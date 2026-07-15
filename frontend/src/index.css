@@ -1,0 +1,50 @@
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Work+Sans:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+/*
+  SariCart design tokens.
+  Palette pulled from real sari-sari store signage: a painted bottle-green
+  storefront wall, a marigold awning, and the chili-red of a Coke/RC Cola
+  crate. Baloo 2 (rounded, hand-signage feel) for display type; Work Sans
+  for body copy and forms.
+*/
+@theme {
+  --font-display: "Baloo 2", system-ui, sans-serif;
+  --font-body: "Work Sans", system-ui, sans-serif;
+
+  --color-storefront: #123832;      /* deep bottle-green wall */
+  --color-storefront-light: #1c5049;
+  --color-awning: #F2A93B;          /* marigold awning / signage yellow */
+  --color-awning-dark: #D98E1F;
+  --color-crate: #E24A3B;           /* chili-red / cola-crate accent */
+  --color-crate-dark: #BE3A2D;
+  --color-paper: #FFFDF7;           /* sachet / receipt paper */
+  --color-ink: #1B2E2A;             /* body text */
+  --color-muted: #6E7D77;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+}
+
+#root {
+  min-height: 100svh;
+}
+
+/* Striped canvas-awning pattern, used as a decorative header band */
+.awning-stripes {
+  background-image: repeating-linear-gradient(
+    115deg,
+    var(--color-awning) 0px,
+    var(--color-awning) 28px,
+    var(--color-paper) 28px,
+    var(--color-paper) 56px
+  );
+}
