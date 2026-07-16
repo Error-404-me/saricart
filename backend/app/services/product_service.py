@@ -5,6 +5,7 @@ from fastapi import HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.models.order_item import OrderItem
 from app.models.product import Product
 from app.models.user import User
 from app.schemas.product import ProductCreate, ProductUpdate
@@ -77,6 +78,13 @@ def update_product(
 def delete_product(db: Session, product_id: int, current_user: User) -> None:
     product = get_product(db, product_id)
     _require_ownership(product, current_user)
+
+    # Order history keeps its own name/image snapshot (see OrderItem), so a
+    # deleted product just detaches from any past orders rather than
+    # blocking the delete or leaving a dangling foreign key.
+    db.query(OrderItem).filter(OrderItem.product_id == product.id).update(
+        {OrderItem.product_id: None}
+    )
 
     if product.image:
         _delete_image_file(product.image)
