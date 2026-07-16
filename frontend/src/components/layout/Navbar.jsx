@@ -12,15 +12,25 @@ export default function Navbar() {
           Sari<span className="text-[var(--color-awning)]">Cart</span>
         </Link>
 
-        <div className="flex items-center gap-3">
-          {user && (
-            <span className="hidden text-sm text-white/80 sm:inline">
-              Hi, {user.username} · <span className="capitalize">{user.role}</span>
-            </span>
+        <div className="flex items-center gap-4">
+          {user?.role === "customer" && (
+            <Link
+              to="/products"
+              className="hidden text-sm font-medium text-white/85 hover:text-white sm:inline"
+            >
+              Browse products
+            </Link>
           )}
-          <Button variant="primary" onClick={logout} className="!px-3 !py-1.5 text-sm">
-            Log out
-          </Button>
+          <div className="flex items-center gap-3">
+            {user && (
+              <span className="hidden text-sm text-white/80 sm:inline">
+                Hi, {user.username} · <span className="capitalize">{user.role}</span>
+              </span>
+            )}
+            <Button variant="primary" onClick={logout} className="!px-3 !py-1.5 text-sm">
+              Log out
+            </Button>
+          </div>
         </div>
       </div>
     </header>

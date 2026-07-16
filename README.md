@@ -3,10 +3,10 @@
 A web app for sari-sari store owners to list products, and for customers to
 browse, pre-order, and pick up in store.
 
-This build covers **Phase 1 (project setup)**, **Phase 2 (authentication)**,
-**Phase 3 (owner dashboard)**, and **Phase 4 (product management)** from the
-roadmap — register/login with JWT, role-based access, an owner dashboard
-shell, and full CRUD for products including image uploads.
+This build covers **Phase 1 (project setup)** through **Phase 5 (customer
+pages)** from the roadmap — register/login with JWT, role-based access, an
+owner dashboard with full product CRUD, and a customer-facing catalog with
+search, category filters, and product details.
 
 ## Stack
 
@@ -56,7 +56,6 @@ to the right home page for that role.
 ## What's implemented
 
 **Backend**
-
 - `POST /api/auth/register` — create a user (customer or owner), bcrypt-hashed password
 - `POST /api/auth/login` — verify credentials, issue a JWT
 - `GET /api/users/me` — return the current user (requires a valid token)
@@ -66,19 +65,18 @@ to the right home page for that role.
   owner-only create/update/delete with ownership enforcement (an owner can't
   edit another owner's product) and image upload (`/api/products/{id}/image`,
   served back from `/uploads/...`)
+- Products include the seller's username (`owner_username`) so a customer
+  browsing across stores can see who they'd be buying from
 
 **Frontend**
-
 - `AuthContext` — holds the logged-in user, exposes `login`, `register`, `logout`
 - Token persisted in `localStorage`; session restored automatically on refresh
 - `ProtectedRoute` — redirects to `/login` if not authenticated, or
   `/unauthorized` if the role doesn't match
 - `PublicRoute` — bounces already-logged-in users away from `/login` and `/register`
 - Login and Register pages with client-side validation and inline error states
-- Placeholder Home (customer) page — Phase 5 fills this in with real browsing
 
 **Owner dashboard (Phase 3)**
-
 - `DashboardLayout` — Navbar + `Sidebar`, used only for `/owner/*` routes
 - `Sidebar` — links to Dashboard, Products, Inventory, Orders, Settings
   (responsive: a left column on desktop, a horizontal scroll bar on mobile)
@@ -90,7 +88,6 @@ to the right home page for that role.
 - `Settings` — a shared page (not owner-specific) reachable from the sidebar
 
 **Product management (Phase 4)**
-
 - `ManageProducts` — the real product list: debounced search, delete with a
   confirmation modal, empty states for "no products yet" vs. "no matches"
 - `AddProduct` / `EditProduct` — share a `ProductForm` component (name,
@@ -101,9 +98,19 @@ to the right home page for that role.
   image is replaced or a product is deleted
 - `formatCurrency` util for consistent ₱ formatting across the app
 
+**Customer pages (Phase 5)**
+- `Home` — search bar, category shortcuts, and a "fresh in stock" preview
+  grid across every store on the platform
+- `Products` — the full catalog: debounced search + category filter chips,
+  synced to the URL (`?search=&category=`) so links are shareable
+- `ProductDetails` — image, price, stock status (in stock / low / out),
+  description, and seller name; "Add to cart" is present but disabled until
+  Phase 6
+- `ProductCard` / `ProductGrid` / `CategoryFilter` — reusable components
+  shared between Home and Products
+
 ## Next steps (per the roadmap)
 
-Phase 5 (customer pages) is the natural next step — it reuses the same
-`/api/products` browsing endpoint (already public, already supports search
-and category filters) to build out the customer-facing Home, Products, and
-ProductDetails pages.
+Phase 6 (shopping cart) is the natural next step — it turns the disabled
+"Add to cart" button on `ProductDetails` into a real `CartContext`, with a
+cart page and running totals, ahead of checkout in Phase 7.

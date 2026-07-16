@@ -1,5 +1,15 @@
 import api from "../api/axios";
 
+export async function browseProducts({ search, category } = {}) {
+  const { data } = await api.get("/products", { params: { search, category } });
+  return data;
+}
+
+export async function browseCategories() {
+  const { data } = await api.get("/products/categories");
+  return data;
+}
+
 export async function fetchMyProducts({ search, category } = {}) {
   const { data } = await api.get("/products/mine", { params: { search, category } });
   return data;
