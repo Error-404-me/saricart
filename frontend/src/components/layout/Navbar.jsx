@@ -1,9 +1,12 @@
 import { Link } from "react-router-dom";
+import { ShoppingCart } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
+import { useCart } from "../../hooks/useCart";
 import Button from "../common/Button";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const { itemCount } = useCart();
 
   return (
     <header className="border-b border-black/10 bg-[var(--color-storefront)]">
@@ -14,12 +17,22 @@ export default function Navbar() {
 
         <div className="flex items-center gap-4">
           {user?.role === "customer" && (
-            <Link
-              to="/products"
-              className="hidden text-sm font-medium text-white/85 hover:text-white sm:inline"
-            >
-              Browse products
-            </Link>
+            <>
+              <Link
+                to="/products"
+                className="hidden text-sm font-medium text-white/85 hover:text-white sm:inline"
+              >
+                Browse products
+              </Link>
+              <Link to="/cart" aria-label="Cart" className="relative rounded-lg p-1.5 text-white/90 hover:text-white">
+                <ShoppingCart className="h-5 w-5" />
+                {itemCount > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-crate)] px-1 text-[10px] font-semibold text-white">
+                    {itemCount}
+                  </span>
+                )}
+              </Link>
+            </>
           )}
           <div className="flex items-center gap-3">
             {user && (

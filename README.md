@@ -3,10 +3,10 @@
 A web app for sari-sari store owners to list products, and for customers to
 browse, pre-order, and pick up in store.
 
-This build covers **Phase 1 (project setup)** through **Phase 5 (customer
-pages)** from the roadmap — register/login with JWT, role-based access, an
-owner dashboard with full product CRUD, and a customer-facing catalog with
-search, category filters, and product details.
+This build covers **Phase 1 (project setup)** through **Phase 6 (shopping
+cart)** from the roadmap — register/login with JWT, role-based access, an
+owner dashboard with full product CRUD, a customer-facing catalog, and a
+persistent shopping cart.
 
 ## Stack
 
@@ -109,8 +109,22 @@ to the right home page for that role.
 - `ProductCard` / `ProductGrid` / `CategoryFilter` — reusable components
   shared between Home and Products
 
+**Shopping cart (Phase 6)**
+- `CartContext` — add/update/remove items, item count, and subtotal;
+  persisted to `localStorage` per user via `cartService`, restored on login
+- Because pickup happens at one physical store, a cart can only hold items
+  from a single seller at a time — adding a product from a different store
+  surfaces a confirmation modal ("Replace cart?") instead of silently mixing
+  stores
+- Quantities are clamped to the stock captured when the item was added
+- `Cart` page — line items with quantity steppers and remove buttons, plus
+  `CartSummary` with subtotal/total; "Proceed to checkout" is present but
+  disabled until Phase 7
+- Cart icon with a live item-count badge in the Navbar (customers only)
+
 ## Next steps (per the roadmap)
 
-Phase 6 (shopping cart) is the natural next step — it turns the disabled
-"Add to cart" button on `ProductDetails` into a real `CartContext`, with a
-cart page and running totals, ahead of checkout in Phase 7.
+Phase 7 (orders/checkout) is the natural next step — it's what turns the
+disabled "Proceed to checkout" button into a real `Order` + `OrderItem` on
+the backend, plus an order-status view for customers and an order queue for
+owners.

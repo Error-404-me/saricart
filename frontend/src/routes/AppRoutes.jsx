@@ -11,6 +11,7 @@ import Register from "../pages/auth/Register";
 import Home from "../pages/customer/Home";
 import Products from "../pages/customer/Products";
 import ProductDetails from "../pages/customer/ProductDetails";
+import Cart from "../pages/customer/Cart";
 import Dashboard from "../pages/owner/Dashboard";
 import ManageProducts from "../pages/owner/ManageProducts";
 import AddProduct from "../pages/owner/AddProduct";
@@ -36,6 +37,7 @@ export default function AppRoutes() {
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<Products />} />
           <Route path="/products/:id" element={<ProductDetails />} />
+          <Route path="/cart" element={<Cart />} />
         </Route>
       </Route>
 
