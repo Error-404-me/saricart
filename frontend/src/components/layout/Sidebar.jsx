@@ -4,19 +4,16 @@ import {
   Package,
   Boxes,
   ClipboardList,
+  BarChart3,
   Settings,
 } from "lucide-react";
 
 const NAV_ITEMS = [
-  {
-    to: "/owner/dashboard",
-    label: "Dashboard",
-    icon: LayoutDashboard,
-    end: true,
-  },
+  { to: "/owner/dashboard", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/owner/products", label: "Products", icon: Package },
   { to: "/owner/inventory", label: "Inventory", icon: Boxes },
   { to: "/owner/orders", label: "Orders", icon: ClipboardList },
+  { to: "/owner/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/owner/settings", label: "Settings", icon: Settings },
 ];
 

@@ -3,15 +3,16 @@
 A web app for sari-sari store owners to list products, and for customers to
 browse, pre-order, and pick up in store.
 
-This build covers **Phase 1 (project setup)** through **Phase 8 (inventory)**
+This build covers **Phase 1 (project setup)** through **Phase 9 (analytics)**
 from the roadmap — register/login with JWT, role-based access, an owner
 dashboard with full product CRUD, a customer-facing catalog, a persistent
-shopping cart, a complete checkout-to-pickup order flow, and inventory
-tracking with a full stock history.
+shopping cart, a complete checkout-to-pickup order flow, inventory tracking
+with a full stock history, and a revenue analytics dashboard.
 
 ## Stack
 
-- **Frontend:** React + Vite + Tailwind CSS v4, React Router, Axios, lucide-react
+- **Frontend:** React + Vite + Tailwind CSS v4, React Router, Axios,
+  lucide-react, Recharts
 - **Backend:** FastAPI + SQLAlchemy + SQLite (swap to Postgres later by
   changing one env var)
 - **Auth:** JWT bearer tokens, bcrypt password hashing
@@ -163,8 +164,25 @@ to the right home page for that role.
   `adjustment` entry too, so there's one consistent history regardless of
   which screen changed it
 
+**Analytics (Phase 9)**
+- Revenue is computed exclusively from **completed** orders — pending,
+  accepted, preparing, ready, and cancelled orders never count, so the
+  numbers reflect what actually got picked up and paid for
+- `GET /api/analytics/summary` — all-time revenue, completed order count,
+  items sold, and average order value
+- `GET /api/analytics/daily-sales` / `monthly-sales` — zero-filled buckets
+  (every day/month in the window appears even with no sales) so charts
+  never have misleading gaps
+- `GET /api/analytics/best-sellers` — top products by quantity sold,
+  grouped by the order item's snapshot name so it stays accurate even if a
+  product was later edited or deleted
+- `Analytics` page (Revenue Dashboard) — summary stat cards, a 14-day daily
+  sales bar chart, a 6-month trend, and a ranked best-sellers list, all
+  built with Recharts and the app's storefront color palette
+
 ## Next steps (per the roadmap)
 
-Phase 9 (analytics) is the natural next step — daily/monthly sales and best
-sellers can now be computed entirely from completed orders and stock
-history, both of which already exist.
+Phase 10 (polish) is the last one on the roadmap — responsive design has
+been handled incrementally each phase, so what's left is mostly loading
+states, error/empty states (already present on most pages, worth an audit),
+a global 404 already in place, and dark mode.

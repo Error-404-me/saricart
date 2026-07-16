@@ -20,6 +20,7 @@ import AddProduct from "../pages/owner/AddProduct";
 import EditProduct from "../pages/owner/EditProduct";
 import Inventory from "../pages/owner/Inventory";
 import ManageOrders from "../pages/owner/ManageOrders";
+import Analytics from "../pages/owner/Analytics";
 import Settings from "../pages/Settings";
 import Unauthorized from "../pages/Unauthorized";
 import NotFound from "../pages/NotFound";
@@ -54,6 +55,7 @@ export default function AppRoutes() {
           <Route path="/owner/products/edit/:id" element={<EditProduct />} />
           <Route path="/owner/inventory" element={<Inventory />} />
           <Route path="/owner/orders" element={<ManageOrders />} />
+          <Route path="/owner/analytics" element={<Analytics />} />
           <Route path="/owner/settings" element={<Settings />} />
         </Route>
       </Route>

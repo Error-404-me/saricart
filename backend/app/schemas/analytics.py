@@ -4,28 +4,26 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-class AnalyticsOverview(BaseModel):
-    today_sales: Decimal
-    month_sales: Decimal
+class AnalyticsSummary(BaseModel):
     total_revenue: Decimal
     total_orders: int
-    pending_orders: int
+    total_items_sold: int
+    average_order_value: Decimal
 
 
 class DailySalesPoint(BaseModel):
-    date: str  # "YYYY-MM-DD"
+    date: str
     revenue: Decimal
     order_count: int
 
 
 class MonthlySalesPoint(BaseModel):
-    month: str  # "YYYY-MM"
+    month: str
     revenue: Decimal
     order_count: int
 
 
-class BestSellerOut(BaseModel):
-    product_id: Optional[int] = None
+class BestSellerItem(BaseModel):
     product_name: str
     product_image: Optional[str] = None
     quantity_sold: int

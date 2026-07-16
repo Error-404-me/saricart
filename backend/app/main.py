@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.database import Base, engine
 from app.models import order, order_item, product, stock_history, user  # noqa: F401 (ensures models are registered on Base)
-from app.routes import auth, orders, products, users
+from app.routes import analytics, auth, orders, products, users
 
 # Dev convenience: auto-create tables. Swap for Alembic migrations in production.
 Base.metadata.create_all(bind=engine)
@@ -30,6 +30,7 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(products.router)
 app.include_router(orders.router)
+app.include_router(analytics.router)
 
 
 @app.get("/api/health")
