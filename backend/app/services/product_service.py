@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.models.order_item import OrderItem
 from app.models.product import Product
+from app.models.stock_history import StockHistory, StockChangeReason
 from app.models.user import User
 from app.schemas.product import ProductCreate, ProductUpdate
 
@@ -64,10 +65,19 @@ def create_product(db: Session, product_in: ProductCreate, owner: User) -> Produ
 def update_product(
     db: Session, product_id: int, product_in: ProductUpdate, current_user: User
 ) -> Product:
+    from app.services import stock_service
+
     product = get_product(db, product_id)
     _require_ownership(product, current_user)
 
-    for field, value in product_in.model_dump(exclude_unset=True).items():
+    updates = product_in.model_dump(exclude_unset=True)
+
+    if "stock" in updates:
+        new_stock = updates.pop("stock")
+        delta = new_stock - product.stock
+        stock_service.record_stock_change(db, product, delta, StockChangeReason.ADJUSTMENT)
+
+    for field, value in updates.items():
         setattr(product, field, value)
 
     db.commit()
@@ -81,9 +91,13 @@ def delete_product(db: Session, product_id: int, current_user: User) -> None:
 
     # Order history keeps its own name/image snapshot (see OrderItem), so a
     # deleted product just detaches from any past orders rather than
-    # blocking the delete or leaving a dangling foreign key.
+    # blocking the delete or leaving a dangling foreign key. Same idea for
+    # stock history.
     db.query(OrderItem).filter(OrderItem.product_id == product.id).update(
         {OrderItem.product_id: None}
+    )
+    db.query(StockHistory).filter(StockHistory.product_id == product.id).update(
+        {StockHistory.product_id: None}
     )
 
     if product.image:

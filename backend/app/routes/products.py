@@ -5,7 +5,8 @@ from app.database import get_db
 from app.dependencies.auth import require_owner
 from app.models.user import User
 from app.schemas.product import ProductCreate, ProductOut, ProductUpdate
-from app.services import product_service
+from app.schemas.stock import StockAdjustment, StockHistoryOut
+from app.services import product_service, stock_service
 
 router = APIRouter(prefix="/api/products", tags=["products"])
 
@@ -37,6 +38,15 @@ def list_my_products(
     return product_service.list_products(
         db, owner_id=current_user.id, category=category, search=search
     )
+
+
+@router.get("/stock-history", response_model=list[StockHistoryOut])
+def stock_history(
+    product_id: int | None = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_owner),
+):
+    return stock_service.list_stock_history(db, current_user.id, product_id)
 
 
 @router.get("/{product_id}", response_model=ProductOut)
@@ -80,3 +90,13 @@ def upload_product_image(
     current_user: User = Depends(require_owner),
 ):
     return product_service.save_product_image(db, product_id, file, current_user)
+
+
+@router.patch("/{product_id}/stock", response_model=ProductOut)
+def adjust_stock(
+    product_id: int,
+    payload: StockAdjustment,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_owner),
+):
+    return stock_service.adjust_stock(db, product_id, payload.delta, current_user)

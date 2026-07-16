@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { formatCurrency } from "../../utils/formatCurrency";
 import Button from "../common/Button";
 
@@ -28,12 +29,11 @@ export default function CartSummary({ itemCount, subtotal, storeName }) {
         </span>
       </div>
 
-      <Button variant="primary" disabled title="Checkout arrives in Phase 7" className="mt-5 w-full">
-        Proceed to checkout
-      </Button>
-      <p className="mt-2 text-center text-xs text-[var(--color-muted)]">
-        Placing pre-orders is coming in Phase 7.
-      </p>
+      <Link to="/checkout">
+        <Button variant="primary" className="mt-5 w-full">
+          Proceed to checkout
+        </Button>
+      </Link>
     </div>
   );
 }

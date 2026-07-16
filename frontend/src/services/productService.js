@@ -39,6 +39,18 @@ export async function deleteProduct(id) {
   await api.delete(`/products/${id}`);
 }
 
+export async function adjustStock(id, delta) {
+  const { data } = await api.patch(`/products/${id}/stock`, { delta });
+  return data;
+}
+
+export async function fetchStockHistory({ productId } = {}) {
+  const { data } = await api.get("/products/stock-history", {
+    params: { product_id: productId },
+  });
+  return data;
+}
+
 export async function uploadProductImage(id, file) {
   const formData = new FormData();
   formData.append("file", file);

@@ -24,6 +24,12 @@ export default function Navbar() {
               >
                 Browse products
               </Link>
+              <Link
+                to="/orders"
+                className="hidden text-sm font-medium text-white/85 hover:text-white sm:inline"
+              >
+                My orders
+              </Link>
               <Link to="/cart" aria-label="Cart" className="relative rounded-lg p-1.5 text-white/90 hover:text-white">
                 <ShoppingCart className="h-5 w-5" />
                 {itemCount > 0 && (

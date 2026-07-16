@@ -4,8 +4,10 @@ from sqlalchemy.orm import Session, joinedload
 from app.models.order import Order, OrderStatus, ALLOWED_TRANSITIONS, RESTOCKING_STATUSES
 from app.models.order_item import OrderItem
 from app.models.product import Product
+from app.models.stock_history import StockChangeReason
 from app.models.user import User
 from app.schemas.order import OrderCreate
+from app.services import stock_service
 
 
 def _with_items(query):
@@ -48,7 +50,7 @@ def create_order(db: Session, order_in: OrderCreate, customer: User) -> Order:
 
     for item in order_in.items:
         product = products_by_id[item.product_id]
-        product.stock -= item.quantity
+        stock_service.record_stock_change(db, product, -item.quantity, StockChangeReason.SALE)
         db.add(
             OrderItem(
                 order_id=order.id,
@@ -131,4 +133,6 @@ def _restock(db: Session, order: Order) -> None:
             continue
         product = db.query(Product).filter(Product.id == item.product_id).first()
         if product:
-            product.stock += item.quantity
+            stock_service.record_stock_change(
+                db, product, item.quantity, StockChangeReason.CANCELLED
+            )
