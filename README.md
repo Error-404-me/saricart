@@ -208,3 +208,26 @@ payment integration, push/email notifications on order status changes, and
 splitting the frontend bundle (Recharts pushed the production JS bundle
 over Vite's 500KB chunk-size warning threshold — harmless today, but worth
 a `dynamic import()` split if the app grows further).
+
+## Post-roadmap: navigation & onboarding
+
+- **One shared layout** — `AppLayout` (replacing the old separate
+  `MainLayout`/`DashboardLayout`) now renders Navbar + Sidebar for both
+  customers and owners. The Sidebar's item list differs by role (customer:
+  Home, Browse, Cart, My orders, Settings · owner: Dashboard, Products,
+  Inventory, Orders, Analytics, Settings), but the Navbar itself is now
+  identical for every session — logo, theme toggle, greeting, logout, full
+  stop
+- **Collapsible sidebar** — a toggle at the bottom collapses it to
+  icon-only (with a `title` tooltip per item) on desktop; the choice
+  persists to `localStorage`. On mobile the sidebar is already a compact
+  horizontal scroll strip, so collapsing doesn't apply there
+- **Onboarding for guests** — visiting `/` while logged out no longer just
+  silently bounces to a bare login form. `Landing` branches three ways:
+  logged out → `Onboarding` (a proper welcome screen with feature
+  highlights and Log in / Create account buttons), logged-in owner →
+  redirect to their dashboard, logged-in customer → the real Home page
+  inside `AppLayout`
+- **Settings, fleshed out** — now shows real account info (username,
+  email, account type), the dark mode toggle, and a log-out action, at a
+  single shared `/settings` route for both roles (previously owner-only)
