@@ -21,7 +21,7 @@ export default function Modal({ open, onClose, title, children, footer }) {
           <button
             onClick={onClose}
             aria-label="Close"
-            className="rounded-lg p-1 text-[var(--color-muted)] hover:bg-black/5 hover:text-[var(--color-ink)]"
+            className="rounded-lg p-1 text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-ink)]"
           >
             <X className="h-4 w-4" />
           </button>

@@ -71,7 +71,7 @@ export default function RegisterForm() {
               ${
                 form.role === r.value
                   ? "border-[var(--color-storefront)] bg-[var(--color-storefront)]/5"
-                  : "border-black/10 hover:border-black/20"
+                  : "border-[var(--color-border)] hover:border-[var(--color-border)]"
               }`}
           >
             <input

@@ -4,10 +4,8 @@ SQLAlchemy engine, session factory, and declarative base.
 Swapping to PostgreSQL later only requires changing DATABASE_URL in .env —
 nothing here needs to change (drop `connect_args`, which is SQLite-only).
 """
-from typing import Generator
-
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base, Session
+from sqlalchemy.orm import sessionmaker, declarative_base
 
 from app.core.config import settings
 

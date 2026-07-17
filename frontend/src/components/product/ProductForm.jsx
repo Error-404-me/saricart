@@ -64,7 +64,7 @@ export default function ProductForm({
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
       <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
-        <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-dashed border-black/15 bg-[var(--color-paper)]">
+        <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-paper)]">
           {imagePreview ? (
             <img src={imagePreview} alt="Product preview" className="h-full w-full object-cover" />
           ) : (
@@ -98,7 +98,7 @@ export default function ProductForm({
           placeholder="Chilimansi flavor, 60g pack"
           value={form.description}
           onChange={handleChange}
-          className="w-full rounded-lg border border-black/10 bg-white px-3.5 py-2.5 text-sm text-[var(--color-ink)] outline-none transition
+          className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm text-[var(--color-ink)] outline-none transition
             placeholder:text-[var(--color-muted)]/60
             focus:border-[var(--color-storefront)] focus:ring-2 focus:ring-[var(--color-storefront)]/20"
         />

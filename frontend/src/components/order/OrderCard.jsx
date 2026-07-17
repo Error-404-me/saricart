@@ -12,7 +12,7 @@ function formatDate(isoString) {
 
 export default function OrderCard({ order }) {
   return (
-    <div className="rounded-2xl border border-black/10 bg-white p-5">
+    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="text-sm font-medium text-[var(--color-ink)]">
@@ -34,7 +34,7 @@ export default function OrderCard({ order }) {
         ))}
       </div>
 
-      <div className="mt-4 flex items-center justify-between border-t border-dashed border-black/10 pt-3">
+      <div className="mt-4 flex items-center justify-between border-t border-dashed border-[var(--color-border)] pt-3">
         <span className="text-sm font-medium text-[var(--color-ink)]">Total</span>
         <span className="font-display text-lg font-bold text-[var(--color-storefront)]">
           {formatCurrency(order.total)}

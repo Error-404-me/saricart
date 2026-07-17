@@ -30,6 +30,7 @@ class ProductOut(ProductBase):
 
     id: int
     owner_id: int
+    owner_username: Optional[str] = None
     image: Optional[str] = None
     created_at: datetime
     updated_at: datetime

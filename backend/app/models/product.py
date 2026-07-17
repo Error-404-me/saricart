@@ -30,3 +30,7 @@ class Product(Base):
     )
 
     owner = relationship("User")
+
+    @property
+    def owner_username(self) -> str | None:
+        return self.owner.username if self.owner else None

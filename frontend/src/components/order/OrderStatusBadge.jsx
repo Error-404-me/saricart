@@ -24,12 +24,12 @@ const STATUS_CONFIG = {
   completed: {
     label: "Completed",
     icon: PartyPopper,
-    classes: "bg-black/5 text-[var(--color-muted)]",
+    classes: "bg-[var(--color-overlay)] text-[var(--color-muted)]",
   },
   cancelled: {
     label: "Cancelled",
     icon: XCircle,
-    classes: "bg-black/5 text-[var(--color-muted)] line-through decoration-1",
+    classes: "bg-[var(--color-overlay)] text-[var(--color-muted)] line-through decoration-1",
   },
 };
 

@@ -65,7 +65,7 @@ export default function ProductDetails() {
         </p>
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <div className="aspect-square w-full overflow-hidden rounded-2xl border border-black/10 bg-[var(--color-paper)]">
+          <div className="aspect-square w-full overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-paper)]">
             {product.image ? (
               <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
             ) : (
@@ -77,7 +77,7 @@ export default function ProductDetails() {
 
           <div className="flex flex-col gap-3">
             {product.category && (
-              <span className="w-fit rounded-full bg-black/5 px-3 py-1 text-xs font-medium uppercase tracking-wide text-[var(--color-muted)]">
+              <span className="w-fit rounded-full bg-[var(--color-overlay)] px-3 py-1 text-xs font-medium uppercase tracking-wide text-[var(--color-muted)]">
                 {product.category}
               </span>
             )}
@@ -110,7 +110,7 @@ export default function ProductDetails() {
             )}
 
             {product.stock > 0 && (
-              <div className="flex items-center gap-1.5 rounded-lg border border-black/10 px-1.5 py-1 w-fit">
+              <div className="flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-1.5 py-1 w-fit">
                 <button
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                   aria-label="Decrease quantity"

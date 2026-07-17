@@ -1,15 +1,17 @@
 import { Link } from "react-router-dom";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Sun, Moon } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { useCart } from "../../hooks/useCart";
+import { useTheme } from "../../hooks/useTheme";
 import Button from "../common/Button";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const { itemCount } = useCart();
+  const { theme, toggleTheme } = useTheme();
 
   return (
-    <header className="border-b border-black/10 bg-[var(--color-storefront)]">
+    <header className="border-b border-[var(--color-border)] bg-[var(--color-storefront)]">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
         <Link to="/" className="font-display text-xl font-extrabold text-white">
           Sari<span className="text-[var(--color-awning)]">Cart</span>
@@ -46,6 +48,13 @@ export default function Navbar() {
                 Hi, {user.username} · <span className="capitalize">{user.role}</span>
               </span>
             )}
+            <button
+              onClick={toggleTheme}
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              className="rounded-lg p-1.5 text-white/90 hover:bg-white/10 hover:text-white"
+            >
+              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
             <Button variant="primary" onClick={logout} className="!px-3 !py-1.5 text-sm">
               Log out
             </Button>

@@ -35,7 +35,7 @@ function formatMonthLabel(monthKey) {
 function ChartTooltip({ active, payload, label, labelFormatter }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border border-black/10 bg-white px-3 py-2 text-sm shadow-md">
+    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm shadow-md">
       <p className="font-medium text-[var(--color-ink)]">{labelFormatter(label)}</p>
       <p className="text-[var(--color-storefront)]">{formatCurrency(payload[0].value)}</p>
       <p className="text-xs text-[var(--color-muted)]">
@@ -120,7 +120,7 @@ export default function Analytics() {
         />
       </div>
 
-      <div className="rounded-2xl border border-black/10 bg-white p-5">
+      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
         <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">
           Daily sales <span className="font-body text-sm font-normal text-[var(--color-muted)]">· last 14 days</span>
         </h2>
@@ -148,7 +148,7 @@ export default function Analytics() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-black/10 bg-white p-5">
+      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
         <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">
           Monthly sales <span className="font-body text-sm font-normal text-[var(--color-muted)]">· last 6 months</span>
         </h2>
@@ -176,7 +176,7 @@ export default function Analytics() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-black/10 bg-white p-5">
+      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
         <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">Best sellers</h2>
         {bestSellers.length === 0 ? (
           <ComingSoon
@@ -185,7 +185,7 @@ export default function Analytics() {
             description="Your top products will show up here once orders are completed."
           />
         ) : (
-          <div className="mt-4 flex flex-col divide-y divide-black/5">
+          <div className="mt-4 flex flex-col divide-y divide-[var(--color-border-subtle)]">
             {bestSellers.map((item, index) => (
               <div key={item.product_name} className="flex items-center justify-between gap-3 py-3">
                 <div className="flex items-center gap-3">

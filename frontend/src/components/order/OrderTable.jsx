@@ -40,7 +40,7 @@ export default function OrderTable({ orders, onStatusChange, updatingOrderId }) 
         const isUpdating = updatingOrderId === order.id;
 
         return (
-          <div key={order.id} className="rounded-2xl border border-black/10 bg-white p-5">
+          <div key={order.id} className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
                 <p className="text-sm font-medium text-[var(--color-ink)]">
@@ -62,7 +62,7 @@ export default function OrderTable({ orders, onStatusChange, updatingOrderId }) 
               ))}
             </div>
 
-            <div className="mt-3 flex items-center justify-between border-t border-dashed border-black/10 pt-3">
+            <div className="mt-3 flex items-center justify-between border-t border-dashed border-[var(--color-border)] pt-3">
               <span className="font-medium text-[var(--color-ink)]">
                 Total: {formatCurrency(order.total)}
               </span>

@@ -28,7 +28,7 @@ export default function StockHistoryList({ entries }) {
   }
 
   return (
-    <div className="flex flex-col divide-y divide-black/5 rounded-2xl border border-black/10 bg-white">
+    <div className="flex flex-col divide-y divide-[var(--color-border-subtle)] rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]">
       {entries.map((entry) => {
         const isPositive = entry.change > 0;
         const config = REASON_CONFIG[entry.reason] || {};

@@ -21,6 +21,35 @@
   --color-paper: #FFFDF7;           /* sachet / receipt paper */
   --color-ink: #1B2E2A;             /* body text */
   --color-muted: #6E7D77;
+
+  /* Semantic surface tokens — every card/border/hover in the app goes
+     through these instead of literal bg-white / border-black, so dark
+     mode below is a matter of re-pointing these variables rather than
+     touching every component. */
+  --color-surface: #FFFFFF;
+  --color-border: rgba(0, 0, 0, 0.1);
+  --color-border-subtle: rgba(0, 0, 0, 0.05);
+  --color-overlay: rgba(0, 0, 0, 0.05);
+}
+
+/* Dark mode: toggled by adding/removing `.dark` on <html> (see
+   ThemeContext). Brand colors are brightened slightly so they still pop
+   against a dark background; paper/surface/border invert accordingly. */
+.dark {
+  --color-storefront: #3CA48F;
+  --color-storefront-light: #4FBBA3;
+  --color-awning: #F2B255;
+  --color-awning-dark: #E0993A;
+  --color-crate: #FF7A67;
+  --color-crate-dark: #E85C48;
+  --color-paper: #0E1B18;
+  --color-ink: #F1EFE6;
+  --color-muted: #93A69F;
+
+  --color-surface: #15251F;
+  --color-border: rgba(255, 255, 255, 0.12);
+  --color-border-subtle: rgba(255, 255, 255, 0.06);
+  --color-overlay: rgba(255, 255, 255, 0.07);
 }
 
 body {
@@ -28,6 +57,7 @@ body {
   font-family: var(--font-body);
   background-color: var(--color-paper);
   color: var(--color-ink);
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 h1, h2, h3, .font-display {

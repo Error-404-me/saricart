@@ -42,7 +42,7 @@ export default function AddProduct() {
         </p>
       </div>
 
-      <div className="rounded-2xl border border-black/10 bg-white p-6">
+      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
         <ProductForm
           onSubmit={handleSubmit}
           submitting={submitting}

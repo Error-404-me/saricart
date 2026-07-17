@@ -92,12 +92,12 @@ export default function Inventory() {
 
       <div className="flex flex-col gap-2">
         <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">Update stock</h2>
-        <div className="overflow-hidden rounded-2xl border border-black/10 bg-white">
+        <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]">
           {products.map((product, index) => (
             <div
               key={product.id}
               className={`flex flex-wrap items-center justify-between gap-3 px-4 py-3 ${
-                index > 0 ? "border-t border-black/5" : ""
+                index > 0 ? "border-t border-[var(--color-border-subtle)]" : ""
               }`}
             >
               <div>

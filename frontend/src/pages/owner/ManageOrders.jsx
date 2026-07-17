@@ -74,7 +74,7 @@ export default function ManageOrders() {
               ${
                 statusFilter === tab.value
                   ? "bg-[var(--color-storefront)] text-white"
-                  : "bg-white text-[var(--color-muted)] hover:bg-black/5"
+                  : "bg-[var(--color-surface)] text-[var(--color-muted)] hover:bg-[var(--color-overlay)]"
               }`}
           >
             {tab.label}

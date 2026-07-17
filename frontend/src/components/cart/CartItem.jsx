@@ -5,7 +5,7 @@ export default function CartItem({ item, onUpdateQuantity, onRemove }) {
   const atMax = item.quantity >= item.stock;
 
   return (
-    <div className="flex items-center gap-4 border-b border-black/5 py-4 last:border-0">
+    <div className="flex items-center gap-4 border-b border-[var(--color-border-subtle)] py-4 last:border-0">
       <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--color-paper)]">
         {item.image ? (
           <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
@@ -24,7 +24,7 @@ export default function CartItem({ item, onUpdateQuantity, onRemove }) {
         )}
       </div>
 
-      <div className="flex items-center gap-1.5 rounded-lg border border-black/10 px-1.5 py-1">
+      <div className="flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-1.5 py-1">
         <button
           onClick={() => onUpdateQuantity(item.productId, item.quantity - 1)}
           aria-label={`Decrease quantity of ${item.name}`}

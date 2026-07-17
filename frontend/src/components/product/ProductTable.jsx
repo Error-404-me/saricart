@@ -6,10 +6,10 @@ export default function ProductTable({ products, onDeleteRequest }) {
   if (products.length === 0) return null;
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-black/10 bg-white">
+    <div className="overflow-x-auto rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]">
       <table className="w-full min-w-[640px] text-left text-sm">
         <thead>
-          <tr className="border-b border-black/10 text-xs uppercase tracking-wide text-[var(--color-muted)]">
+          <tr className="border-b border-[var(--color-border)] text-xs uppercase tracking-wide text-[var(--color-muted)]">
             <th className="px-4 py-3 font-medium">Product</th>
             <th className="px-4 py-3 font-medium">Category</th>
             <th className="px-4 py-3 font-medium">Price</th>
@@ -19,7 +19,7 @@ export default function ProductTable({ products, onDeleteRequest }) {
         </thead>
         <tbody>
           {products.map((product) => (
-            <tr key={product.id} className="border-b border-black/5 last:border-0">
+            <tr key={product.id} className="border-b border-[var(--color-border-subtle)] last:border-0">
               <td className="px-4 py-3">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[var(--color-paper)]">

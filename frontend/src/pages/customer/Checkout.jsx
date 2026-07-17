@@ -64,7 +64,7 @@ export default function Checkout() {
         </p>
       </div>
 
-      <div className="rounded-2xl border border-black/10 bg-white p-5">
+      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
         <div className="flex flex-col gap-2.5">
           {items.map((item) => (
             <div key={item.productId} className="flex items-center justify-between text-sm">
@@ -78,7 +78,7 @@ export default function Checkout() {
           ))}
         </div>
 
-        <div className="my-4 border-t border-dashed border-black/10" />
+        <div className="my-4 border-t border-dashed border-[var(--color-border)]" />
 
         <div className="flex items-center justify-between text-sm text-[var(--color-muted)]">
           <span>Items ({itemCount})</span>

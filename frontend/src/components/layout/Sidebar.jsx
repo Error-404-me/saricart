@@ -21,7 +21,7 @@ export default function Sidebar() {
   return (
     <nav
       aria-label="Store owner navigation"
-      className="border-b border-black/10 bg-white
+      className="border-b border-[var(--color-border)] bg-[var(--color-surface)]
         md:w-56 md:shrink-0 md:border-b-0 md:border-r md:min-h-[calc(100vh-57px)]"
     >
       <ul
@@ -38,7 +38,7 @@ export default function Sidebar() {
                 ${
                   isActive
                     ? "bg-[var(--color-storefront)]/10 text-[var(--color-storefront)]"
-                    : "text-[var(--color-muted)] hover:bg-black/5 hover:text-[var(--color-ink)]"
+                    : "text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-ink)]"
                 }`
               }
             >

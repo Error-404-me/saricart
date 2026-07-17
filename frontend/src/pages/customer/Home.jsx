@@ -69,7 +69,7 @@ export default function Home() {
               <Link
                 key={category}
                 to={`/products?category=${encodeURIComponent(category)}`}
-                className="rounded-full bg-white px-3.5 py-1.5 text-sm font-medium text-[var(--color-muted)] border border-black/10 hover:border-[var(--color-storefront)]/40 hover:text-[var(--color-ink)]"
+                className="rounded-full bg-[var(--color-surface)] px-3.5 py-1.5 text-sm font-medium text-[var(--color-muted)] border border-[var(--color-border)] hover:border-[var(--color-storefront)]/40 hover:text-[var(--color-ink)]"
               >
                 {category}
               </Link>

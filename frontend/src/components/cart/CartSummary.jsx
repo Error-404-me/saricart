@@ -4,7 +4,7 @@ import Button from "../common/Button";
 
 export default function CartSummary({ itemCount, subtotal, storeName }) {
   return (
-    <div className="rounded-2xl border border-black/10 bg-white p-5">
+    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
       <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">Order summary</h2>
 
       {storeName && (
@@ -20,7 +20,7 @@ export default function CartSummary({ itemCount, subtotal, storeName }) {
         <span className="font-medium text-[var(--color-ink)]">{formatCurrency(subtotal)}</span>
       </div>
 
-      <div className="my-4 border-t border-dashed border-black/10" />
+      <div className="my-4 border-t border-dashed border-[var(--color-border)]" />
 
       <div className="flex items-center justify-between">
         <span className="font-medium text-[var(--color-ink)]">Total</span>

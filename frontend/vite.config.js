@@ -1,6 +1,6 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -8,15 +8,15 @@ export default defineConfig({
   server: {
     proxy: {
       // Forward API calls to the FastAPI backend during development
-      "/api": {
-        target: "http://localhost:8000",
+      '/api': {
+        target: 'http://localhost:8000',
         changeOrigin: true,
       },
       // Product images are served by the backend too
-      "/uploads": {
-        target: "http://localhost:8000",
+      '/uploads': {
+        target: 'http://localhost:8000',
         changeOrigin: true,
       },
     },
   },
-});
+})

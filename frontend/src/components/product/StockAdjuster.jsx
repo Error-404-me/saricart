@@ -31,7 +31,7 @@ export default function StockAdjuster({ stock, onAdjust, disabled }) {
           disabled={disabled || submitting || !hasValidAmount}
           onClick={() => handleAdjust(-1)}
           aria-label="Remove stock"
-          className="rounded-lg border border-black/10 p-1.5 text-[var(--color-crate)] transition hover:bg-[var(--color-crate)]/10 disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-lg border border-[var(--color-border)] p-1.5 text-[var(--color-crate)] transition hover:bg-[var(--color-crate)]/10 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Minus className="h-3.5 w-3.5" />
         </button>
@@ -42,7 +42,7 @@ export default function StockAdjuster({ stock, onAdjust, disabled }) {
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           disabled={disabled || submitting}
-          className="w-16 rounded-lg border border-black/10 px-2 py-1.5 text-center text-sm outline-none
+          className="w-16 rounded-lg border border-[var(--color-border)] px-2 py-1.5 text-center text-sm outline-none
             focus:border-[var(--color-storefront)] focus:ring-2 focus:ring-[var(--color-storefront)]/20"
         />
         <button
@@ -50,7 +50,7 @@ export default function StockAdjuster({ stock, onAdjust, disabled }) {
           disabled={disabled || submitting || !hasValidAmount}
           onClick={() => handleAdjust(1)}
           aria-label="Add stock"
-          className="rounded-lg border border-black/10 p-1.5 text-[var(--color-storefront)] transition hover:bg-[var(--color-storefront)]/10 disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-lg border border-[var(--color-border)] p-1.5 text-[var(--color-storefront)] transition hover:bg-[var(--color-storefront)]/10 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Plus className="h-3.5 w-3.5" />
         </button>

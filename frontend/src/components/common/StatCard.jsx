@@ -1,19 +1,12 @@
-export default function StatCard({
-  icon: Icon,
-  label,
-  value,
-  hint,
-  accent = "storefront",
-}) {
+export default function StatCard({ icon: Icon, label, value, hint, accent = "storefront" }) {
   const accentClasses = {
-    storefront:
-      "bg-[var(--color-storefront)]/10 text-[var(--color-storefront)]",
+    storefront: "bg-[var(--color-storefront)]/10 text-[var(--color-storefront)]",
     crate: "bg-[var(--color-crate)]/10 text-[var(--color-crate)]",
     awning: "bg-[var(--color-awning)]/15 text-[var(--color-awning-dark)]",
   };
 
   return (
-    <div className="rounded-2xl border border-black/10 bg-white p-5">
+    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm text-[var(--color-muted)]">{label}</p>

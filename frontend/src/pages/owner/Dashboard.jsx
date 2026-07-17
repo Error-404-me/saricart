@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import StatCard from "../../components/common/StatCard";
 import Button from "../../components/common/Button";
+import Spinner from "../../components/common/Spinner";
 import OrderStatusBadge from "../../components/order/OrderStatusBadge";
 import { formatCurrency } from "../../utils/formatCurrency";
 import { fetchMyProducts } from "../../services/productService";
@@ -107,7 +108,7 @@ export default function Dashboard() {
         />
       </div>
 
-      <div className="rounded-2xl border border-black/10 bg-white p-6">
+      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
         <div className="flex items-center justify-between">
           <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">
             Recent orders
@@ -122,7 +123,9 @@ export default function Dashboard() {
           )}
         </div>
 
-        {recentOrders.length === 0 ? (
+        {loadingOrders ? (
+          <Spinner label="Loading recent orders…" />
+        ) : recentOrders.length === 0 ? (
           <div className="mt-4 flex flex-col items-center justify-center gap-2 rounded-xl bg-[var(--color-paper)] py-10 text-center">
             <ClipboardList className="h-6 w-6 text-[var(--color-muted)]" />
             <p className="text-sm text-[var(--color-muted)]">
@@ -130,7 +133,7 @@ export default function Dashboard() {
             </p>
           </div>
         ) : (
-          <div className="mt-4 flex flex-col divide-y divide-black/5">
+          <div className="mt-4 flex flex-col divide-y divide-[var(--color-border-subtle)]">
             {recentOrders.map((order) => (
               <div key={order.id} className="flex items-center justify-between py-3">
                 <div>

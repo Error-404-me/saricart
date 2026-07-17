@@ -3,11 +3,11 @@
 A web app for sari-sari store owners to list products, and for customers to
 browse, pre-order, and pick up in store.
 
-This build covers **Phase 1 (project setup)** through **Phase 9 (analytics)**
-from the roadmap — register/login with JWT, role-based access, an owner
-dashboard with full product CRUD, a customer-facing catalog, a persistent
-shopping cart, a complete checkout-to-pickup order flow, inventory tracking
-with a full stock history, and a revenue analytics dashboard.
+This build covers **all 10 phases** of the roadmap — register/login with
+JWT, role-based access, an owner dashboard with full product CRUD, a
+customer-facing catalog, a persistent shopping cart, a complete
+checkout-to-pickup order flow, inventory tracking with a full stock
+history, a revenue analytics dashboard, and dark mode.
 
 ## Stack
 
@@ -180,9 +180,31 @@ to the right home page for that role.
   sales bar chart, a 6-month trend, and a ranked best-sellers list, all
   built with Recharts and the app's storefront color palette
 
-## Next steps (per the roadmap)
+**Polish (Phase 10)**
+- **Dark mode** — every card, border, and hover state now goes through
+  semantic tokens (`--color-surface`, `--color-border`, `--color-border-subtle`,
+  `--color-overlay`) instead of literal `bg-white` / `border-black`, so a
+  single `.dark` class swap re-themes the entire app; brand colors are
+  brightened slightly in dark mode so they still pop against a dark
+  background. `ThemeContext` persists the choice to `localStorage` and
+  falls back to the OS preference (`prefers-color-scheme`) on first visit.
+  Toggle lives in the Navbar (sun/moon icon) and as a real switch on the
+  Settings page
+- **Error handling** — a top-level `ErrorBoundary` catches unexpected
+  render errors app-wide with a recoverable fallback screen instead of a
+  blank page
+- **Loading states audit** — fixed one gap where the Dashboard's "Recent
+  orders" panel could flash an empty state before data arrived; every
+  other data-fetching page already showed a `Spinner` correctly
+- **Responsive design, empty states, and the 404 page** were already
+  handled incrementally in earlier phases — this was an audit pass rather
+  than new work, and no other gaps turned up
 
-Phase 10 (polish) is the last one on the roadmap — responsive design has
-been handled incrementally each phase, so what's left is mostly loading
-states, error/empty states (already present on most pages, worth an audit),
-a global 404 already in place, and dark mode.
+## Roadmap status
+
+All 10 phases are built. From here, natural extensions beyond the original
+roadmap would be: pagination for large catalogs/order histories, real
+payment integration, push/email notifications on order status changes, and
+splitting the frontend bundle (Recharts pushed the production JS bundle
+over Vite's 500KB chunk-size warning threshold — harmless today, but worth
+a `dynamic import()` split if the app grows further).
