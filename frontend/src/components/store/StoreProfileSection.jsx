@@ -50,7 +50,7 @@ export default function StoreProfileSection() {
         setError("Location access was denied.");
         setLocating(false);
       },
-      { enableHighAccuracy: false, timeout: 10000 }
+      { enableHighAccuracy: false, timeout: 10000 },
     );
   }
 
@@ -70,7 +70,9 @@ export default function StoreProfileSection() {
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (err) {
-      setError(err.response?.data?.detail || "Couldn't save your store profile.");
+      setError(
+        err.response?.data?.detail || "Couldn't save your store profile.",
+      );
     } finally {
       setSaving(false);
     }
@@ -96,7 +98,9 @@ export default function StoreProfileSection() {
       />
 
       <div className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-[var(--color-ink)]">Location</span>
+        <span className="text-sm font-medium text-[var(--color-ink)]">
+          Location
+        </span>
         {coords.latitude != null ? (
           <p className="flex items-center gap-1.5 text-sm text-[var(--color-muted)]">
             <MapPin className="h-4 w-4 text-[var(--color-storefront)]" />
@@ -131,7 +135,9 @@ export default function StoreProfileSection() {
 
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-[var(--color-ink)]">Open for orders</p>
+          <p className="text-sm font-medium text-[var(--color-ink)]">
+            Open for orders
+          </p>
           <p className="text-sm text-[var(--color-muted)]">
             Turn off to hide your store from discovery temporarily.
           </p>
@@ -145,14 +151,17 @@ export default function StoreProfileSection() {
             ${form.isOpen ? "bg-[var(--color-storefront)]" : "bg-[var(--color-border)]"}`}
         >
           <span
-            className={`absolute top-1 h-5 w-5 rounded-full bg-[var(--color-surface)] shadow transition-transform
+            className={`absolute flex top-1 h-5 w-5 items-center justify-center rounded-full bg-[var(--color-surface)] shadow transition-transform
               ${form.isOpen ? "translate-x-6" : "translate-x-1"}`}
-          />
+          ></span>
         </button>
       </div>
 
       {error && (
-        <p className="rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]" role="alert">
+        <p
+          className="rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]"
+          role="alert"
+        >
           {error}
         </p>
       )}
@@ -162,7 +171,12 @@ export default function StoreProfileSection() {
         </p>
       )}
 
-      <Button variant="primary" loading={saving} onClick={handleSave} className="w-fit">
+      <Button
+        variant="primary"
+        loading={saving}
+        onClick={handleSave}
+        className="w-fit"
+      >
         Save store profile
       </Button>
     </div>

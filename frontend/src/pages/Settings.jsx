@@ -25,14 +25,18 @@ export default function Settings() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-5">
       <div>
-        <h1 className="font-display text-2xl font-bold text-[var(--color-ink)]">Settings</h1>
+        <h1 className="font-display text-2xl font-bold text-[var(--color-ink)]">
+          Settings
+        </h1>
         <p className="mt-1 text-sm text-[var(--color-muted)]">
           Manage your account and how SariCart looks for you.
         </p>
       </div>
 
       <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
-        <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">Account</h2>
+        <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">
+          Account
+        </h2>
         <div className="mt-1 flex flex-col divide-y divide-[var(--color-border-subtle)]">
           <InfoRow icon={User} label="Username" value={user?.username} />
           <InfoRow icon={Mail} label="Email" value={user?.email} />
@@ -43,8 +47,8 @@ export default function Settings() {
           />
         </div>
         <p className="mt-4 text-xs text-[var(--color-muted)]">
-          Editing your profile and changing your password aren't available yet — they're
-          planned for a future update.
+          Editing your profile and changing your password aren't available yet —
+          they're planned for a future update.
         </p>
       </div>
 
@@ -60,10 +64,14 @@ export default function Settings() {
       )}
 
       <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
-        <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">Appearance</h2>
+        <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">
+          Appearance
+        </h2>
         <div className="mt-3 flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-[var(--color-ink)]">Dark mode</p>
+            <p className="text-sm font-medium text-[var(--color-ink)]">
+              Dark mode
+            </p>
             <p className="text-sm text-[var(--color-muted)]">
               Switch between a light and dark theme.
             </p>
@@ -91,11 +99,18 @@ export default function Settings() {
       </div>
 
       <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
-        <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">Session</h2>
+        <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">
+          Session
+        </h2>
         <p className="mt-1 text-sm text-[var(--color-muted)]">
-          Signed in as {user?.username}. Logging out ends your session on this device.
+          Signed in as {user?.username}. Logging out ends your session on this
+          device.
         </p>
-        <Button variant="ghost" onClick={logout} className="mt-3 gap-1.5 !text-[var(--color-crate)]">
+        <Button
+          variant="ghost"
+          onClick={logout}
+          className="mt-3 gap-1.5 !text-[var(--color-crate)]"
+        >
           <LogOut className="h-4 w-4" />
           Log out
         </Button>
