@@ -16,7 +16,12 @@ import { useAuth } from "../../hooks/useAuth";
 import { useCart } from "../../hooks/useCart";
 
 const OWNER_NAV_ITEMS = [
-  { to: "/owner/dashboard", label: "Dashboard", icon: LayoutDashboard, end: true },
+  {
+    to: "/owner/dashboard",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    end: true,
+  },
   { to: "/owner/products", label: "Products", icon: Package },
   { to: "/owner/inventory", label: "Inventory", icon: Boxes },
   { to: "/owner/orders", label: "Orders", icon: ClipboardList },
@@ -37,7 +42,8 @@ const CUSTOMER_NAV_ITEMS = [
 export default function Sidebar({ collapsed, onToggleCollapse }) {
   const { user } = useAuth();
   const { itemCount } = useCart();
-  const navItems = user?.role === "owner" ? OWNER_NAV_ITEMS : CUSTOMER_NAV_ITEMS;
+  const navItems =
+    user?.role === "owner" ? OWNER_NAV_ITEMS : CUSTOMER_NAV_ITEMS;
 
   return (
     <nav
