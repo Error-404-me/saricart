@@ -57,6 +57,7 @@ class Order(Base):
     items = relationship(
         "OrderItem", back_populates="order", cascade="all, delete-orphan"
     )
+    review = relationship("Review", back_populates="order", uselist=False)
 
     @property
     def customer_username(self) -> str | None:
@@ -65,3 +66,7 @@ class Order(Base):
     @property
     def owner_username(self) -> str | None:
         return self.owner.username if self.owner else None
+
+    @property
+    def review_id(self) -> int | None:
+        return self.review.id if self.review else None

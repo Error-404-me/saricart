@@ -22,6 +22,12 @@ export default function Orders() {
       .finally(() => setLoading(false));
   }, []);
 
+  function handleReviewed(orderId, reviewId) {
+    setOrders((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, review_id: reviewId } : o))
+    );
+  }
+
   return (
     <div className="flex flex-col gap-5">
       <div>
@@ -59,7 +65,7 @@ export default function Orders() {
       ) : (
         <div className="flex flex-col gap-4">
           {orders.map((order) => (
-            <OrderCard key={order.id} order={order} />
+            <OrderCard key={order.id} order={order} onReviewed={handleReviewed} />
           ))}
         </div>
       )}

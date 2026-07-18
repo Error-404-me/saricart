@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.schemas.user import UserCreate
 from app.core.security import hash_password, verify_password
 
@@ -39,6 +39,14 @@ def register_user(db: Session, user_in: UserCreate) -> User:
     db.add(user)
     db.commit()
     db.refresh(user)
+
+    if user.role == UserRole.OWNER:
+        # Local import avoids a service-layer circular import (store_service
+        # doesn't need anything from auth_service).
+        from app.services.store_service import get_or_create_store
+
+        get_or_create_store(db, user)
+
     return user
 
 

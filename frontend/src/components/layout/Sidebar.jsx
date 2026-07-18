@@ -8,6 +8,7 @@ import {
   Settings,
   Home,
   ShoppingCart,
+  MapPin,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -26,6 +27,7 @@ const OWNER_NAV_ITEMS = [
 const CUSTOMER_NAV_ITEMS = [
   { to: "/", label: "Home", icon: Home, end: true },
   { to: "/products", label: "Browse", icon: Package },
+  { to: "/stores", label: "Nearby Stores", icon: MapPin },
   { to: "/cart", label: "Cart", icon: ShoppingCart, showCartBadge: true },
   { to: "/orders", label: "My orders", icon: ClipboardList },
   { to: "/settings", label: "Settings", icon: Settings },

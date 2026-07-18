@@ -2,6 +2,7 @@ import { Sun, Moon, User, Mail, ShieldCheck, LogOut } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useTheme } from "../hooks/useTheme";
 import Button from "../components/common/Button";
+import StoreProfileSection from "../components/store/StoreProfileSection";
 
 function InfoRow({ icon: Icon, label, value }) {
   return (
@@ -46,6 +47,17 @@ export default function Settings() {
           planned for a future update.
         </p>
       </div>
+
+      {user?.role === "owner" && (
+        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+          <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">
+            Store profile
+          </h2>
+          <div className="mt-3">
+            <StoreProfileSection />
+          </div>
+        </div>
+      )}
 
       <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
         <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">Appearance</h2>

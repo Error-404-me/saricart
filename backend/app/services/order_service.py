@@ -11,7 +11,7 @@ from app.services import stock_service
 
 
 def _with_items(query):
-    return query.options(joinedload(Order.items))
+    return query.options(joinedload(Order.items), joinedload(Order.review))
 
 
 def create_order(db: Session, order_in: OrderCreate, customer: User) -> Order:

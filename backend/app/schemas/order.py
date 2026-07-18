@@ -46,6 +46,7 @@ class OrderOut(BaseModel):
     created_at: datetime
     updated_at: datetime
     items: list[OrderItemOut] = []
+    review_id: Optional[int] = None
 
 
 class OrderStatusUpdate(BaseModel):

@@ -1,7 +1,9 @@
 import api from "../api/axios";
 
-export async function browseProducts({ search, category } = {}) {
-  const { data } = await api.get("/products", { params: { search, category } });
+export async function browseProducts({ search, category, ownerId } = {}) {
+  const { data } = await api.get("/products", {
+    params: { search, category, owner_id: ownerId },
+  });
   return data;
 }
 

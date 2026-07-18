@@ -231,3 +231,46 @@ a `dynamic import()` split if the app grows further).
 - **Settings, fleshed out** — now shows real account info (username,
   email, account type), the dark mode toggle, and a log-out action, at a
   single shared `/settings` route for both roles (previously owner-only)
+
+## Post-roadmap: Community Store Discovery
+
+Customers can find nearby participating stores, see their status and
+rating at a glance, and jump straight into that store's product list.
+
+**Backend**
+- `Store` model — a 1:1 profile per owner (name, latitude/longitude,
+  `is_open` toggle, optional `closes_at`). Auto-created at registration for
+  any owner account, so every store shows up in discovery from day one
+  (even before the owner fills in details)
+- `Review` model — one review per **completed** order (unique on
+  `order_id`), 1-5 stars + an optional comment. You can't review your own
+  order twice, someone else's order, or an order that isn't completed yet
+- Store status is computed server-side, not stored: `closed` if the manual
+  toggle is off, `closing_soon` if within 30 minutes of `closes_at`,
+  otherwise `open`
+- `GET /api/stores/nearby?lat=&lng=&radius_km=` — haversine distance from
+  every store with a location set, filtered to the radius and sorted
+  nearest-first
+- `GET/PATCH /api/stores/mine` — owner's own store profile
+- `GET /api/stores/{id}` and `/{id}/reviews` — public store detail and
+  review list, both include a live `rating_average`/`rating_count`
+- `POST /api/reviews` — submit a review; `GET /api/orders/mine` now
+  includes `review_id` so the frontend knows whether an order's already
+  been reviewed without an extra request
+- `/api/products` already supported an `owner_id` filter from Phase 4/5 —
+  reused as-is to power "view this store's products" from a discovery card
+
+**Frontend**
+- `StoresNearby` page (`/stores`) — requests browser geolocation, lets the
+  customer pick a search radius (2/5/10/25km), and lists results via
+  `StoreCard` (distance, name, `StoreStatusBadge`, `StarRating`, and a
+  Products shortcut) in one row
+- `Products` page now accepts `?owner=<id>` and shows a dismissible "Showing
+  products from X's store" banner when browsing that way
+- `ReviewModal` — customers can rate a completed order from their Order
+  History; `OrderCard` shows "Leave a review" until they do, then "You
+  reviewed this order" afterward
+- `StoreProfileSection` (in Settings, owners only) — set store name, grab
+  the current location with one tap (`navigator.geolocation`), set a
+  closing time, and flip the open/closed toggle; shows the live computed
+  status badge as a preview of what customers will see

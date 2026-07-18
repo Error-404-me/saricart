@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
+import { X } from "lucide-react";
 import SearchBar from "../../components/common/SearchBar";
 import Spinner from "../../components/common/Spinner";
 import ProductGrid from "../../components/product/ProductGrid";
@@ -10,6 +11,7 @@ export default function Products() {
   const [searchParams, setSearchParams] = useSearchParams();
   const search = searchParams.get("search") || "";
   const category = searchParams.get("category") || "";
+  const ownerId = searchParams.get("owner") || "";
 
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -20,13 +22,14 @@ export default function Products() {
     browseCategories().then(setCategories).catch(() => setCategories([]));
   }, []);
 
-  const load = useCallback(async (searchTerm, categoryTerm) => {
+  const load = useCallback(async (searchTerm, categoryTerm, owner) => {
     setLoading(true);
     setError("");
     try {
       const data = await browseProducts({
         search: searchTerm || undefined,
         category: categoryTerm || undefined,
+        ownerId: owner || undefined,
       });
       setProducts(data);
     } catch {
@@ -37,9 +40,9 @@ export default function Products() {
   }, []);
 
   useEffect(() => {
-    const timeout = setTimeout(() => load(search, category), 250);
+    const timeout = setTimeout(() => load(search, category, ownerId), 250);
     return () => clearTimeout(timeout);
-  }, [search, category, load]);
+  }, [search, category, ownerId, load]);
 
   function updateParams(next) {
     const params = new URLSearchParams(searchParams);
@@ -53,6 +56,8 @@ export default function Products() {
     setSearchParams(params, { replace: true });
   }
 
+  const storeName = ownerId ? products[0]?.owner_username : null;
+
   return (
     <div className="flex flex-col gap-5">
       <div>
@@ -63,6 +68,22 @@ export default function Products() {
           Everything currently available for pre-order.
         </p>
       </div>
+
+      {ownerId && (
+        <div className="flex items-center justify-between rounded-lg bg-[var(--color-storefront)]/10 px-3.5 py-2.5 text-sm">
+          <span className="text-[var(--color-storefront)]">
+            Showing products from{" "}
+            <strong>{storeName ? `${storeName}'s store` : "this store"}</strong>
+          </span>
+          <button
+            onClick={() => updateParams({ owner: null })}
+            className="flex items-center gap-1 font-medium text-[var(--color-storefront)] hover:underline"
+          >
+            <X className="h-3.5 w-3.5" />
+            Clear
+          </button>
+        </div>
+      )}
 
       <SearchBar
         value={search}
@@ -88,11 +109,19 @@ export default function Products() {
       ) : (
         <ProductGrid
           products={products}
-          emptyTitle={search || category ? "No matching products" : "No products yet"}
+          emptyTitle={search || category || ownerId ? "No matching products" : "No products yet"}
           emptyDescription={
-            search || category
-              ? "Try a different search term or category."
-              : "Check back soon — store owners are still stocking up."
+            search || category || ownerId ? (
+              <>
+                Try a different search term or category, or{" "}
+                <Link to="/products" className="font-medium text-[var(--color-storefront)] hover:underline">
+                  browse everything
+                </Link>
+                .
+              </>
+            ) : (
+              "Check back soon — store owners are still stocking up."
+            )
           }
         />
       )}

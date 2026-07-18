@@ -12,26 +12,37 @@ export default function Navbar() {
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <header className="border-b border-[var(--color-border)] bg-[var(--color-storefront)]">
+    <header className="border-b border-border bg-storefront">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
         <Link to="/" className="font-display text-xl font-extrabold text-white">
-          Sari<span className="text-[var(--color-awning)]">Cart</span>
+          Sari<span className="text-awning">Cart</span>
         </Link>
 
         <div className="flex items-center gap-3">
           {user && (
             <span className="hidden text-sm text-white/80 sm:inline">
-              Hi, {user.username} · <span className="capitalize">{user.role}</span>
+              Hi, {user.username} ·{" "}
+              <span className="capitalize">{user.role}</span>
             </span>
           )}
           <button
             onClick={toggleTheme}
-            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            aria-label={
+              theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
+            }
             className="rounded-lg p-1.5 text-white/90 hover:bg-white/10 hover:text-white"
           >
-            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {theme === "dark" ? (
+              <Sun className="h-4 w-4" />
+            ) : (
+              <Moon className="h-4 w-4" />
+            )}
           </button>
-          <Button variant="primary" onClick={logout} className="!px-3 !py-1.5 text-sm">
+          <Button
+            variant="primary"
+            onClick={logout}
+            className="px-3 py-1.5 text-sm"
+          >
             Log out
           </Button>
         </div>
