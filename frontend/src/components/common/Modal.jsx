@@ -19,6 +19,7 @@ export default function Modal({ open, onClose, title, children, footer }) {
         <div className="flex items-start justify-between gap-4">
           <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">{title}</h2>
           <button
+            type="button"
             onClick={onClose}
             aria-label="Close"
             className="rounded-lg p-1 text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-ink)]"

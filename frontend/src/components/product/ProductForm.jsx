@@ -1,7 +1,9 @@
-import { useState } from "react";
-import { ImagePlus } from "lucide-react";
+import { useCallback, useState } from "react";
+import { ImagePlus, ScanBarcode } from "lucide-react";
 import Input from "../common/Input";
 import Button from "../common/Button";
+import Modal from "../common/Modal";
+import BarcodeScanner from "../scanner/BarcodeScanner";
 
 const CURRENT_CATEGORIES_HINT = "e.g. Snacks, Instant Noodles, Beverages, Canned Goods";
 
@@ -19,10 +21,12 @@ export default function ProductForm({
     category: initialValues.category || "",
     price: initialValues.price ?? "",
     stock: initialValues.stock ?? "",
+    barcode: initialValues.barcode || "",
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(initialImageUrl);
   const [fieldErrors, setFieldErrors] = useState({});
+  const [scannerOpen, setScannerOpen] = useState(false);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -57,97 +61,136 @@ export default function ProductForm({
       category: form.category.trim() || null,
       price: parseFloat(form.price),
       stock: parseInt(form.stock, 10),
+      barcode: form.barcode.trim() || null,
       imageFile,
     });
   }
 
+  const handleScanned = useCallback((code) => {
+    setForm((prev) => ({ ...prev, barcode: code }));
+    setScannerOpen(false);
+  }, []);
+
   return (
-    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-      <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
-        <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-paper)]">
-          {imagePreview ? (
-            <img src={imagePreview} alt="Product preview" className="h-full w-full object-cover" />
-          ) : (
-            <ImagePlus className="h-6 w-6 text-[var(--color-muted)]" />
-          )}
+    <>
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+        <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+          <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-paper)]">
+            {imagePreview ? (
+              <img src={imagePreview} alt="Product preview" className="h-full w-full object-cover" />
+            ) : (
+              <ImagePlus className="h-6 w-6 text-[var(--color-muted)]" />
+            )}
+          </div>
+          <label className="cursor-pointer text-sm font-medium text-[var(--color-storefront)] hover:underline">
+            {imagePreview ? "Change photo" : "Add a photo"}
+            <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImageChange} className="sr-only" />
+          </label>
         </div>
-        <label className="cursor-pointer text-sm font-medium text-[var(--color-storefront)] hover:underline">
-          {imagePreview ? "Change photo" : "Add a photo"}
-          <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImageChange} className="sr-only" />
-        </label>
-      </div>
 
-      <Input
-        id="name"
-        name="name"
-        label="Product name"
-        placeholder="Lucky Me Pancit Canton"
-        value={form.name}
-        onChange={handleChange}
-        error={fieldErrors.name}
-      />
-
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="description" className="text-sm font-medium text-[var(--color-ink)]">
-          Description
-        </label>
-        <textarea
-          id="description"
-          name="description"
-          rows={3}
-          placeholder="Chilimansi flavor, 60g pack"
-          value={form.description}
-          onChange={handleChange}
-          className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm text-[var(--color-ink)] outline-none transition
-            placeholder:text-[var(--color-muted)]/60
-            focus:border-[var(--color-storefront)] focus:ring-2 focus:ring-[var(--color-storefront)]/20"
-        />
-      </div>
-
-      <Input
-        id="category"
-        name="category"
-        label="Category"
-        placeholder={CURRENT_CATEGORIES_HINT}
-        value={form.category}
-        onChange={handleChange}
-      />
-
-      <div className="grid grid-cols-2 gap-4">
         <Input
-          id="price"
-          name="price"
-          type="number"
-          step="0.01"
-          min="0"
-          label="Price (₱)"
-          placeholder="15.50"
-          value={form.price}
+          id="name"
+          name="name"
+          label="Product name"
+          placeholder="Lucky Me Pancit Canton"
+          value={form.name}
           onChange={handleChange}
-          error={fieldErrors.price}
+          error={fieldErrors.name}
         />
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="description" className="text-sm font-medium text-[var(--color-ink)]">
+            Description
+          </label>
+          <textarea
+            id="description"
+            name="description"
+            rows={3}
+            placeholder="Chilimansi flavor, 60g pack"
+            value={form.description}
+            onChange={handleChange}
+            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm text-[var(--color-ink)] outline-none transition
+              placeholder:text-[var(--color-muted)]/60
+              focus:border-[var(--color-storefront)] focus:ring-2 focus:ring-[var(--color-storefront)]/20"
+          />
+        </div>
+
         <Input
-          id="stock"
-          name="stock"
-          type="number"
-          min="0"
-          label="Stock"
-          placeholder="40"
-          value={form.stock}
+          id="category"
+          name="category"
+          label="Category"
+          placeholder={CURRENT_CATEGORIES_HINT}
+          value={form.category}
           onChange={handleChange}
-          error={fieldErrors.stock}
         />
-      </div>
 
-      {formError && (
-        <p className="rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]" role="alert">
-          {formError}
-        </p>
-      )}
+        <div className="grid grid-cols-2 gap-4">
+          <Input
+            id="price"
+            name="price"
+            type="number"
+            step="0.01"
+            min="0"
+            label="Price (₱)"
+            placeholder="15.50"
+            value={form.price}
+            onChange={handleChange}
+            error={fieldErrors.price}
+          />
+          <Input
+            id="stock"
+            name="stock"
+            type="number"
+            min="0"
+            label="Stock"
+            placeholder="40"
+            value={form.stock}
+            onChange={handleChange}
+            error={fieldErrors.stock}
+          />
+        </div>
 
-      <Button type="submit" loading={submitting} className="mt-1 w-full sm:w-auto">
-        {submitLabel}
-      </Button>
-    </form>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="barcode" className="text-sm font-medium text-[var(--color-ink)]">
+            Barcode
+          </label>
+          <div className="flex gap-2">
+            <input
+              id="barcode"
+              name="barcode"
+              value={form.barcode}
+              onChange={handleChange}
+              placeholder="e.g. 4801988712345"
+              className="flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm text-[var(--color-ink)] outline-none transition
+                placeholder:text-[var(--color-muted)]/60
+                focus:border-[var(--color-storefront)] focus:ring-2 focus:ring-[var(--color-storefront)]/20"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setScannerOpen(true)}
+              className="shrink-0 gap-1.5"
+            >
+              <ScanBarcode className="h-4 w-4" />
+              Scan
+            </Button>
+          </div>
+        </div>
+
+        {formError && (
+          <p className="rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]" role="alert">
+            {formError}
+          </p>
+        )}
+
+        <Button type="submit" loading={submitting} className="mt-1 w-full sm:w-auto">
+          {submitLabel}
+        </Button>
+      </form>
+
+      <Modal open={scannerOpen} onClose={() => setScannerOpen(false)} title="Scan barcode">
+        {scannerOpen && <BarcodeScanner onScan={handleScanned} />}
+      </Modal>
+    </>
   );
 }

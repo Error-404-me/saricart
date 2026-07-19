@@ -17,6 +17,12 @@ class OrderCreate(BaseModel):
     items: list[OrderItemCreate] = Field(min_length=1)
 
 
+class WalkInSaleCreate(BaseModel):
+    """No owner_id — always the current owner's own store."""
+
+    items: list[OrderItemCreate] = Field(min_length=1)
+
+
 class OrderItemOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

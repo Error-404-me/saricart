@@ -22,6 +22,11 @@ export async function fetchProduct(id) {
   return data;
 }
 
+export async function fetchProductByBarcode(barcode) {
+  const { data } = await api.get(`/products/barcode/${encodeURIComponent(barcode)}`);
+  return data;
+}
+
 export async function fetchMyCategories(ownerId) {
   const { data } = await api.get("/products/categories", { params: { owner_id: ownerId } });
   return data;

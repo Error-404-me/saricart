@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import ProductForm from "../../components/product/ProductForm";
 import { createProduct, uploadProductImage } from "../../services/productService";
 
 export default function AddProduct() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const scannedBarcode = searchParams.get("barcode") || "";
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
 
@@ -44,6 +46,7 @@ export default function AddProduct() {
 
       <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
         <ProductForm
+          initialValues={{ barcode: scannedBarcode }}
           onSubmit={handleSubmit}
           submitting={submitting}
           formError={formError}

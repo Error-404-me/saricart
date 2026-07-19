@@ -274,3 +274,109 @@ rating at a glance, and jump straight into that store's product list.
   the current location with one tap (`navigator.geolocation`), set a
   closing time, and flip the open/closed toggle; shows the live computed
   status badge as a preview of what customers will see
+
+## Post-roadmap: map view for store discovery
+
+`StoresNearby` now renders an actual map (`StoreMap`, via Leaflet +
+OpenStreetMap — no API key needed) above the list, so a customer can see
+*where* a store is relative to them, not just how far away a number says
+it is.
+
+- A distinct marker for "you are here," plus one per nearby store, colored
+  by status (open / closing soon / closed) so it's readable at a glance
+  without opening every popup
+- Each store's popup repeats the essentials (name, status, rating) and
+  gives two exits: **View products** (into the filtered catalog) and
+  **Directions** (a universal Google Maps deep link — opens the native
+  Maps app on mobile, google.com/maps in a browser on desktop; no API key
+  or embedded routing needed for this)
+- The same **Directions** shortcut is on every `StoreCard` in the list
+  view and in `StoreMap`'s popups, so it's available whichever way someone
+  is browsing
+
+## Post-roadmap: Barcode Scanner
+
+Most sari-sari stores sell over a counter, not a keyboard — this adds a
+camera-based scanner (`/owner/scanner`) that finds a product, updates its
+stock, jumps to editing it, or rings up a sale, all from one scan.
+
+**Backend**
+- `Product.barcode` — optional, unique **per owner** (`UniqueConstraint(owner_id, barcode)`)
+  rather than globally, since two different stores can legitimately stock
+  the same UPC-labeled product
+- `GET /api/products/barcode/{code}` — looks up within the scanning
+  owner's own catalog only; 404 (not another owner's product) if it's not
+  there, so the frontend can offer "add this product" instead
+- `POST /api/orders/walk-in` — rings up an in-person sale. Reuses the same
+  validation as online checkout (same-store items, stock limits,
+  server-computed total) via a shared `_validate_and_price_items` helper,
+  but creates the order **already `completed`** — there's no pickup to
+  wait for, the item just left the shelf. Modeled as an `Order` where the
+  store is both `owner_id` and `customer_id`, so it counts toward
+  analytics revenue and shows up in the order queue like anything else,
+  and still logs a `SALE` stock-history entry the same way an online order
+  does
+
+**Frontend**
+- `BarcodeScanner` — wraps `html5-qrcode` (supports EAN/UPC/Code128 and
+  more, not just QR) with a live camera view; a manual text-entry fallback
+  is always available underneath, since not every device has a working
+  camera or grants permission. A 1.5s per-code cooldown stops one item
+  sitting in frame from firing dozens of duplicate scans
+- `/owner/scanner` — scan (or type) a code and get one of two outcomes:
+  - **Found**: a card with the product's photo, price, and stock, plus
+    three actions — add it to the sale in progress, jump to editing it, or
+    adjust stock right there with the same `StockAdjuster` used in
+    Inventory
+  - **Not found**: a prompt to add it, linking to
+    `/owner/products/add?barcode=<code>` with the scanned code pre-filled
+  - Scanned items accumulate in a running `SaleCart` (quantity steppers,
+    remove, live total) so one scanning session can ring up a full
+    multi-item transaction before completing it
+- `ProductForm` also gained a barcode field with its own **Scan** button
+  (opens the same `BarcodeScanner` in a modal) — so a barcode can be
+  attached to a product while adding or editing it, not just from the
+  dedicated scanner page
+
+**A note on bundle size:** Leaflet and html5-qrcode are both sizeable
+libraries, and together they push the production JS bundle past Vite's
+500KB warning threshold (harmless today, but the app would benefit from
+route-level code-splitting — `React.lazy()` on `StoresNearby`, `Scanner`,
+and `Analytics` in particular — before this goes much further).
+
+## Fix: scanner crash under React StrictMode
+
+The scanner page was crashing to the global error boundary even with the
+camera visibly on. Root cause: `html5-qrcode`'s `start()`/`stop()` are both
+async, and React 18 `StrictMode` intentionally double-invokes effects in
+development (mount → cleanup → mount again) to catch exactly this class of
+bug — a second `start()` was firing before the first `stop()` had actually
+released the camera, and the library threw.
+
+Fixed by serializing every start/stop through one promise chain stored in
+a ref (`operationChainRef`) that persists across that double-invoke, so a
+new start always waits for the previous stop to fully finish first, plus a
+`cancelled` flag so a start that resolves *after* cleanup already fired
+shuts the camera back down immediately instead of leaving it running.
+Also memoized `ProductForm`'s `onScan` callback with `useCallback` — it
+wasn't stable before, which would have restarted the camera on every
+unrelated keystroke while the scan-barcode modal was open.
+
+## Navigation: sidebar-only, fixed position
+
+Removed the separate top `Navbar` — its content (logo, theme toggle, user
+greeting, logout) now lives in the `Sidebar`, which is the app's only
+navigation surface.
+
+- **Desktop:** the sidebar is `fixed` to the viewport (`md:fixed
+  md:inset-y-0`), not part of the scrolling page — it stays in place the
+  same way Claude's own sidebar does, while `<main>` scrolls independently
+  with a matching `margin-left` offset (`md:ml-56`, or `md:ml-16` when
+  collapsed) so content never sits underneath it
+- **Mobile:** there's no room for a fixed column, so the sidebar instead
+  renders a compact `sticky top-0` header (logo + theme toggle + logout)
+  with the same nav items as a horizontally scrollable strip beneath it —
+  sticky rather than fixed so it stays in normal document flow and doesn't
+  need a manual content offset
+- Logo, theme toggle, and logout are now defined once, in `Sidebar`,
+  instead of duplicated between a Navbar and a Sidebar

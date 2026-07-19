@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
-import { ChevronRight, Store as StoreIcon } from "lucide-react";
+import { ChevronRight, Navigation, Store as StoreIcon } from "lucide-react";
 import StoreStatusBadge from "./StoreStatusBadge";
 import StarRating from "./StarRating";
+import { directionsUrl } from "../../utils/directions";
 
 function formatDistance(km) {
   if (km < 1) return `${Math.round(km * 1000)}m`;
@@ -31,13 +32,27 @@ export default function StoreCard({ store }) {
         </div>
       </div>
 
-      <Link
-        to={`/products?owner=${store.owner_id}`}
-        className="flex shrink-0 items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-[var(--color-storefront)] hover:bg-[var(--color-storefront)]/10"
-      >
-        Products
-        <ChevronRight className="h-4 w-4" />
-      </Link>
+      <div className="flex shrink-0 items-center gap-1">
+        {store.latitude != null && (
+          <a
+            href={directionsUrl(store.latitude, store.longitude)}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Get directions to ${store.name}`}
+            title="Get directions"
+            className="rounded-lg p-2 text-[var(--color-storefront)] hover:bg-[var(--color-storefront)]/10"
+          >
+            <Navigation className="h-4 w-4" />
+          </a>
+        )}
+        <Link
+          to={`/products?owner=${store.owner_id}`}
+          className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-[var(--color-storefront)] hover:bg-[var(--color-storefront)]/10"
+        >
+          Products
+          <ChevronRight className="h-4 w-4" />
+        </Link>
+      </div>
     </div>
   );
 }

@@ -8,6 +8,13 @@ export async function placeOrder({ ownerId, items }) {
   return data;
 }
 
+export async function createWalkInSale(items) {
+  const { data } = await api.post("/orders/walk-in", {
+    items: items.map((item) => ({ product_id: item.productId, quantity: item.quantity })),
+  });
+  return data;
+}
+
 export async function fetchMyOrders() {
   const { data } = await api.get("/orders/mine");
   return data;
