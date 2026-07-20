@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ImageOff, Pencil, Plus, PackagePlus, ScanBarcode } from "lucide-react";
+import { ImageOff, Pencil, Plus, PackagePlus, ScanBarcode, WifiOff } from "lucide-react";
 import Button from "../common/Button";
 import StockAdjuster from "../product/StockAdjuster";
 import { formatCurrency } from "../../utils/formatCurrency";
@@ -8,6 +8,7 @@ export default function ScanResultCard({
   state,
   product,
   scannedCode,
+  isOffline,
   onAddToSale,
   onAdjustStock,
 }) {
@@ -27,17 +28,26 @@ export default function ScanResultCard({
           <PackagePlus className="h-5 w-5" />
         </span>
         <div>
-          <p className="font-medium text-[var(--color-ink)]">No product with this barcode</p>
+          <p className="font-medium text-[var(--color-ink)]">
+            {isOffline ? "Not in your last-synced catalog" : "No product with this barcode"}
+          </p>
           <p className="mt-0.5 text-sm text-[var(--color-muted)]">
             Scanned: <span className="font-mono">{scannedCode}</span>
           </p>
         </div>
-        <Link to={`/owner/products/add?barcode=${encodeURIComponent(scannedCode)}`}>
-          <Button variant="secondary" className="gap-1.5">
-            <Plus className="h-4 w-4" />
-            Add this product
-          </Button>
-        </Link>
+        {isOffline ? (
+          <p className="flex items-center gap-1.5 text-xs text-[var(--color-muted)]">
+            <WifiOff className="h-3.5 w-3.5" />
+            Reconnect to check again or add a new product
+          </p>
+        ) : (
+          <Link to={`/owner/products/add?barcode=${encodeURIComponent(scannedCode)}`}>
+            <Button variant="secondary" className="gap-1.5">
+              <Plus className="h-4 w-4" />
+              Add this product
+            </Button>
+          </Link>
+        )}
       </div>
     );
   }
@@ -45,6 +55,12 @@ export default function ScanResultCard({
   if (state === "found" && product) {
     return (
       <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
+        {isOffline && (
+          <p className="mb-3 flex items-center gap-1.5 text-xs text-[var(--color-awning-dark)]">
+            <WifiOff className="h-3.5 w-3.5" />
+            Offline — showing your last-synced catalog
+          </p>
+        )}
         <div className="flex items-center gap-4">
           <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--color-paper)]">
             {product.image ? (
@@ -73,12 +89,19 @@ export default function ScanResultCard({
             <Plus className="h-4 w-4" />
             Add to sale
           </Button>
-          <Link to={`/owner/products/edit/${product.id}`}>
-            <Button variant="ghost" className="gap-1.5">
+          {isOffline ? (
+            <Button variant="ghost" disabled title="Editing needs a connection" className="gap-1.5">
               <Pencil className="h-4 w-4" />
               Edit product
             </Button>
-          </Link>
+          ) : (
+            <Link to={`/owner/products/edit/${product.id}`}>
+              <Button variant="ghost" className="gap-1.5">
+                <Pencil className="h-4 w-4" />
+                Edit product
+              </Button>
+            </Link>
+          )}
           <div className="ml-auto">
             <StockAdjuster
               stock={product.stock}

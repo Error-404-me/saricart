@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Html5Qrcode } from "html5-qrcode";
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
 import { Keyboard, Camera } from "lucide-react";
 import Button from "../common/Button";
 import Input from "../common/Input";
@@ -41,22 +41,35 @@ export default function BarcodeScanner({ onScan }) {
       .then(() =>
         scanner.start(
           { facingMode: "environment" },
-          { fps: 10, qrbox: { width: 250, height: 150 } },
+          {
+            fps: 10,
+            qrbox: { width: 400, height: 250 },
+            formatsToSupport: [
+              Html5QrcodeSupportedFormats.EAN_13,
+              Html5QrcodeSupportedFormats.EAN_8,
+              Html5QrcodeSupportedFormats.UPC_A,
+              Html5QrcodeSupportedFormats.UPC_E,
+              Html5QrcodeSupportedFormats.CODE_128,
+              Html5QrcodeSupportedFormats.CODE_39,
+            ],
+          },
           (decodedText) => {
+            console.log("Decoded:", decodedText);
             const now = Date.now();
             const last = lastScanRef.current;
             // Ignore the same code firing again within the cooldown window —
             // the camera decodes several frames a second while a barcode
             // sits in view, so without this a single scan fires repeatedly.
-            if (decodedText === last.code && now - last.at < RESCAN_COOLDOWN_MS) return;
+            if (decodedText === last.code && now - last.at < RESCAN_COOLDOWN_MS)
+              return;
             lastScanRef.current = { code: decodedText, at: now };
             onScan(decodedText);
           },
           () => {
             // Per-frame "nothing decoded yet" callback — expected constantly
             // while aiming the camera, not a real error.
-          }
-        )
+          },
+        ),
       )
       .then(() => {
         if (cancelled) {
@@ -66,10 +79,14 @@ export default function BarcodeScanner({ onScan }) {
         }
         setCameraState("running");
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("Scanner start failed:", err);
+
         if (!cancelled) {
           setCameraState("error");
-          setCameraError("Couldn't access the camera. Check permissions, or enter the code below.");
+          setCameraError(
+            "Couldn't access the camera. Check permissions, or enter the code below.",
+          );
           setShowManualEntry(true);
         }
       });
@@ -93,7 +110,10 @@ export default function BarcodeScanner({ onScan }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="relative overflow-hidden rounded-2xl border border-[var(--color-border)] bg-black">
-        <div id={SCAN_REGION_ID} className="aspect-[4/3] w-full [&_video]:!h-full [&_video]:!w-full [&_video]:object-cover" />
+        <div
+          id={SCAN_REGION_ID}
+          className="aspect-[4/3] w-full [&_video]:!h-full [&_video]:!w-full [&_video]:object-cover"
+        />
         {cameraState === "starting" && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-sm text-white">
             <Camera className="mr-2 h-4 w-4 animate-pulse" />
@@ -103,7 +123,10 @@ export default function BarcodeScanner({ onScan }) {
       </div>
 
       {cameraError && (
-        <p className="rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]" role="alert">
+        <p
+          className="rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]"
+          role="alert"
+        >
           {cameraError}
         </p>
       )}

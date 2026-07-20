@@ -1,8 +1,15 @@
-import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, WifiOff } from "lucide-react";
 import Button from "../common/Button";
 import { formatCurrency } from "../../utils/formatCurrency";
 
-export default function SaleCart({ items, onUpdateQuantity, onRemove, onComplete, completing }) {
+export default function SaleCart({
+  items,
+  onUpdateQuantity,
+  onRemove,
+  onComplete,
+  completing,
+  isOffline,
+}) {
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   if (items.length === 0) {
@@ -66,8 +73,14 @@ export default function SaleCart({ items, onUpdateQuantity, onRemove, onComplete
       </div>
 
       <Button variant="primary" loading={completing} onClick={onComplete} className="mt-4 w-full">
-        Complete sale
+        {isOffline ? "Save sale (syncs when online)" : "Complete sale"}
       </Button>
+      {isOffline && (
+        <p className="mt-2 flex items-center justify-center gap-1.5 text-xs text-[var(--color-muted)]">
+          <WifiOff className="h-3.5 w-3.5" />
+          You're offline — this sale will be saved and sent automatically once reconnected.
+        </p>
+      )}
     </div>
   );
 }

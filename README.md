@@ -380,3 +380,56 @@ navigation surface.
   need a manual content offset
 - Logo, theme toggle, and logout are now defined once, in `Sidebar`,
   instead of duplicated between a Navbar and a Sidebar
+
+## Post-roadmap: PWA & offline support
+
+Sari-sari stores often have unstable internet, so the app now works as an
+installable PWA that keeps functioning — meaningfully, not just "the page
+loads" — when the connection drops.
+
+**App shell & installability** (`vite-plugin-pwa`, Workbox under the hood)
+- A real manifest (name, icons, `theme_color`/`background_color` matching
+  the app's own palette, `display: standalone`) — installable to a home
+  screen on mobile or as a desktop app
+- The service worker is auto-registered at build time
+  (`injectRegister: 'auto'` injects the registration script into the built
+  HTML — no manual bootstrapping needed) and updates itself silently
+  (`registerType: 'autoUpdate'`)
+- Three runtime caching strategies, chosen per data type rather than one
+  blanket rule:
+  - Product images (`/uploads/*`) — `CacheFirst`: they rarely change once
+    uploaded, so don't re-fetch them every time
+  - Catalog/store browsing (`/api/products*`, `/api/stores*`) —
+    `StaleWhileRevalidate`: show the cached list instantly, refresh it
+    quietly in the background
+  - Orders/account/analytics (`/api/orders*`, `/api/users*`,
+    `/api/analytics*`) — `NetworkFirst` with a 4s timeout: prefer a fresh
+    answer since status changes matter, but fall back to the last known
+    state instead of failing outright
+
+**Actual offline capability, not just a cached shell** — scoped
+deliberately to the barcode scanner's two write actions (walk-in sales,
+stock adjustments), since those have safe, unambiguous replay semantics; a
+general offline-everything layer would need real conflict resolution this
+doesn't attempt:
+- `Scanner` warms a per-owner product cache (`offlineStore.js`,
+  `localStorage`-backed) on load and whenever connectivity returns, so a
+  barcode lookup works from the last-synced catalog the instant the signal
+  drops — no dead end mid-sale
+- Ringing up a sale or adjusting stock while offline queues the action
+  (`enqueueAction`) instead of failing, and immediately applies the change
+  locally (`applyLocalStockDelta`) so the displayed stock stays accurate
+  for the rest of that scanning session
+- `useOfflineSync` replays the queue automatically the moment `navigator
+  onLine` flips back to true; `SyncStatusBanner` shows what's pending (and
+  a manual "Sync now") on the scanner page
+- `ScanResultCard` and `SaleCart` are honest about offline state rather
+  than pretending nothing changed — "Not in your last-synced catalog"
+  instead of a confident "not found," editing/adding disabled with a
+  reason instead of silently failing, "Save sale (syncs when online)"
+  instead of "Complete sale"
+- `OfflineBanner` (in `AppLayout`, so it's visible everywhere) and a
+  generic axios interceptor fix mean any other write action in the app
+  that fails while offline gets a friendly "You're offline" message
+  instead of a raw network error — even outside the scanner's explicit
+  offline support

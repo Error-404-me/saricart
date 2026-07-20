@@ -10,8 +10,6 @@ import {
   Home,
   ShoppingCart,
   MapPin,
-  ChevronLeft,
-  ChevronRight,
   Sun,
   Moon,
   LogOut,
