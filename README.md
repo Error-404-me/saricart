@@ -433,3 +433,63 @@ doesn't attempt:
   that fails while offline gets a friendly "You're offline" message
   instead of a raw network error — even outside the scanner's explicit
   offline support
+
+## Fix: switched barcode scanning libraries
+
+`html5-qrcode` still wasn't reliable even after serializing its lifecycle,
+so `BarcodeScanner` was rebuilt on **`@zxing/browser`** instead — the same
+underlying ZXing decoding engine, but used directly rather than through
+html5-qrcode's higher-level wrapper.
+
+The concrete win: `IScannerControls.stop()` in `@zxing/browser` is
+**synchronous**, where html5-qrcode's `stop()` is async. That's exactly
+what caused the earlier crash — React 18 `StrictMode`'s double-invoked
+effects need cleanup to fully finish before the next setup runs, and an
+async stop leaves a window for two camera sessions to overlap. A
+synchronous stop closes that window entirely rather than requiring careful
+promise-chain sequencing to work around it.
+
+Also switched from html5-qrcode's div-based approach (it injects and
+manages its own `<video>` element inside a container div) to owning a
+`<video ref>` directly via `decodeFromConstraints` — simpler styling (plain
+`object-cover` instead of an arbitrary `[&_video]:` selector reaching into
+someone else's injected markup) and one less layer that can get out of
+sync with React's render cycle. Same public API (`<BarcodeScanner
+onScan={...} />`), same manual-entry fallback, same per-code rescan
+cooldown — nothing downstream (`Scanner`, `ProductForm`'s scan-to-fill
+modal) needed to change.
+
+## Fix: dropped scanning libraries entirely, native BarcodeDetector instead
+
+`@zxing/browser` still wasn't reliable in practice — camera access worked,
+but `video.play()` was throwing `AbortError: The play() request was
+interrupted by a new load request`, and the console filled with
+`MultiFormatReader: non-ReaderException` on every frame (expected — ZXing
+tries every barcode format each frame and logs each miss — but noisy
+enough to look broken, and did coincide with scans never actually
+resolving).
+
+Two library-based attempts hitting the same class of problem pointed at
+the pattern, not the library: any continuous-decode library manages its
+own video lifecycle internally, and React 18 StrictMode's double-invoked
+effects (mount → cleanup → mount again, in dev) can trigger two of those
+lifecycles overlapping on the same `<video>` element. So `BarcodeScanner`
+now uses the browser's **native `BarcodeDetector` API** instead of a third
+scanning library:
+
+- One `getUserMedia()` call, a `setInterval` that grabs a frame to an
+  offscreen canvas and calls `detector.detect()`, and cleanup that's just
+  `clearInterval` + stopping `MediaStream` tracks — no third-party
+  decode-loop state machine involved at all
+- The fix is structural rather than another workaround: the effect checks
+  its `cancelled` flag **before** ever touching the video element, so a
+  StrictMode-cancelled instance releases its camera stream and returns
+  without calling `srcObject`/`play()` — there's only ever one real
+  `play()` call on the live instance, never two racing each other
+- **Coverage tradeoff, stated plainly:** `BarcodeDetector` ships in
+  Chrome/Edge/Samsung Internet (desktop and Android) but not in Safari or
+  Firefox. Where it's unavailable, manual entry is the primary path (shown
+  by default, not offered as a fallback link) rather than reaching for a
+  fourth library to paper over a browser support gap
+- Net effect: `@zxing/browser` + `@zxing/library` removed entirely,
+  dropping the production bundle from ~1.39MB back down to ~916KB

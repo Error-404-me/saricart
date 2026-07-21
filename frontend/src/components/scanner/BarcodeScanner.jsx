@@ -1,140 +1,298 @@
 import { useEffect, useRef, useState } from "react";
-import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
-import { Keyboard, Camera } from "lucide-react";
+import { BrowserMultiFormatReader } from "@zxing/browser";
+import { BarcodeFormat, DecodeHintType } from "@zxing/library";
+
+import { Keyboard, Camera, CheckCircle2, AlertTriangle } from "lucide-react";
+
 import Button from "../common/Button";
 import Input from "../common/Input";
 
-const SCAN_REGION_ID = "saricart-barcode-scanner";
 const RESCAN_COOLDOWN_MS = 1500;
 
-/**
- * Camera-based barcode scanner with a manual-entry fallback — not every
- * device has a usable camera (or grants permission), and typing a code
- * should always work as a backup.
- *
- * html5-qrcode's start()/stop() are both async, and React 18 StrictMode
- * intentionally double-invokes effects in development (mount → cleanup →
- * mount again) to surface exactly this kind of bug: without care, a second
- * start() can fire before the first stop() has actually released the
- * camera, and the library throws. operationChainRef serializes every
- * start/stop through one promise queue — persisted in a ref so it survives
- * across that double-invoke — so a new start always waits for the previous
- * stop to fully finish first.
- */
 export default function BarcodeScanner({ onScan }) {
-  const lastScanRef = useRef({ code: null, at: 0 });
-  const operationChainRef = useRef(Promise.resolve());
-  const [cameraState, setCameraState] = useState("starting"); // starting | running | error
+  const videoRef = useRef(null);
+  const controlsRef = useRef(null);
+
+  const lastScanRef = useRef({
+    code: null,
+    at: 0,
+  });
+
+  const [cameraState, setCameraState] = useState("starting");
   const [cameraError, setCameraError] = useState("");
+
   const [manualCode, setManualCode] = useState("");
   const [showManualEntry, setShowManualEntry] = useState(false);
 
+  const [scanSuccess, setScanSuccess] = useState(false);
+
   useEffect(() => {
     let cancelled = false;
-    const scanner = new Html5Qrcode(SCAN_REGION_ID, { verbose: false });
 
-    setCameraState("starting");
-    setCameraError("");
+    async function startScanner() {
+      try {
+        const hints = new Map();
 
-    operationChainRef.current = operationChainRef.current
-      .catch(() => {})
-      .then(() =>
-        scanner.start(
-          { facingMode: "environment" },
-          {
-            fps: 10,
-            qrbox: { width: 400, height: 250 },
-            formatsToSupport: [
-              Html5QrcodeSupportedFormats.EAN_13,
-              Html5QrcodeSupportedFormats.EAN_8,
-              Html5QrcodeSupportedFormats.UPC_A,
-              Html5QrcodeSupportedFormats.UPC_E,
-              Html5QrcodeSupportedFormats.CODE_128,
-              Html5QrcodeSupportedFormats.CODE_39,
-            ],
-          },
-          (decodedText) => {
-            console.log("Decoded:", decodedText);
+        hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+          BarcodeFormat.EAN_13,
+          BarcodeFormat.EAN_8,
+          BarcodeFormat.UPC_A,
+          BarcodeFormat.UPC_E,
+          BarcodeFormat.CODE_128,
+          BarcodeFormat.CODE_39,
+          BarcodeFormat.CODE_93,
+          BarcodeFormat.ITF,
+        ]);
+
+        const reader = new BrowserMultiFormatReader(hints);
+
+        const devices = await BrowserMultiFormatReader.listVideoInputDevices();
+
+        if (cancelled) return;
+
+        if (!devices.length) {
+          throw new Error("No camera found");
+        }
+
+        // Prefer rear/mobile camera
+        const camera =
+          devices.find((device) =>
+            /(back|rear|environment)/i.test(device.label),
+          ) ?? devices[0];
+
+        controlsRef.current = await reader.decodeFromVideoDevice(
+          camera.deviceId,
+          videoRef.current,
+          (result) => {
+            if (cancelled || !result) return;
+
+            const code = result.getText();
+
             const now = Date.now();
             const last = lastScanRef.current;
-            // Ignore the same code firing again within the cooldown window —
-            // the camera decodes several frames a second while a barcode
-            // sits in view, so without this a single scan fires repeatedly.
-            if (decodedText === last.code && now - last.at < RESCAN_COOLDOWN_MS)
+
+            if (code === last.code && now - last.at < RESCAN_COOLDOWN_MS) {
               return;
-            lastScanRef.current = { code: decodedText, at: now };
-            onScan(decodedText);
+            }
+
+            lastScanRef.current = {
+              code,
+              at: now,
+            };
+
+            setScanSuccess(true);
+
+            setTimeout(() => {
+              setScanSuccess(false);
+            }, 600);
+
+            onScan(code);
           },
-          () => {
-            // Per-frame "nothing decoded yet" callback — expected constantly
-            // while aiming the camera, not a real error.
-          },
-        ),
-      )
-      .then(() => {
-        if (cancelled) {
-          // Unmounted (or StrictMode's simulated cleanup fired) while the
-          // camera was still starting — shut it back down immediately.
-          return scanner.stop().then(() => scanner.clear());
-        }
+        );
+
         setCameraState("running");
-      })
-      .catch((err) => {
-        console.error("Scanner start failed:", err);
+      } catch (error) {
+        console.error(error);
 
         if (!cancelled) {
           setCameraState("error");
           setCameraError(
-            "Couldn't access the camera. Check permissions, or enter the code below.",
+            "Couldn't access the camera. Check permissions or enter the barcode manually.",
           );
           setShowManualEntry(true);
         }
-      });
+      }
+    }
+
+    startScanner();
 
     return () => {
       cancelled = true;
-      operationChainRef.current = operationChainRef.current
-        .then(() => scanner.stop().then(() => scanner.clear()))
-        .catch(() => {});
+
+      controlsRef.current?.stop();
+      controlsRef.current = null;
     };
   }, [onScan]);
 
-  function handleManualSubmit(e) {
-    e.preventDefault();
+  function handleManualSubmit(event) {
+    event.preventDefault();
+
     const code = manualCode.trim();
+
     if (!code) return;
+
     onScan(code);
+
     setManualCode("");
   }
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="relative overflow-hidden rounded-2xl border border-[var(--color-border)] bg-black">
-        <div
-          id={SCAN_REGION_ID}
-          className="aspect-[4/3] w-full [&_video]:!h-full [&_video]:!w-full [&_video]:object-cover"
+      <div
+        className="
+          relative
+          overflow-hidden
+          rounded-2xl
+          border
+          border-[var(--color-border)]
+          bg-black
+        "
+      >
+        <video
+          ref={videoRef}
+          muted
+          playsInline
+          autoPlay
+          className="
+            aspect-[4/3]
+            w-full
+            object-cover
+          "
         />
+
+        {/* Dark overlay */}
+        <div
+          className="
+            pointer-events-none
+            absolute
+            inset-0
+            bg-black/40
+          "
+        />
+
+        {/* Scanner window */}
+        <div
+          className={`
+            pointer-events-none
+            absolute
+            left-1/2
+            top-1/2
+            h-52
+            w-72
+            -translate-x-1/2
+            -translate-y-1/2
+            rounded-xl
+            border-2
+            transition-colors
+            duration-300
+            ${
+              scanSuccess
+                ? "border-green-400 shadow-[0_0_30px_rgba(74,222,128,.8)]"
+                : "border-emerald-400 shadow-[0_0_20px_rgba(52,211,153,.5)]"
+            }
+          `}
+        >
+          {/* Corner guides */}
+          <span className="absolute left-0 top-0 h-6 w-6 border-l-4 border-t-4 border-emerald-300" />
+          <span className="absolute right-0 top-0 h-6 w-6 border-r-4 border-t-4 border-emerald-300" />
+          <span className="absolute bottom-0 left-0 h-6 w-6 border-b-4 border-l-4 border-emerald-300" />
+          <span className="absolute bottom-0 right-0 h-6 w-6 border-b-4 border-r-4 border-emerald-300" />
+
+          {/* Animated scan line */}
+          {!scanSuccess && (
+            <div
+              className="
+                absolute
+                left-2
+                right-2
+                top-1/2
+                h-0.5
+                bg-emerald-400
+                shadow-[0_0_10px_#34d399]
+                animate-bounce
+              "
+            />
+          )}
+        </div>
+
+        {/* Status */}
+        <div
+          className="
+            absolute
+            bottom-4
+            left-0
+            right-0
+            flex
+            justify-center
+          "
+        >
+          <div
+            className="
+              flex
+              items-center
+              gap-2
+              rounded-full
+              bg-black/60
+              px-4
+              py-2
+              text-sm
+              text-white
+            "
+          >
+            {scanSuccess ? (
+              <>
+                <CheckCircle2 className="h-4 w-4 text-green-400" />
+                Barcode found
+              </>
+            ) : (
+              <>
+                <Camera className="h-4 w-4 animate-pulse" />
+                Looking for barcode...
+              </>
+            )}
+          </div>
+        </div>
+
         {cameraState === "starting" && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-sm text-white">
+          <div
+            className="
+              absolute
+              inset-0
+              flex
+              items-center
+              justify-center
+              bg-black/70
+              text-white
+            "
+          >
             <Camera className="mr-2 h-4 w-4 animate-pulse" />
-            Starting camera…
+            Starting camera...
           </div>
         )}
       </div>
 
       {cameraError && (
-        <p
-          className="rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]"
+        <div
           role="alert"
+          className="
+            flex
+            gap-2
+            rounded-lg
+            bg-red-500/10
+            px-3
+            py-2
+            text-sm
+            text-red-600
+          "
         >
+          <AlertTriangle className="h-4 w-4" />
           {cameraError}
-        </p>
+        </div>
       )}
 
       {!showManualEntry ? (
         <button
           onClick={() => setShowManualEntry(true)}
-          className="flex items-center justify-center gap-1.5 text-sm font-medium text-[var(--color-storefront)] hover:underline"
+          className="
+            flex
+            items-center
+            justify-center
+            gap-2
+            text-sm
+            font-medium
+            text-[var(--color-storefront)]
+            hover:underline
+          "
         >
           <Keyboard className="h-4 w-4" />
           Enter barcode manually instead
@@ -145,10 +303,11 @@ export default function BarcodeScanner({ onScan }) {
             id="manual-barcode"
             label="Barcode"
             value={manualCode}
-            onChange={(e) => setManualCode(e.target.value)}
+            onChange={(event) => setManualCode(event.target.value)}
             placeholder="e.g. 4801988712345"
             className="flex-1"
           />
+
           <Button type="submit" variant="secondary" className="mt-6 h-fit">
             Look up
           </Button>
