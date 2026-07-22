@@ -33,7 +33,14 @@ export default function ProductTable({ products, onDeleteRequest }) {
                       <ImageOff className="h-4 w-4 text-[var(--color-muted)]" />
                     )}
                   </div>
-                  <span className="font-medium text-[var(--color-ink)]">{product.name}</span>
+                  <div>
+                    <span className="font-medium text-[var(--color-ink)]">{product.name}</span>
+                    {product.barcode && (
+                      <span className="block font-mono text-xs text-[var(--color-muted)]">
+                        {product.barcode}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </td>
               <td className="px-4 py-3 text-[var(--color-muted)]">

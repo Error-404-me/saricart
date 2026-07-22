@@ -66,7 +66,7 @@ export default function ManageProducts() {
         </Link>
       </div>
 
-      <SearchBar value={search} onChange={setSearch} placeholder="Search your products…" className="max-w-sm" />
+      <SearchBar value={search} onChange={setSearch} placeholder="Search by name or barcode…" className="max-w-sm" />
 
       {error && (
         <p className="rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]" role="alert">

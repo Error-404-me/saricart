@@ -493,3 +493,53 @@ scanning library:
   fourth library to paper over a browser support gap
 - Net effect: `@zxing/browser` + `@zxing/library` removed entirely,
   dropping the production bundle from ~1.39MB back down to ~916KB
+
+(Note: `BarcodeScanner.jsx` has since been replaced again with a version
+using `@zxing/browser`'s `decodeFromVideoDevice` plus a scan-window overlay
+UI, which is confirmed working. The structural principles above — own the
+lifecycle, check `cancelled` before touching the video element — still
+apply to whatever implementation is in place.)
+
+## Fix: barcode "disappearing" on add/edit
+
+Turned out the barcode was being saved correctly the whole time — direct
+API testing confirmed create, edit, list, and lookup-by-barcode all
+round-tripped it correctly. The bug was that there was no way to *see*
+that from the app, which is functionally the same problem from a user's
+perspective:
+
+- `list_products`' `search` parameter only ever matched `Product.name` —
+  typing a barcode into the search bar (on `ManageProducts`, or anywhere
+  else search is used) could never find anything, even though the barcode
+  was sitting right there in the database. Now matches name **or**
+  barcode (`OR` filter, partial match on either)
+- `ProductTable` never displayed a product's barcode anywhere, so even a
+  successful save was invisible on the owner's product list. Now shown as
+  a small monospace line under the product name when one is set
+- `ManageProducts`' search placeholder updated to "Search by name or
+  barcode…" so the new capability is discoverable
+
+## Fix: dark mode leaking between accounts
+
+Dark mode was stored under one `localStorage` key shared by the whole
+browser (`saricart_theme`), not scoped to whoever was logged in — so an
+owner turning on dark mode would also flip it for a customer using the
+same browser (or vice versa), since both sessions read and wrote the same
+global key.
+
+- `ThemeContext` now scopes the key per account (`saricart_theme:<userId>`,
+  or `saricart_theme:guest` when logged out) and re-resolves the active
+  theme whenever the signed-in user changes — logging in, logging out, or
+  switching accounts in the same browser each land on that account's own
+  preference rather than inheriting whatever the last session left set
+- This required `ThemeProvider` to move inside `AuthProvider` in `App.jsx`
+  (it needs `useAuth()` to know whose preference to read/write) — verified
+  `AuthProvider` renders its children immediately regardless of its own
+  session-check `loading` state, so this reorder doesn't delay first paint
+- A one-time fallback to the old global key means anyone who'd already set
+  a preference before this fix doesn't just lose it — it's read once as a
+  default, then a scoped key takes over
+- Verified with 5 isolated logic tests (own preference respected, a
+  different logged-in user unaffected, a logged-out guest unaffected, the
+  legacy-key fallback firing for a new user, and a scoped preference
+  correctly taking priority once one exists)

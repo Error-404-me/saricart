@@ -1,22 +1,24 @@
 import { BrowserRouter } from "react-router-dom";
 import ErrorBoundary from "./components/common/ErrorBoundary";
-import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import { CartProvider } from "./context/CartContext";
 import AppRoutes from "./routes/AppRoutes";
 
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider>
-        <BrowserRouter>
-          <AuthProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          {/* ThemeProvider needs useAuth() to scope dark mode per account,
+              so it has to sit inside AuthProvider. */}
+          <ThemeProvider>
             <CartProvider>
               <AppRoutes />
             </CartProvider>
-          </AuthProvider>
-        </BrowserRouter>
-      </ThemeProvider>
+          </ThemeProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </ErrorBoundary>
   );
 }

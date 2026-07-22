@@ -1,6 +1,15 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, Integer, String, Text, Numeric, DateTime, ForeignKey
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Text,
+    Numeric,
+    DateTime,
+    ForeignKey,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -8,6 +17,12 @@ from app.database import Base
 
 class Product(Base):
     __tablename__ = "products"
+    __table_args__ = (
+        # NULLs don't conflict under a unique constraint, so products
+        # without a scanned barcode yet are unaffected; this only stops the
+        # same owner from assigning one barcode to two different products.
+        UniqueConstraint("owner_id", "barcode", name="uq_owner_barcode"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
 
@@ -21,6 +36,7 @@ class Product(Base):
     price = Column(Numeric(10, 2), nullable=False)
     stock = Column(Integer, nullable=False, default=0)
     image = Column(String(255), nullable=True)  # relative URL, e.g. /uploads/xyz.jpg
+    barcode = Column(String(64), nullable=True, index=True)
 
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(

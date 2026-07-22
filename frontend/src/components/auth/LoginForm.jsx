@@ -22,7 +22,8 @@ export default function LoginForm() {
 
   function validate() {
     const errors = {};
-    if (!isValidEmail(form.email)) errors.email = "Enter a valid email address.";
+    if (!isValidEmail(form.email))
+      errors.email = "Enter a valid email address.";
     if (!form.password) errors.password = "Enter your password.";
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
@@ -73,7 +74,10 @@ export default function LoginForm() {
       />
 
       {formError && (
-        <p className="rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]" role="alert">
+        <p
+          className="rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]"
+          role="alert"
+        >
           {formError}
         </p>
       )}
@@ -84,7 +88,10 @@ export default function LoginForm() {
 
       <p className="text-center text-sm text-[var(--color-muted)]">
         New to SariCart?{" "}
-        <Link to="/register" className="font-medium text-[var(--color-storefront)] hover:underline">
+        <Link
+          to="/register"
+          className="font-medium text-[var(--color-storefront)] hover:underline"
+        >
           Create an account
         </Link>
       </p>

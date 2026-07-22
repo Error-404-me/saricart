@@ -49,6 +49,15 @@ def stock_history(
     return stock_service.list_stock_history(db, current_user.id, product_id)
 
 
+@router.get("/barcode/{barcode}", response_model=ProductOut)
+def get_product_by_barcode(
+    barcode: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_owner),
+):
+    return product_service.get_product_by_barcode(db, current_user.id, barcode)
+
+
 @router.get("/{product_id}", response_model=ProductOut)
 def get_product(product_id: int, db: Session = Depends(get_db)):
     return product_service.get_product(db, product_id)

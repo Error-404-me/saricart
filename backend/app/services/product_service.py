@@ -2,6 +2,8 @@ import os
 import uuid
 
 from fastapi import HTTPException, UploadFile, status
+from sqlalchemy import or_
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -13,6 +15,7 @@ from app.schemas.product import ProductCreate, ProductUpdate
 
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
+BARCODE_CONFLICT_DETAIL = "Another product already uses this barcode."
 
 
 def list_products(
@@ -28,7 +31,9 @@ def list_products(
         query = query.filter(Product.category == category)
     if search:
         like = f"%{search.strip()}%"
-        query = query.filter(Product.name.ilike(like))
+        query = query.filter(
+            or_(Product.name.ilike(like), Product.barcode.ilike(like))
+        )
     return query.order_by(Product.created_at.desc()).all()
 
 
@@ -46,6 +51,20 @@ def get_product(db: Session, product_id: int) -> Product:
     return product
 
 
+def get_product_by_barcode(db: Session, owner_id: int, barcode: str) -> Product:
+    product = (
+        db.query(Product)
+        .filter(Product.owner_id == owner_id, Product.barcode == barcode)
+        .first()
+    )
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No product in your catalog has this barcode.",
+        )
+    return product
+
+
 def _require_ownership(product: Product, current_user: User) -> None:
     if product.owner_id != current_user.id:
         raise HTTPException(
@@ -57,7 +76,11 @@ def _require_ownership(product: Product, current_user: User) -> None:
 def create_product(db: Session, product_in: ProductCreate, owner: User) -> Product:
     product = Product(**product_in.model_dump(), owner_id=owner.id)
     db.add(product)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=BARCODE_CONFLICT_DETAIL)
     db.refresh(product)
     return product
 
@@ -80,7 +103,11 @@ def update_product(
     for field, value in updates.items():
         setattr(product, field, value)
 
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=BARCODE_CONFLICT_DETAIL)
     db.refresh(product)
     return product
 

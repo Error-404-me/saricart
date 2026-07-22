@@ -25,6 +25,7 @@ export default function BarcodeScanner({ onScan }) {
   const [showManualEntry, setShowManualEntry] = useState(false);
 
   const [scanSuccess, setScanSuccess] = useState(false);
+  const scannerColor = scanSuccess ? "border-green-400" : "border-red-400";
 
   useEffect(() => {
     let cancelled = false;
@@ -38,11 +39,10 @@ export default function BarcodeScanner({ onScan }) {
           BarcodeFormat.EAN_8,
           BarcodeFormat.UPC_A,
           BarcodeFormat.UPC_E,
-          BarcodeFormat.CODE_128,
-          BarcodeFormat.CODE_39,
-          BarcodeFormat.CODE_93,
-          BarcodeFormat.ITF,
         ]);
+
+        hints.set(DecodeHintType.TRY_HARDER, true);
+        hints.set(DecodeHintType.ASSUME_GS1, true);
 
         const reader = new BrowserMultiFormatReader(hints);
 
@@ -60,8 +60,15 @@ export default function BarcodeScanner({ onScan }) {
             /(back|rear|environment)/i.test(device.label),
           ) ?? devices[0];
 
-        controlsRef.current = await reader.decodeFromVideoDevice(
-          camera.deviceId,
+        controlsRef.current = await reader.decodeFromConstraints(
+          {
+            video: {
+              deviceId: { exact: camera.deviceId },
+              facingMode: { ideal: "environment" },
+              width: { ideal: 1920 },
+              height: { ideal: 1080 },
+            },
+          },
           videoRef.current,
           (result) => {
             if (cancelled || !result) return;
@@ -89,6 +96,22 @@ export default function BarcodeScanner({ onScan }) {
             onScan(code);
           },
         );
+
+        const stream = videoRef.current?.srcObject;
+
+        if (stream instanceof MediaStream) {
+          const track = stream.getVideoTracks()[0];
+
+          console.log(track.getSettings());
+
+          const capabilities = track.getCapabilities();
+
+          if (capabilities.focusMode?.includes("continuous")) {
+            await track.applyConstraints({
+              advanced: [{ focusMode: "continuous" }],
+            });
+          }
+        }
 
         setCameraState("running");
       } catch (error) {
@@ -140,14 +163,11 @@ export default function BarcodeScanner({ onScan }) {
       >
         <video
           ref={videoRef}
+          autoPlay
           muted
           playsInline
-          autoPlay
-          className="
-            aspect-[4/3]
-            w-full
-            object-cover
-          "
+          disablePictureInPicture
+          className="aspect-4/3 w-full object-cover"
         />
 
         {/* Dark overlay */}
@@ -167,42 +187,34 @@ export default function BarcodeScanner({ onScan }) {
             absolute
             left-1/2
             top-1/2
-            h-52
-            w-72
+            h-72
+            w-144
             -translate-x-1/2
             -translate-y-1/2
-            rounded-xl
+            rounded-none
             border-2
             transition-colors
             duration-300
             ${
               scanSuccess
-                ? "border-green-400 shadow-[0_0_30px_rgba(74,222,128,.8)]"
-                : "border-emerald-400 shadow-[0_0_20px_rgba(52,211,153,.5)]"
+                ? "border-green-500 shadow-[0_0_30px_rgba(34,197,94,.8)]"
+                : "border-red-500 shadow-[0_0_30px_rgba(239,68,68,.8)]"
             }
           `}
         >
           {/* Corner guides */}
-          <span className="absolute left-0 top-0 h-6 w-6 border-l-4 border-t-4 border-emerald-300" />
-          <span className="absolute right-0 top-0 h-6 w-6 border-r-4 border-t-4 border-emerald-300" />
-          <span className="absolute bottom-0 left-0 h-6 w-6 border-b-4 border-l-4 border-emerald-300" />
-          <span className="absolute bottom-0 right-0 h-6 w-6 border-b-4 border-r-4 border-emerald-300" />
-
-          {/* Animated scan line */}
-          {!scanSuccess && (
-            <div
-              className="
-                absolute
-                left-2
-                right-2
-                top-1/2
-                h-0.5
-                bg-emerald-400
-                shadow-[0_0_10px_#34d399]
-                animate-bounce
-              "
-            />
-          )}
+          <span
+            className={`absolute left-0 top-0 h-6 w-6 border-l-4 border-t-4 ${scannerColor}`}
+          />
+          <span
+            className={`absolute right-0 top-0 h-6 w-6 border-r-4 border-t-4 ${scannerColor}`}
+          />
+          <span
+            className={`absolute bottom-0 left-0 h-6 w-6 border-b-4 border-l-4 ${scannerColor}`}
+          />
+          <span
+            className={`absolute bottom-0 right-0 h-6 w-6 border-b-4 border-r-4 ${scannerColor}`}
+          />
         </div>
 
         {/* Status */}

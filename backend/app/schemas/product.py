@@ -11,6 +11,7 @@ class ProductBase(BaseModel):
     category: Optional[str] = Field(default=None, max_length=80)
     price: Decimal = Field(gt=0, decimal_places=2)
     stock: int = Field(ge=0, default=0)
+    barcode: Optional[str] = Field(default=None, max_length=64)
 
 
 class ProductCreate(ProductBase):
@@ -23,6 +24,7 @@ class ProductUpdate(BaseModel):
     category: Optional[str] = Field(default=None, max_length=80)
     price: Optional[Decimal] = Field(default=None, gt=0, decimal_places=2)
     stock: Optional[int] = Field(default=None, ge=0)
+    barcode: Optional[str] = Field(default=None, max_length=64)
 
 
 class ProductOut(ProductBase):
