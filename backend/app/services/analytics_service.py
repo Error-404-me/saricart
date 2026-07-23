@@ -1,9 +1,44 @@
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from decimal import Decimal
 
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.order import Order, OrderStatus
+
+STORE_TIMEZONE = ZoneInfo("Asia/Manila")
+DAYS_IN_WEEK = 7
+HOURS_IN_DAY = 24
+
+def get_sales_heatmap(db: Session, owner_id: int, weeks: int = 12) -> list[dict]:
+    """Revenue aggregated by day-of-week and hour-of-day (store-local time),
+    over a rolling window, so an owner can see at a glance which days and
+    times are busiest — not just which days had the most total revenue."""
+    since = datetime.now(timezone.utc) - timedelta(weeks=weeks)
+    orders = _completed_orders(db, owner_id, since)
+
+    buckets: dict[tuple[int, int], dict] = {}
+    for order in orders:
+        # updated_at is stored as naive UTC (SQLite drops tzinfo on write).
+        local_dt = order.updated_at.replace(tzinfo=timezone.utc).astimezone(STORE_TIMEZONE)
+        key = (local_dt.weekday(), local_dt.hour)
+        bucket = buckets.setdefault(
+            key,
+            {"day_of_week": key[0], "hour": key[1], "revenue": Decimal("0"), "order_count": 0},
+        )
+        bucket["revenue"] += order.total
+        bucket["order_count"] += 1
+
+    # Zero-fill every day/hour cell — same principle as get_daily_sales,
+    # so an empty cell reads as "no sales" rather than "no data collected".
+    return [
+        buckets.get(
+            (dow, hour),
+            {"day_of_week": dow, "hour": hour, "revenue": Decimal("0"), "order_count": 0},
+        )
+        for dow in range(DAYS_IN_WEEK)
+        for hour in range(HOURS_IN_DAY)
+    ]
 
 
 def _completed_orders(db: Session, owner_id: int, since: datetime | None = None) -> list[Order]:

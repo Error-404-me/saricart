@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import Input from "../common/Input";
+import PasswordInput from "../common/PasswordInput";
 import Button from "../common/Button";
 import { isValidEmail } from "../../utils/validators";
 
@@ -61,10 +62,9 @@ export default function LoginForm() {
         onChange={handleChange}
         error={fieldErrors.email}
       />
-      <Input
+      <PasswordInput
         id="password"
         name="password"
-        type="password"
         label="Password"
         placeholder="••••••••"
         autoComplete="current-password"

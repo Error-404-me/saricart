@@ -28,3 +28,9 @@ class BestSellerItem(BaseModel):
     product_image: Optional[str] = None
     quantity_sold: int
     revenue: Decimal
+    
+class HeatmapCell(BaseModel):
+    day_of_week: int  # 0 = Monday ... 6 = Sunday
+    hour: int  # 0-23
+    revenue: Decimal
+    order_count: int

@@ -9,6 +9,7 @@ from app.schemas.analytics import (
     DailySalesPoint,
     MonthlySalesPoint,
     BestSellerItem,
+    HeatmapCell
 )
 from app.services import analytics_service
 
@@ -48,3 +49,11 @@ def best_sellers(
     current_user: User = Depends(require_owner),
 ):
     return analytics_service.get_best_sellers(db, current_user.id, limit)
+
+@router.get("/heatmap", response_model=list[HeatmapCell])
+def sales_heatmap(
+    weeks: int = 12,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_owner),
+):
+    return analytics_service.get_sales_heatmap(db, current_user.id, weeks)

@@ -1,13 +1,29 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { User, Store } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import Input from "../common/Input";
+import PasswordInput from "../common/PasswordInput";
 import Button from "../common/Button";
-import { isValidEmail, isValidUsername, passwordIssues } from "../../utils/validators";
+import {
+  isValidEmail,
+  isValidUsername,
+  passwordIssues,
+} from "../../utils/validators";
 
 const ROLES = [
-  { value: "customer", label: "I'm a customer", hint: "Browse stores & pre-order" },
-  { value: "owner", label: "I own a store", hint: "List products & manage orders" },
+  {
+    value: "customer",
+    label: "I'm a customer",
+    hint: "Browse stores & pre-order",
+    icon: User,
+  },
+  {
+    value: "owner",
+    label: "I own a store",
+    hint: "List products & manage orders",
+    icon: Store,
+  },
 ];
 
 export default function RegisterForm() {
@@ -53,7 +69,9 @@ export default function RegisterForm() {
     setSubmitting(true);
     try {
       const user = await register(form);
-      navigate(user.role === "owner" ? "/owner/dashboard" : "/", { replace: true });
+      navigate(user.role === "owner" ? "/owner/dashboard" : "/", {
+        replace: true,
+      });
     } catch (err) {
       setFormError(err.message);
     } finally {
@@ -67,12 +85,12 @@ export default function RegisterForm() {
         {ROLES.map((r) => (
           <label
             key={r.value}
-            className={`cursor-pointer rounded-lg border px-3 py-2.5 text-sm transition
-              ${
-                form.role === r.value
-                  ? "border-[var(--color-storefront)] bg-[var(--color-storefront)]/5"
-                  : "border-[var(--color-border)] hover:border-[var(--color-border)]"
-              }`}
+            className={`cursor-pointer rounded-xl border px-3.5 py-3 text-sm transition
+        ${
+          form.role === r.value
+            ? "border-[var(--color-storefront)] bg-[var(--color-storefront)]/5 ring-1 ring-[var(--color-storefront)]/20"
+            : "border-[var(--color-border)] hover:border-[var(--color-storefront)]/30"
+        }`}
           >
             <input
               type="radio"
@@ -82,8 +100,19 @@ export default function RegisterForm() {
               onChange={handleChange}
               className="sr-only"
             />
-            <span className="block font-medium text-[var(--color-ink)]">{r.label}</span>
-            <span className="block text-xs text-[var(--color-muted)]">{r.hint}</span>
+            <r.icon
+              className={`mb-1.5 h-4 w-4 ${
+                form.role === r.value
+                  ? "text-[var(--color-storefront)]"
+                  : "text-[var(--color-muted)]"
+              }`}
+            />
+            <span className="block font-medium text-[var(--color-ink)]">
+              {r.label}
+            </span>
+            <span className="block text-xs text-[var(--color-muted)]">
+              {r.hint}
+            </span>
           </label>
         ))}
       </div>
@@ -109,10 +138,9 @@ export default function RegisterForm() {
         onChange={handleChange}
         error={fieldErrors.email}
       />
-      <Input
+      <PasswordInput
         id="password"
         name="password"
-        type="password"
         label="Password"
         placeholder="At least 8 characters"
         autoComplete="new-password"
@@ -122,7 +150,10 @@ export default function RegisterForm() {
       />
 
       {formError && (
-        <p className="rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]" role="alert">
+        <p
+          className="rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]"
+          role="alert"
+        >
           {formError}
         </p>
       )}
@@ -133,7 +164,10 @@ export default function RegisterForm() {
 
       <p className="text-center text-sm text-[var(--color-muted)]">
         Already have an account?{" "}
-        <Link to="/login" className="font-medium text-[var(--color-storefront)] hover:underline">
+        <Link
+          to="/login"
+          className="font-medium text-[var(--color-storefront)] hover:underline"
+        >
           Log in
         </Link>
       </p>
