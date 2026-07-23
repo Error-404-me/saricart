@@ -4,7 +4,7 @@ import { getToken, clearToken } from "../utils/localStorage";
 // In dev, Vite proxies "/api" to the FastAPI backend (see vite.config.js).
 // In production, point this at your deployed API's base URL.
 const api = axios.create({
-  baseURL: "/api",
+  baseURL: import.meta.env.VITE_API_URL,
 });
 
 // Attach the JWT (if we have one) to every outgoing request.
@@ -29,11 +29,13 @@ api.interceptors.response.use(
       // `err.response?.data?.detail` call site across the app picks up a
       // friendly message for free, instead of axios's generic "Network Error".
       error.response = {
-        data: { detail: "You're offline. Check your connection and try again." },
+        data: {
+          detail: "You're offline. Check your connection and try again.",
+        },
       };
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;
