@@ -1,7 +1,7 @@
 import enum
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, Integer, String, DateTime, Enum
+from sqlalchemy import Column, Integer, String, DateTime, Enum, Boolean
 
 from app.database import Base
 
@@ -20,3 +20,7 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     role = Column(Enum(UserRole), default=UserRole.CUSTOMER, nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    notify_order_updates = Column(Boolean, default=True, nullable=False)
+    notify_promotions = Column(Boolean, default=False, nullable=False)
+    notify_low_stock = Column(Boolean, default=True, nullable=False)

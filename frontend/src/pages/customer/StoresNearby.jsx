@@ -1,10 +1,15 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MapPin, LocateFixed, Store as StoreIcon } from "lucide-react";
 import Spinner from "../../components/common/Spinner";
 import ComingSoon from "../../components/common/ComingSoon";
 import Button from "../../components/common/Button";
 import StoreCard from "../../components/store/StoreCard";
 import { fetchNearbyStores } from "../../services/storeService";
+import {
+  fetchFavorites,
+  addFavorite,
+  removeFavorite,
+} from "../../services/customerService";
 
 const RADIUS_OPTIONS = [
   { value: 2, label: "2km" },
@@ -18,6 +23,31 @@ export default function StoresNearby() {
   const [stores, setStores] = useState([]);
   const [radiusKm, setRadiusKm] = useState(10);
   const [error, setError] = useState("");
+  const [favoriteIds, setFavoriteIds] = useState(new Set());
+
+  useEffect(() => {
+    fetchFavorites()
+      .then((favs) => setFavoriteIds(new Set(favs.map((f) => f.store_id))))
+      .catch(() => {});
+  }, []);
+
+  async function toggleFavorite(store) {
+    const isFav = favoriteIds.has(store.id);
+    setFavoriteIds((prev) => {
+      const next = new Set(prev);
+      isFav ? next.delete(store.id) : next.add(store.id);
+      return next;
+    });
+    try {
+      isFav ? await removeFavorite(store.id) : await addFavorite(store.id);
+    } catch {
+      setFavoriteIds((prev) => {
+        const next = new Set(prev);
+        isFav ? next.add(store.id) : next.delete(store.id);
+        return next;
+      });
+    }
+  }
 
   const locateAndSearch = useCallback((radius) => {
     if (!navigator.geolocation) {
@@ -46,10 +76,12 @@ export default function StoresNearby() {
         }
       },
       () => {
-        setError("Location access was denied. Enable it in your browser to find nearby stores.");
+        setError(
+          "Location access was denied. Enable it in your browser to find nearby stores.",
+        );
         setStatus("error");
       },
-      { enableHighAccuracy: false, timeout: 10000 }
+      { enableHighAccuracy: false, timeout: 10000 },
     );
   }, []);
 
@@ -97,7 +129,11 @@ export default function StoresNearby() {
             title="Find stores near you"
             description="We'll use your device's location to show participating stores close by."
           />
-          <Button variant="secondary" onClick={() => locateAndSearch(radiusKm)} className="gap-1.5">
+          <Button
+            variant="secondary"
+            onClick={() => locateAndSearch(radiusKm)}
+            className="gap-1.5"
+          >
             <LocateFixed className="h-4 w-4" />
             Use my location
           </Button>
@@ -109,10 +145,17 @@ export default function StoresNearby() {
 
       {status === "error" && (
         <div className="flex flex-col items-center gap-4">
-          <p className="rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]" role="alert">
+          <p
+            className="rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]"
+            role="alert"
+          >
             {error}
           </p>
-          <Button variant="secondary" onClick={() => locateAndSearch(radiusKm)} className="gap-1.5">
+          <Button
+            variant="secondary"
+            onClick={() => locateAndSearch(radiusKm)}
+            className="gap-1.5"
+          >
             <LocateFixed className="h-4 w-4" />
             Try again
           </Button>
@@ -129,7 +172,12 @@ export default function StoresNearby() {
         ) : (
           <div className="flex flex-col gap-3">
             {stores.map((store) => (
-              <StoreCard key={store.id} store={store} />
+              <StoreCard
+                key={store.id}
+                store={store}
+                isFavorite={favoriteIds.has(store.id)}
+                onToggleFavorite={() => toggleFavorite(store)}
+              />
             ))}
           </div>
         ))}

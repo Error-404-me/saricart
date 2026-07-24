@@ -1,9 +1,3 @@
-"""
-Centralized application configuration.
-
-Reads settings from environment variables (loaded from .env in development).
-Import `settings` anywhere in the app instead of calling os.environ directly.
-"""
 import os
 from dotenv import load_dotenv
 
@@ -21,11 +15,16 @@ class Settings:
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(
         os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440")
     )
+    
+    UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "uploads")
 
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
-    UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "uploads")
     MAX_IMAGE_SIZE_MB: int = int(os.getenv("MAX_IMAGE_SIZE_MB", "5"))
+
+    CLOUDINARY_CLOUD_NAME: str = os.getenv("CLOUDINARY_CLOUD_NAME", "")
+    CLOUDINARY_API_KEY: str = os.getenv("CLOUDINARY_API_KEY", "")
+    CLOUDINARY_API_SECRET: str = os.getenv("CLOUDINARY_API_SECRET", "")
 
 
 settings = Settings()

@@ -34,3 +34,27 @@ class HeatmapCell(BaseModel):
     hour: int  # 0-23
     revenue: Decimal
     order_count: int
+    
+class RestockSuggestion(BaseModel):
+    product_id: int
+    product_name: str
+    product_image: Optional[str] = None
+    current_stock: int
+    avg_daily_sales: float
+    days_until_stockout: float
+    suggested_reorder: int
+
+
+class SlowMovingProduct(BaseModel):
+    product_id: int
+    product_name: str
+    product_image: Optional[str] = None
+    current_stock: int
+    days_since_last_sale: Optional[int] = None  # None = never sold
+
+
+class FastestSellingItem(BaseModel):
+    rank: int
+    product_id: Optional[int] = None
+    product_name: str
+    quantity_sold: int

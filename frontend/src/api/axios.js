@@ -4,7 +4,7 @@ import { getToken, clearToken } from "../utils/localStorage";
 // In dev, Vite proxies "/api" to the FastAPI backend (see vite.config.js).
 // In production, point this at your deployed API's base URL.
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: import.meta.env.VITE_API_URL || "/api",
 });
 
 // Attach the JWT (if we have one) to every outgoing request.

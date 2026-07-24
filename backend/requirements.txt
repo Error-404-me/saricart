@@ -9,3 +9,6 @@ pydantic[email]==2.13.4
 cloudinary
 psycopg2
 tzdata
+gunicorn==23.0.0
+alembic
+cloudinary

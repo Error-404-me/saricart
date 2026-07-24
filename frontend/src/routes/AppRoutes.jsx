@@ -22,9 +22,16 @@ import Inventory from "../pages/owner/Inventory";
 import ManageOrders from "../pages/owner/ManageOrders";
 import Analytics from "../pages/owner/Analytics";
 import Scanner from "../pages/owner/Scanner";
-import Settings from "../pages/Settings";
+import SettingsLayout from "../layouts/SettingsLayout";
+import ProfileSettings from "../pages/settings/ProfileSettings";
+import SecuritySettings from "../pages/settings/SecuritySettings";
+import NotificationSettings from "../pages/settings/NotificationSettings";
+import AppearanceSettings from "../pages/settings/AppearanceSettings";
+import StoreSettings from "../pages/settings/StoreSettings";
+import DangerZoneSettings from "../pages/settings/DangerZoneSettings";
 import Unauthorized from "../pages/Unauthorized";
 import NotFound from "../pages/NotFound";
+import Favorites from "../pages/customer/Favorites";
 
 export default function AppRoutes() {
   return (
@@ -44,11 +51,23 @@ export default function AppRoutes() {
         <Route element={<AppLayout />}>
           <Route path="/products" element={<Products />} />
           <Route path="/stores" element={<StoresNearby />} />
+          <Route path="/favorites" element={<Favorites />} />
           <Route path="/products/:id" element={<ProductDetails />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/orders" element={<Orders />} />
-          <Route path="/settings" element={<Settings />} />
+          <Route path="/settings" element={<SettingsLayout />}>
+            <Route
+              index
+              element={<Navigate to="/settings/profile" replace />}
+            />
+            <Route path="profile" element={<ProfileSettings />} />
+            <Route path="store" element={<StoreSettings />} />
+            <Route path="security" element={<SecuritySettings />} />
+            <Route path="notifications" element={<NotificationSettings />} />
+            <Route path="appearance" element={<AppearanceSettings />} />
+            <Route path="danger" element={<DangerZoneSettings />} />
+          </Route>
 
           {/* Authenticated, owner only — still inside the same layout */}
           <Route element={<ProtectedRoute role="owner" />}>

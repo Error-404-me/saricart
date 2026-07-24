@@ -51,24 +51,32 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const register = useCallback(async ({ username, email, password, role }) => {
-    setError(null);
-    try {
-      await registerUser({ username, email, password, role });
-      // Register endpoint doesn't log the user in automatically —
-      // do that as a follow-up so the flow feels seamless.
-      return await login({ email, password });
-    } catch (err) {
-      const message =
-        err.response?.data?.detail || "Couldn't create your account. Please try again.";
-      setError(message);
-      throw new Error(message);
-    }
-  }, [login]);
+  const register = useCallback(
+    async ({ username, email, password, role }) => {
+      setError(null);
+      try {
+        await registerUser({ username, email, password, role });
+        // Register endpoint doesn't log the user in automatically —
+        // do that as a follow-up so the flow feels seamless.
+        return await login({ email, password });
+      } catch (err) {
+        const message =
+          err.response?.data?.detail ||
+          "Couldn't create your account. Please try again.";
+        setError(message);
+        throw new Error(message);
+      }
+    },
+    [login],
+  );
 
   const logout = useCallback(() => {
     clearToken();
     setUser(null);
+  }, []);
+
+  const updateUser = useCallback((updates) => {
+    setUser((prev) => (prev ? { ...prev, ...updates } : prev));
   }, []);
 
   const value = {
@@ -79,6 +87,7 @@ export function AuthProvider({ children }) {
     login,
     register,
     logout,
+    updateUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

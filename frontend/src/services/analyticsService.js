@@ -30,3 +30,18 @@ export async function fetchSalesHeatmap(weeks = 12) {
   const { data } = await api.get("/analytics/heatmap", { params: { weeks } });
   return data;
 }
+
+export async function fetchRestockSuggestions() {
+  const { data } = await api.get("/analytics/restock-suggestions");
+  return data;
+}
+
+export async function fetchSlowMovingProducts() {
+  const { data } = await api.get("/analytics/slow-moving");
+  return data;
+}
+
+export async function fetchFastestSelling(limit = 5) {
+  const { data } = await api.get("/analytics/fastest-selling", { params: { limit } });
+  return data;
+}

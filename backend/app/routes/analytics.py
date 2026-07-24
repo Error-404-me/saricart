@@ -9,7 +9,10 @@ from app.schemas.analytics import (
     DailySalesPoint,
     MonthlySalesPoint,
     BestSellerItem,
-    HeatmapCell
+    HeatmapCell,
+    RestockSuggestion,
+    SlowMovingProduct,
+    FastestSellingItem,
 )
 from app.services import analytics_service
 
@@ -57,3 +60,28 @@ def sales_heatmap(
     current_user: User = Depends(require_owner),
 ):
     return analytics_service.get_sales_heatmap(db, current_user.id, weeks)
+
+@router.get("/restock-suggestions", response_model=list[RestockSuggestion])
+def restock_suggestions(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_owner),
+):
+    return analytics_service.get_restock_suggestions(db, current_user.id)
+
+
+@router.get("/slow-moving", response_model=list[SlowMovingProduct])
+def slow_moving_products(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_owner),
+):
+    return analytics_service.get_slow_moving_products(db, current_user.id)
+
+
+@router.get("/fastest-selling", response_model=list[FastestSellingItem])
+def fastest_selling(
+    days: int = 30,
+    limit: int = 5,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_owner),
+):
+    return analytics_service.get_fastest_selling(db, current_user.id, days, limit)

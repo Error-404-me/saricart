@@ -5,13 +5,28 @@ import Spinner from "../../components/common/Spinner";
 import ComingSoon from "../../components/common/ComingSoon";
 import StockAdjuster from "../../components/product/StockAdjuster";
 import StockHistoryList from "../../components/product/StockHistoryList";
-import { fetchMyProducts, adjustStock, fetchStockHistory } from "../../services/productService";
+import RestockSuggestions from "../../components/product/RestockSuggestions";
+import SlowMovingProducts from "../../components/product/SlowMovingProducts";
+import FastestSellingProducts from "../../components/product/FastestSellingProducts";
+import {
+  fetchMyProducts,
+  adjustStock,
+  fetchStockHistory,
+} from "../../services/productService";
+import {
+  fetchRestockSuggestions,
+  fetchSlowMovingProducts,
+  fetchFastestSelling,
+} from "../../services/analyticsService";
 
 const LOW_STOCK_THRESHOLD = 5;
 
 export default function Inventory() {
   const [products, setProducts] = useState([]);
   const [history, setHistory] = useState([]);
+  const [restockSuggestions, setRestockSuggestions] = useState([]);
+  const [slowMoving, setSlowMoving] = useState([]);
+  const [fastestSelling, setFastestSelling] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -19,12 +34,24 @@ export default function Inventory() {
     setLoading(true);
     setError("");
     try {
-      const [productData, historyData] = await Promise.all([
+      const [
+        productData,
+        historyData,
+        restockData,
+        slowMovingData,
+        fastestData,
+      ] = await Promise.all([
         fetchMyProducts(),
         fetchStockHistory(),
+        fetchRestockSuggestions(),
+        fetchSlowMovingProducts(),
+        fetchFastestSelling(),
       ]);
       setProducts(productData);
       setHistory(historyData);
+      setRestockSuggestions(restockData);
+      setSlowMoving(slowMovingData);
+      setFastestSelling(fastestData);
     } catch {
       setError("Couldn't load your inventory. Please try again.");
     } finally {
@@ -39,10 +66,17 @@ export default function Inventory() {
   async function handleAdjust(productId, delta) {
     const updated = await adjustStock(productId, delta);
     setProducts((prev) => prev.map((p) => (p.id === productId ? updated : p)));
-    fetchStockHistory().then(setHistory).catch(() => {});
+    fetchStockHistory()
+      .then(setHistory)
+      .catch(() => {});
+    fetchRestockSuggestions()
+      .then(setRestockSuggestions)
+      .catch(() => {});
   }
 
-  const lowStockProducts = products.filter((p) => p.stock <= LOW_STOCK_THRESHOLD);
+  const lowStockProducts = products.filter(
+    (p) => p.stock <= LOW_STOCK_THRESHOLD,
+  );
 
   if (loading) return <Spinner label="Loading inventory…" />;
 
@@ -54,7 +88,10 @@ export default function Inventory() {
           title="No products to track yet"
           description="Add a product first, then come back here to manage its stock."
         />
-        <Link to="/owner/products/add" className="text-sm font-medium text-[var(--color-storefront)] hover:underline">
+        <Link
+          to="/owner/products/add"
+          className="text-sm font-medium text-[var(--color-storefront)] hover:underline"
+        >
           Add a product
         </Link>
       </div>
@@ -64,14 +101,19 @@ export default function Inventory() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="font-display text-2xl font-bold text-[var(--color-ink)]">Inventory</h1>
+        <h1 className="font-display text-2xl font-bold text-[var(--color-ink)]">
+          Inventory
+        </h1>
         <p className="mt-1 text-sm text-[var(--color-muted)]">
           Update stock levels and keep an eye on what's running low.
         </p>
       </div>
 
       {error && (
-        <p className="rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]" role="alert">
+        <p
+          className="rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]"
+          role="alert"
+        >
           {error}
         </p>
       )}
@@ -81,7 +123,9 @@ export default function Inventory() {
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-[var(--color-crate)]" />
           <div>
             <p className="text-sm font-medium text-[var(--color-ink)]">
-              {lowStockProducts.length} {lowStockProducts.length === 1 ? "item is" : "items are"} running low
+              {lowStockProducts.length}{" "}
+              {lowStockProducts.length === 1 ? "item is" : "items are"} running
+              low
             </p>
             <p className="text-sm text-[var(--color-muted)]">
               {lowStockProducts.map((p) => p.name).join(", ")}
@@ -91,7 +135,41 @@ export default function Inventory() {
       )}
 
       <div className="flex flex-col gap-2">
-        <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">Update stock</h2>
+        <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">
+          Smart restocking
+        </h2>
+        <p className="-mt-1 text-sm text-[var(--color-muted)]">
+          Based on the last 30 days of sales — products expected to run out
+          within a week.
+        </p>
+        <RestockSuggestions suggestions={restockSuggestions} />
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="flex flex-col gap-2">
+          <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">
+            Slow-moving products
+          </h2>
+          <p className="-mt-1 text-sm text-[var(--color-muted)]">
+            Unsold for the last 30 days.
+          </p>
+          <SlowMovingProducts products={slowMoving} />
+        </div>
+        <div className="flex flex-col gap-2">
+          <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">
+            Fastest selling
+          </h2>
+          <p className="-mt-1 text-sm text-[var(--color-muted)]">
+            Top sellers over the last 30 days.
+          </p>
+          <FastestSellingProducts items={fastestSelling} />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">
+          Update stock
+        </h2>
         <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]">
           {products.map((product, index) => (
             <div
@@ -101,9 +179,13 @@ export default function Inventory() {
               }`}
             >
               <div>
-                <p className="text-sm font-medium text-[var(--color-ink)]">{product.name}</p>
+                <p className="text-sm font-medium text-[var(--color-ink)]">
+                  {product.name}
+                </p>
                 {product.category && (
-                  <p className="text-xs text-[var(--color-muted)]">{product.category}</p>
+                  <p className="text-xs text-[var(--color-muted)]">
+                    {product.category}
+                  </p>
                 )}
               </div>
               <StockAdjuster
@@ -116,7 +198,9 @@ export default function Inventory() {
       </div>
 
       <div className="flex flex-col gap-2">
-        <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">Recent activity</h2>
+        <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">
+          Recent activity
+        </h2>
         <StockHistoryList entries={history} />
       </div>
     </div>

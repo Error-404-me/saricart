@@ -1,14 +1,23 @@
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 from decimal import Decimal
+import math
 
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.order import Order, OrderStatus
+from app.models.product import Product
+from app.models.stock_history import StockHistory, StockChangeReason
 
 STORE_TIMEZONE = ZoneInfo("Asia/Manila")
 DAYS_IN_WEEK = 7
 HOURS_IN_DAY = 24
+
+REORDER_LOOKBACK_DAYS = 30    # window used to compute average daily sales
+REORDER_COVER_DAYS = 14       # how many days of stock a suggested reorder should cover
+STOCKOUT_URGENCY_DAYS = 7     # only surface products expected to run out within this window
+SLOW_MOVING_WINDOW_DAYS = 30  # "unsold for" window
+NEW_PRODUCT_GRACE_DAYS = 7    # don't flag a product as slow-moving days after it's listed
 
 def get_sales_heatmap(db: Session, owner_id: int, weeks: int = 12) -> list[dict]:
     """Revenue aggregated by day-of-week and hour-of-day (store-local time),
@@ -147,3 +156,144 @@ def get_best_sellers(db: Session, owner_id: int, limit: int = 10) -> list[dict]:
             entry["revenue"] += item.price * item.quantity
 
     return sorted(aggregates.values(), key=lambda e: e["quantity_sold"], reverse=True)[:limit]
+
+def get_restock_suggestions(db: Session, owner_id: int) -> list[dict]:
+    """Products likely to run out soon, based on recent sale velocity —
+    only ones needing action within STOCKOUT_URGENCY_DAYS, so this stays a
+    short, actionable list rather than a rundown of the whole catalog."""
+    products = db.query(Product).filter(Product.owner_id == owner_id).all()
+    if not products:
+        return []
+
+    since = datetime.now(timezone.utc) - timedelta(days=REORDER_LOOKBACK_DAYS)
+    sales = (
+        db.query(StockHistory)
+        .filter(
+            StockHistory.owner_id == owner_id,
+            StockHistory.reason == StockChangeReason.SALE,
+            StockHistory.created_at >= since,
+            StockHistory.product_id.isnot(None),
+        )
+        .all()
+    )
+
+    sold_by_product: dict[int, int] = {}
+    for entry in sales:
+        sold_by_product[entry.product_id] = sold_by_product.get(entry.product_id, 0) + abs(entry.change)
+
+    suggestions = []
+    for product in products:
+        total_sold = sold_by_product.get(product.id, 0)
+        avg_daily_sales = total_sold / REORDER_LOOKBACK_DAYS
+        if avg_daily_sales <= 0:
+            continue  # not selling — nothing meaningful to project
+
+        days_until_stockout = product.stock / avg_daily_sales
+        if days_until_stockout > STOCKOUT_URGENCY_DAYS:
+            continue  # not urgent yet
+
+        suggested_reorder = max(0, math.ceil(avg_daily_sales * REORDER_COVER_DAYS) - product.stock)
+
+        suggestions.append({
+            "product_id": product.id,
+            "product_name": product.name,
+            "product_image": product.image,
+            "current_stock": product.stock,
+            "avg_daily_sales": round(avg_daily_sales, 1),
+            "days_until_stockout": round(days_until_stockout, 1),
+            "suggested_reorder": suggested_reorder,
+        })
+
+    suggestions.sort(key=lambda s: s["days_until_stockout"])
+    return suggestions
+
+
+def get_slow_moving_products(db: Session, owner_id: int) -> list[dict]:
+    """Products with no sale in the last SLOW_MOVING_WINDOW_DAYS. Products
+    listed more recently than NEW_PRODUCT_GRACE_DAYS are excluded — a brand
+    new item hasn't had a fair chance to sell yet."""
+    now = datetime.now(timezone.utc)
+    since = now - timedelta(days=SLOW_MOVING_WINDOW_DAYS)
+    grace_cutoff = now - timedelta(days=NEW_PRODUCT_GRACE_DAYS)
+
+    products = (
+        db.query(Product)
+        .filter(Product.owner_id == owner_id, Product.created_at <= grace_cutoff)
+        .all()
+    )
+    if not products:
+        return []
+
+    recently_sold_ids = {
+        row[0]
+        for row in db.query(StockHistory.product_id)
+        .filter(
+            StockHistory.owner_id == owner_id,
+            StockHistory.reason == StockChangeReason.SALE,
+            StockHistory.created_at >= since,
+            StockHistory.product_id.isnot(None),
+        )
+        .distinct()
+        .all()
+    }
+
+    # Last-ever sale per product (even outside the window), so the UI can
+    # say "last sold N days ago" instead of just "not recently."
+    last_sale_by_product = dict(
+        db.query(StockHistory.product_id, func.max(StockHistory.created_at))
+        .filter(
+            StockHistory.owner_id == owner_id,
+            StockHistory.reason == StockChangeReason.SALE,
+            StockHistory.product_id.isnot(None),
+        )
+        .group_by(StockHistory.product_id)
+        .all()
+    )
+
+    slow_moving = []
+    for product in products:
+        if product.id in recently_sold_ids:
+            continue
+        last_sale = last_sale_by_product.get(product.id)
+        days_since_last_sale = (
+            (now - last_sale.replace(tzinfo=timezone.utc)).days if last_sale else None
+        )
+        slow_moving.append({
+            "product_id": product.id,
+            "product_name": product.name,
+            "product_image": product.image,
+            "current_stock": product.stock,
+            "days_since_last_sale": days_since_last_sale,
+        })
+
+    # Never-sold products (None) surface first, then longest-idle first.
+    slow_moving.sort(key=lambda p: p["days_since_last_sale"] if p["days_since_last_sale"] is not None else math.inf, reverse=True)
+    return slow_moving
+
+
+def get_fastest_selling(db: Session, owner_id: int, days: int = 30, limit: int = 5) -> list[dict]:
+    """Top products by units sold over a rolling window — a "velocity"
+    view distinct from the all-time Best Sellers on the Analytics page."""
+    since = datetime.now(timezone.utc) - timedelta(days=days)
+    sales = (
+        db.query(StockHistory)
+        .filter(
+            StockHistory.owner_id == owner_id,
+            StockHistory.reason == StockChangeReason.SALE,
+            StockHistory.created_at >= since,
+        )
+        .all()
+    )
+
+    aggregates: dict[str, dict] = {}
+    for entry in sales:
+        item = aggregates.setdefault(
+            entry.product_name,
+            {"product_name": entry.product_name, "product_id": entry.product_id, "quantity_sold": 0},
+        )
+        item["quantity_sold"] += abs(entry.change)
+
+    ranked = sorted(aggregates.values(), key=lambda e: e["quantity_sold"], reverse=True)[:limit]
+    for rank, item in enumerate(ranked, start=1):
+        item["rank"] = rank
+    return ranked

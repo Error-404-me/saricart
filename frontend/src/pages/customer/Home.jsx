@@ -5,10 +5,11 @@ import { useAuth } from "../../hooks/useAuth";
 import Button from "../../components/common/Button";
 import Spinner from "../../components/common/Spinner";
 import ProductGrid from "../../components/product/ProductGrid";
-import {
-  browseProducts,
-  browseCategories,
-} from "../../services/productService";
+import PersonalizedSuggestions from "../../components/customer/PersonalizedSuggestions";
+import BuyAgainList from "../../components/customer/BuyAgainList";
+import RecentlyBoughtStrip from "../../components/customer/RecentlyBoughtStrip";
+import { browseProducts, browseCategories } from "../../services/productService";
+import { fetchBuyAgain, fetchRecentlyBought, fetchSuggestions } from "../../services/customerService";
 
 export default function Home() {
   const { user } = useAuth();
@@ -18,6 +19,10 @@ export default function Home() {
   const [categories, setCategories] = useState([]);
   const [featured, setFeatured] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const [buyAgain, setBuyAgain] = useState([]);
+  const [recentlyBought, setRecentlyBought] = useState([]);
+  const [suggestions, setSuggestions] = useState({ usually_buys: [], recommended: null });
 
   useEffect(() => {
     Promise.all([browseCategories(), browseProducts()])
@@ -32,12 +37,20 @@ export default function Home() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    fetchBuyAgain().then(setBuyAgain).catch(() => setBuyAgain([]));
+    fetchRecentlyBought().then(setRecentlyBought).catch(() => setRecentlyBought([]));
+    fetchSuggestions()
+      .then(setSuggestions)
+      .catch(() => setSuggestions({ usually_buys: [], recommended: null }));
+  }, []);
+
   function handleSearchSubmit(e) {
     e.preventDefault();
-    navigate(
-      query ? `/products?search=${encodeURIComponent(query)}` : "/products",
-    );
+    navigate(query ? `/products?search=${encodeURIComponent(query)}` : "/products");
   }
+
+  const hasPersonalization = suggestions.usually_buys.length > 0 || !!suggestions.recommended;
 
   return (
     <div className="flex flex-col gap-8">
@@ -48,10 +61,7 @@ export default function Home() {
         <p className="mt-2 text-sm text-white/75">
           Browse what's in stock, then pick it up in store.
         </p>
-        <form
-          onSubmit={handleSearchSubmit}
-          className="mx-auto mt-5 flex max-w-md gap-2"
-        >
+        <form onSubmit={handleSearchSubmit} className="mx-auto mt-5 flex max-w-md gap-2">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-muted)]" />
             <input
@@ -73,11 +83,27 @@ export default function Home() {
         </form>
       </div>
 
+      {hasPersonalization && (
+        <PersonalizedSuggestions usuallyBuys={suggestions.usually_buys} recommended={suggestions.recommended} />
+      )}
+
+      {recentlyBought.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">Recently bought</h2>
+          <RecentlyBoughtStrip items={recentlyBought} />
+        </div>
+      )}
+
+      {buyAgain.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">Buy again</h2>
+          <BuyAgainList items={buyAgain} />
+        </div>
+      )}
+
       {categories.length > 0 && (
         <div className="flex flex-col gap-3">
-          <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">
-            Categories
-          </h2>
+          <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">Categories</h2>
           <div className="flex flex-wrap gap-2">
             {categories.map((category) => (
               <Link
@@ -98,10 +124,7 @@ export default function Home() {
             {featured.length > 0 ? "Fresh in stock" : "Products"}
           </h2>
           {featured.length > 0 && (
-            <Link
-              to="/products"
-              className="text-sm font-medium text-[var(--color-storefront)] hover:underline"
-            >
+            <Link to="/products" className="text-sm font-medium text-[var(--color-storefront)] hover:underline">
               See all
             </Link>
           )}

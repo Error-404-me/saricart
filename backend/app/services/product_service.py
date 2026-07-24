@@ -12,6 +12,8 @@ from app.models.product import Product
 from app.models.stock_history import StockHistory, StockChangeReason
 from app.models.user import User
 from app.schemas.product import ProductCreate, ProductUpdate
+from app.services import cloudinary_service
+from io import BytesIO
 
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
@@ -127,8 +129,11 @@ def delete_product(db: Session, product_id: int, current_user: User) -> None:
         {StockHistory.product_id: None}
     )
 
+    # if product.image:
+    #     _delete_image_file(product.image)
+        
     if product.image:
-        _delete_image_file(product.image)
+        cloudinary_service.delete_file(product.image)
 
     db.delete(product)
     db.commit()
@@ -147,39 +152,31 @@ def save_product_image(
             detail="Only JPEG, PNG, or WEBP images are allowed.",
         )
 
-    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-    filename = f"{uuid.uuid4().hex}{ext}"
-    filepath = os.path.join(settings.UPLOAD_DIR, filename)
-
     max_bytes = settings.MAX_IMAGE_SIZE_MB * 1024 * 1024
-    size = 0
-    with open(filepath, "wb") as out:
-        while chunk := file.file.read(1024 * 1024):
-            size += len(chunk)
-            if size > max_bytes:
-                out.close()
-                os.remove(filepath)
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Image must be under {settings.MAX_IMAGE_SIZE_MB}MB.",
-                )
-            out.write(chunk)
+    contents = file.file.read(max_bytes + 1)
+    if len(contents) > max_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Image must be under {settings.MAX_IMAGE_SIZE_MB}MB.",
+        )
 
-    # Replace any previous image now that the new one is safely written
-    if product.image:
-        _delete_image_file(product.image)
-
-    product.image = f"/uploads/{filename}"
+    old_image = product.image
+    public_id = uuid.uuid4().hex
+    product.image = cloudinary_service.upload_file(BytesIO(contents), public_id)
     db.commit()
     db.refresh(product)
+
+    if old_image:
+        cloudinary_service.delete_file(old_image)
+
     return product
 
 
-def _delete_image_file(image_url: str) -> None:
-    filename = os.path.basename(image_url)
-    filepath = os.path.join(settings.UPLOAD_DIR, filename)
-    if os.path.exists(filepath):
-        try:
-            os.remove(filepath)
-        except OSError:
-            pass
+# def _delete_image_file(image_url: str) -> None:
+#     filename = os.path.basename(image_url)
+#     filepath = os.path.join(settings.UPLOAD_DIR, filename)
+#     if os.path.exists(filepath):
+#         try:
+#             os.remove(filepath)
+#         except OSError:
+#             pass
