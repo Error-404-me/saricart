@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, CheckCheck, Package, ClipboardList, AlertTriangle } from "lucide-react";
+import {
+  Bell,
+  CheckCheck,
+  Package,
+  ClipboardList,
+  AlertTriangle,
+} from "lucide-react";
 import { useNotifications } from "../../hooks/useNotifications";
 
 const ICON_BY_TYPE = {
@@ -20,8 +26,14 @@ function formatDate(isoString) {
 
 export default function NotificationBell() {
   const navigate = useNavigate();
-  const { notifications, unreadCount, loaded, loadNotifications, markRead, markAllRead } =
-    useNotifications();
+  const {
+    notifications,
+    unreadCount,
+    loaded,
+    loadNotifications,
+    markRead,
+    markAllRead,
+  } = useNotifications();
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);
 
@@ -61,9 +73,11 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-30 mt-2 w-80 max-w-[90vw] overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl shadow-black/10">
+        <div className="absolute right-auto top-full z-30 mt-2 w-80 max-w-[90vw] overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl shadow-black/10">
           <div className="flex items-center justify-between border-b border-[var(--color-border-subtle)] px-4 py-3">
-            <p className="font-display text-sm font-bold text-[var(--color-ink)]">Notifications</p>
+            <p className="font-display text-sm font-bold text-[var(--color-ink)]">
+              Notifications
+            </p>
             {unreadCount > 0 && (
               <button
                 onClick={markAllRead}
@@ -103,13 +117,17 @@ export default function NotificationBell() {
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="flex items-start justify-between gap-2">
-                          <span className="text-sm font-medium text-[var(--color-ink)]">{n.title}</span>
+                          <span className="text-sm font-medium text-[var(--color-ink)]">
+                            {n.title}
+                          </span>
                           {!n.is_read && (
                             <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--color-storefront)]" />
                           )}
                         </span>
                         {n.body && (
-                          <span className="mt-0.5 block text-xs text-[var(--color-muted)]">{n.body}</span>
+                          <span className="mt-0.5 block text-xs text-[var(--color-muted)]">
+                            {n.body}
+                          </span>
                         )}
                         <span className="mt-1 block text-[11px] text-[var(--color-muted)]">
                           {formatDate(n.created_at)}
