@@ -6,25 +6,25 @@ from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.database import Base, engine
-from app.models import favorite, order, order_item, product, review, stock_history, store, user  # noqa: F401 (ensures models are registered on Base)
+from app.models import favorite, order, order_item, product, review, stock_history, store, user  # noqa: F401
 from app.routes import analytics, auth, customers, orders, products, reviews, stores, users
 
-# Dev convenience: auto-create tables. Swap for Alembic migrations in production.
-Base.metadata.create_all(bind=engine)
-
-os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+if settings.ENVIRONMENT == "development":
+    Base.metadata.create_all(bind=engine)
+    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 
 app = FastAPI(title=settings.APP_NAME)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL, "https://saricart.vercel.app"],
+    allow_origins=[settings.FRONTEND_URL],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
+if settings.ENVIRONMENT == "development":
+    app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 
 app.include_router(auth.router)
 app.include_router(users.router)

@@ -12,7 +12,7 @@ from app.models.product import Product
 from app.models.stock_history import StockHistory, StockChangeReason
 from app.models.user import User
 from app.schemas.product import ProductCreate, ProductUpdate
-from app.services import cloudinary_service
+from app.services import storage_service
 from io import BytesIO
 
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
@@ -133,7 +133,7 @@ def delete_product(db: Session, product_id: int, current_user: User) -> None:
     #     _delete_image_file(product.image)
         
     if product.image:
-        cloudinary_service.delete_file(product.image)
+        storage_service.delete_file(product.image)
 
     db.delete(product)
     db.commit()
@@ -161,13 +161,12 @@ def save_product_image(
         )
 
     old_image = product.image
-    public_id = uuid.uuid4().hex
-    product.image = cloudinary_service.upload_file(BytesIO(contents), public_id)
+    product.image = storage_service.upload_file(BytesIO(contents), ext, file.content_type)
     db.commit()
     db.refresh(product)
 
     if old_image:
-        cloudinary_service.delete_file(old_image)
+        storage_service.delete_file(old_image)
 
     return product
 
