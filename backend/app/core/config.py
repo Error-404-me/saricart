@@ -25,6 +25,9 @@ class Settings:
     CLOUDINARY_CLOUD_NAME: str = os.getenv("CLOUDINARY_CLOUD_NAME", "")
     CLOUDINARY_API_KEY: str = os.getenv("CLOUDINARY_API_KEY", "")
     CLOUDINARY_API_SECRET: str = os.getenv("CLOUDINARY_API_SECRET", "")
+    
+    DOCS_USERNAME: str = os.getenv("DOCS_USERNAME", "admin")
+    DOCS_PASSWORD: str = os.getenv("DOCS_PASSWORD", "")
 
 
 settings = Settings()
