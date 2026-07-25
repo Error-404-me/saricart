@@ -10,6 +10,16 @@ from app.models.stock_history import StockChangeReason
 from app.models.user import User
 from app.schemas.order import OrderCreate, OrderItemCreate
 from app.services import stock_service
+from app.models.notification import NotificationType
+from app.services import notification_service
+
+_CUSTOMER_STATUS_MESSAGES = {
+    OrderStatus.ACCEPTED: "Your order has been accepted and is being prepared.",
+    OrderStatus.PREPARING: "Your order is being prepared.",
+    OrderStatus.READY: "Your order is ready for pickup!",
+    OrderStatus.COMPLETED: "Thanks for your order!",
+    OrderStatus.CANCELLED: "Your order was cancelled.",
+}
 
 
 def _with_items(query):
@@ -69,6 +79,17 @@ def create_order(db: Session, order_in: OrderCreate, customer: User) -> Order:
                 quantity=item.quantity,
                 price=product.price,
             )
+        )
+
+    owner = products_by_id[order_in.items[0].product_id].owner
+    if owner:
+        notification_service.create_notification(
+            db,
+            owner,
+            NotificationType.ORDER_PLACED,
+            title="New order received",
+            body=f"{customer.username} placed an order for ₱{order.total:.2f} — {len(order_in.items)} item(s).",
+            link="/owner/orders",
         )
 
     db.commit()
@@ -172,6 +193,17 @@ def update_order_status(
         _restock(db, order)
 
     order.status = new_status
+
+    if order.customer:
+        notification_service.create_notification(
+            db,
+            order.customer,
+            NotificationType.ORDER_STATUS_CHANGED,
+            title=f"Order #{order.id} — {new_status.value.replace('_', ' ').title()}",
+            body=_CUSTOMER_STATUS_MESSAGES.get(new_status, "Your order status was updated."),
+            link="/orders",
+        )
+
     db.commit()
     db.refresh(order)
     return order

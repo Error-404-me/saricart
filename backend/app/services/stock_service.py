@@ -4,6 +4,10 @@ from sqlalchemy.orm import Session
 from app.models.product import Product
 from app.models.stock_history import StockHistory, StockChangeReason
 from app.models.user import User
+from app.models.notification import NotificationType
+from app.services import notification_service
+
+LOW_STOCK_THRESHOLD = 5
 
 
 def record_stock_change(
@@ -30,6 +34,16 @@ def record_stock_change(
         )
     )
     product.stock = new_stock
+
+    if delta < 0 and previous_stock > LOW_STOCK_THRESHOLD >= new_stock and product.owner:
+        notification_service.create_notification(
+            db,
+            product.owner,
+            NotificationType.LOW_STOCK,
+            title=f"{product.name} is running low",
+            body=f"Only {new_stock} left in stock.",
+            link="/owner/inventory",
+        )
 
 
 def adjust_stock(db: Session, product_id: int, delta: int, current_user: User) -> Product:

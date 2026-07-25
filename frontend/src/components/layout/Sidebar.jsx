@@ -20,6 +20,7 @@ import {
 import { useAuth } from "../../hooks/useAuth";
 import { useCart } from "../../hooks/useCart";
 import { useTheme } from "../../hooks/useTheme";
+import NotificationBell from "../notifications/NotificationBell";
 
 const OWNER_NAV_ITEMS = [
   {
@@ -147,6 +148,9 @@ export default function Sidebar({ collapsed, onToggleCollapse }) {
         </div>
 
         <div className="shrink-0 border-t border-[var(--color-border)] p-3">
+          <div className={`mb-1 flex ${collapsed ? "justify-center" : "px-1"}`}>
+            <NotificationBell />
+          </div>
           <button
             onClick={toggleTheme}
             title={
@@ -195,6 +199,7 @@ export default function Sidebar({ collapsed, onToggleCollapse }) {
           </Link>
 
           <div className="flex items-center gap-1">
+            <NotificationBell />
             <button
               onClick={toggleTheme}
               aria-label={
