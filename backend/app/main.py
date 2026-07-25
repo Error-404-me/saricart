@@ -33,7 +33,6 @@ app.include_router(orders.router)
 app.include_router(analytics.router)
 app.include_router(stores.router)
 app.include_router(reviews.router)
-app.include_router(reviews.router)
 app.include_router(customers.router)
 
 
