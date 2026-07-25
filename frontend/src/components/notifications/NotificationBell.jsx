@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Bell,
@@ -14,6 +14,9 @@ const ICON_BY_TYPE = {
   order_status_changed: Package,
   low_stock: AlertTriangle,
 };
+
+const PANEL_WIDTH = 320;
+const PANEL_MARGIN = 12;
 
 function formatDate(isoString) {
   return new Date(isoString).toLocaleString("en-PH", {
@@ -35,15 +38,53 @@ export default function NotificationBell() {
     markAllRead,
   } = useNotifications();
   const [open, setOpen] = useState(false);
-  const containerRef = useRef(null);
+  const [coords, setCoords] = useState(null);
+  const buttonRef = useRef(null);
+  const panelRef = useRef(null);
 
   useEffect(() => {
     if (open && !loaded) loadNotifications();
   }, [open, loaded, loadNotifications]);
 
+  useLayoutEffect(() => {
+    if (!open || !buttonRef.current) return;
+
+    function computePosition() {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      // Prefer opening downward; flip upward only when there's genuinely
+      // more room that way — this is what fixes a trigger pinned to the
+      // bottom of the screen (desktop sidebar) or a short viewport (mobile).
+      const openUpward = spaceBelow < 340 && spaceAbove > spaceBelow;
+
+      let left = rect.right - PANEL_WIDTH;
+      left = Math.max(
+        PANEL_MARGIN,
+        Math.min(left, window.innerWidth - PANEL_WIDTH - PANEL_MARGIN),
+      );
+
+      setCoords({
+        left,
+        top: openUpward ? undefined : rect.bottom + 8,
+        bottom: openUpward ? window.innerHeight - rect.top + 8 : undefined,
+        maxHeight: Math.max(200, (openUpward ? spaceAbove : spaceBelow) - 24),
+      });
+    }
+
+    computePosition();
+    window.addEventListener("resize", computePosition);
+    return () => window.removeEventListener("resize", computePosition);
+  }, [open]);
+
   useEffect(() => {
     function handleClickOutside(e) {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
+      if (
+        buttonRef.current &&
+        !buttonRef.current.contains(e.target) &&
+        panelRef.current &&
+        !panelRef.current.contains(e.target)
+      ) {
         setOpen(false);
       }
     }
@@ -58,8 +99,9 @@ export default function NotificationBell() {
   }
 
   return (
-    <div ref={containerRef} className="relative">
+    <>
       <button
+        ref={buttonRef}
         onClick={() => setOpen((o) => !o)}
         aria-label="Notifications"
         className="relative rounded-lg p-2 text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-ink)]"
@@ -72,9 +114,20 @@ export default function NotificationBell() {
         )}
       </button>
 
-      {open && (
-        <div className="absolute right-auto top-full z-30 mt-2 w-80 max-w-[90vw] overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl shadow-black/10">
-          <div className="flex items-center justify-between border-b border-[var(--color-border-subtle)] px-4 py-3">
+      {open && coords && (
+        <div
+          ref={panelRef}
+          style={{
+            position: "fixed",
+            left: coords.left,
+            top: coords.top,
+            bottom: coords.bottom,
+            width: PANEL_WIDTH,
+            maxHeight: coords.maxHeight,
+          }}
+          className="z-50 flex flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl shadow-black/10"
+        >
+          <div className="flex shrink-0 items-center justify-between border-b border-[var(--color-border-subtle)] px-4 py-3">
             <p className="font-display text-sm font-bold text-[var(--color-ink)]">
               Notifications
             </p>
@@ -89,7 +142,7 @@ export default function NotificationBell() {
             )}
           </div>
 
-          <div className="max-h-96 overflow-y-auto">
+          <div className="overflow-y-auto">
             {notifications.length === 0 ? (
               <p className="px-4 py-8 text-center text-sm text-[var(--color-muted)]">
                 Nothing yet — you're all caught up.
@@ -141,6 +194,6 @@ export default function NotificationBell() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

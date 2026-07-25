@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -16,6 +17,8 @@ import {
   LogOut,
   PanelLeftOpen,
   PanelLeftClose,
+  Menu,
+  X,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { useCart } from "../../hooks/useCart";
@@ -82,15 +85,16 @@ function Logo({ collapsed, onToggleCollapse }) {
   );
 }
 
-function NavItems({ items, collapsed, itemCount }) {
+function NavItems({ items, collapsed, itemCount, onNavigate }) {
   return (
-    <ul className="flex gap-1 px-3 md:flex-col md:gap-1">
+    <ul className="flex flex-col gap-1 px-3">
       {items.map(({ to, label, icon: Icon, end, showCartBadge }) => (
-        <li key={to} className="shrink-0">
+        <li key={to}>
           <NavLink
             to={to}
             end={end}
             title={label}
+            onClick={onNavigate}
             className={({ isActive }) =>
               `flex items-center gap-2.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition
               ${collapsed ? "md:justify-center md:px-0" : ""}
@@ -123,9 +127,32 @@ export default function Sidebar({ collapsed, onToggleCollapse }) {
   const { user, logout } = useAuth();
   const { itemCount } = useCart();
   const { theme, toggleTheme } = useTheme();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const navItems =
     user?.role === "owner" ? OWNER_NAV_ITEMS : CUSTOMER_NAV_ITEMS;
+
+  // Lock background scroll behind the mobile drawer while it's open.
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
+
+  // Let Escape close the drawer, same as the backdrop click.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    function handleKeyDown(e) {
+      if (e.key === "Escape") setMobileOpen(false);
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [mobileOpen]);
+
+  function closeMobile() {
+    setMobileOpen(false);
+  }
 
   return (
     <>
@@ -151,6 +178,7 @@ export default function Sidebar({ collapsed, onToggleCollapse }) {
           <div className={`mb-1 flex ${collapsed ? "justify-center" : "px-1"}`}>
             <NotificationBell />
           </div>
+
           <button
             onClick={toggleTheme}
             title={
@@ -188,7 +216,7 @@ export default function Sidebar({ collapsed, onToggleCollapse }) {
         </div>
       </nav>
 
-      {/* Mobile */}
+      {/* Mobile top bar */}
       <div className="sticky top-0 z-20 border-b border-[var(--color-border)] bg-[var(--color-surface)] md:hidden">
         <div className="flex h-14 items-center justify-between px-4">
           <Link
@@ -200,35 +228,86 @@ export default function Sidebar({ collapsed, onToggleCollapse }) {
 
           <div className="flex items-center gap-1">
             <NotificationBell />
-            <button
-              onClick={toggleTheme}
-              aria-label={
-                theme === "dark"
-                  ? "Switch to light mode"
-                  : "Switch to dark mode"
-              }
-              className="rounded-lg p-2 text-[var(--color-muted)] hover:bg-[var(--color-overlay)]"
-            >
-              {theme === "dark" ? (
-                <Sun className="h-4 w-4" />
-              ) : (
-                <Moon className="h-4 w-4" />
-              )}
-            </button>
 
             <button
-              onClick={logout}
-              aria-label="Log out"
-              className="rounded-lg p-2 text-[var(--color-crate)] hover:bg-[var(--color-crate)]/10"
+              onClick={() => setMobileOpen(true)}
+              aria-label="Open menu"
+              className="rounded-lg p-2 text-[var(--color-muted)] hover:bg-[var(--color-overlay)]"
             >
-              <LogOut className="h-4 w-4" />
+              <Menu className="h-5 w-5" />
             </button>
           </div>
         </div>
+      </div>
 
-        <div className="overflow-x-auto pb-2">
-          <NavItems items={navItems} collapsed={false} itemCount={itemCount} />
-        </div>
+      {/* Mobile drawer */}
+      <div
+        className={`fixed inset-0 z-40 transition-opacity duration-200 md:hidden
+          ${mobileOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"}`}
+        aria-hidden={!mobileOpen}
+      >
+        <div onClick={closeMobile} className="absolute inset-0 bg-black/40" />
+
+        <nav
+          aria-label="Main navigation"
+          className={`absolute inset-y-0 right-0 flex w-72 max-w-[85vw] flex-col
+            bg-[var(--color-surface)] shadow-xl shadow-black/20
+            transition-transform duration-200
+            ${mobileOpen ? "translate-x-0" : "translate-x-full"}`}
+        >
+          <div className="flex h-14 shrink-0 items-center justify-between border-b border-[var(--color-border)] px-4">
+            <Link
+              to="/"
+              onClick={closeMobile}
+              className="font-display text-lg font-extrabold text-[var(--color-ink)]"
+            >
+              Sari<span className="text-awning">Cart</span>
+            </Link>
+            <button
+              onClick={closeMobile}
+              aria-label="Close menu"
+              className="rounded-lg p-2 text-[var(--color-muted)] hover:bg-[var(--color-overlay)]"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto py-4">
+            <NavItems
+              items={navItems}
+              collapsed={false}
+              itemCount={itemCount}
+              onNavigate={closeMobile}
+            />
+          </div>
+
+          <div className="shrink-0 border-t border-[var(--color-border)] p-3">
+            <button
+              onClick={toggleTheme}
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium
+                text-[var(--color-muted)] transition hover:bg-[var(--color-overlay)] hover:text-[var(--color-ink)]"
+            >
+              {theme === "dark" ? (
+                <Sun className="h-4 w-4 shrink-0" />
+              ) : (
+                <Moon className="h-4 w-4 shrink-0" />
+              )}
+              {theme === "dark" ? "Light mode" : "Dark mode"}
+            </button>
+
+            <button
+              onClick={() => {
+                closeMobile();
+                logout();
+              }}
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium
+                text-[var(--color-crate)] transition hover:bg-[var(--color-crate)]/10"
+            >
+              <LogOut className="h-4 w-4 shrink-0" />
+              Log out
+            </button>
+          </div>
+        </nav>
       </div>
     </>
   );
