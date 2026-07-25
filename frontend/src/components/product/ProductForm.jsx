@@ -1,11 +1,12 @@
 import { useCallback, useState } from "react";
-import { ImagePlus, ScanBarcode } from "lucide-react";
+import { ImagePlus, ScanBarcode, Camera } from "lucide-react";
 import Input from "../common/Input";
 import Button from "../common/Button";
 import Modal from "../common/Modal";
 import BarcodeScanner from "../scanner/BarcodeScanner";
 
-const CURRENT_CATEGORIES_HINT = "e.g. Snacks, Instant Noodles, Beverages, Canned Goods";
+const CURRENT_CATEGORIES_HINT =
+  "e.g. Snacks, Instant Noodles, Beverages, Canned Goods";
 
 export default function ProductForm({
   initialValues = {},
@@ -44,9 +45,11 @@ export default function ProductForm({
     const errors = {};
     if (!form.name.trim()) errors.name = "Give the product a name.";
     const price = parseFloat(form.price);
-    if (Number.isNaN(price) || price <= 0) errors.price = "Enter a price greater than 0.";
+    if (Number.isNaN(price) || price <= 0)
+      errors.price = "Enter a price greater than 0.";
     const stock = parseInt(form.stock, 10);
-    if (Number.isNaN(stock) || stock < 0) errors.stock = "Enter a stock count of 0 or more.";
+    if (Number.isNaN(stock) || stock < 0)
+      errors.stock = "Enter a stock count of 0 or more.";
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   }
@@ -77,15 +80,39 @@ export default function ProductForm({
         <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
           <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-paper)]">
             {imagePreview ? (
-              <img src={imagePreview} alt="Product preview" className="h-full w-full object-cover" />
+              <img
+                src={imagePreview}
+                alt="Product preview"
+                className="h-full w-full object-cover"
+              />
             ) : (
               <ImagePlus className="h-6 w-6 text-[var(--color-muted)]" />
             )}
           </div>
-          <label className="cursor-pointer text-sm font-medium text-[var(--color-storefront)] hover:underline">
-            {imagePreview ? "Change photo" : "Add a photo"}
-            <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImageChange} className="sr-only" />
-          </label>
+
+          <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+            <label className="flex cursor-pointer items-center gap-1.5 text-sm font-medium text-[var(--color-storefront)] hover:underline">
+              <Camera className="h-4 w-4" />
+              Take photo
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                capture="environment"
+                onChange={handleImageChange}
+                className="sr-only"
+              />
+            </label>
+            <label className="flex cursor-pointer items-center gap-1.5 text-sm font-medium text-[var(--color-storefront)] hover:underline">
+              <ImagePlus className="h-4 w-4" />
+              {imagePreview ? "Change photo" : "Upload photo"}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleImageChange}
+                className="sr-only"
+              />
+            </label>
+          </div>
         </div>
 
         <Input
@@ -99,7 +126,10 @@ export default function ProductForm({
         />
 
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="description" className="text-sm font-medium text-[var(--color-ink)]">
+          <label
+            htmlFor="description"
+            className="text-sm font-medium text-[var(--color-ink)]"
+          >
             Description
           </label>
           <textarea
@@ -151,7 +181,10 @@ export default function ProductForm({
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="barcode" className="text-sm font-medium text-[var(--color-ink)]">
+          <label
+            htmlFor="barcode"
+            className="text-sm font-medium text-[var(--color-ink)]"
+          >
             Barcode
           </label>
           <div className="flex gap-2">
@@ -178,17 +211,28 @@ export default function ProductForm({
         </div>
 
         {formError && (
-          <p className="rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]" role="alert">
+          <p
+            className="rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]"
+            role="alert"
+          >
             {formError}
           </p>
         )}
 
-        <Button type="submit" loading={submitting} className="mt-1 w-full sm:w-auto">
+        <Button
+          type="submit"
+          loading={submitting}
+          className="mt-1 w-full sm:w-auto"
+        >
           {submitLabel}
         </Button>
       </form>
 
-      <Modal open={scannerOpen} onClose={() => setScannerOpen(false)} title="Scan barcode">
+      <Modal
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        title="Scan barcode"
+      >
         {scannerOpen && <BarcodeScanner onScan={handleScanned} />}
       </Modal>
     </>

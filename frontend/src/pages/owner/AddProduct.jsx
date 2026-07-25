@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import ProductForm from "../../components/product/ProductForm";
-import { createProduct, uploadProductImage } from "../../services/productService";
+import { createProduct } from "../../services/productService";
+import { useUploadQueue } from "../../hooks/useUploadQueue";
 
 export default function AddProduct() {
   const navigate = useNavigate();
@@ -10,6 +11,7 @@ export default function AddProduct() {
   const scannedBarcode = searchParams.get("barcode") || "";
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
+  const { enqueueUpload } = useUploadQueue();
 
   async function handleSubmit({ imageFile, ...payload }) {
     setSubmitting(true);
@@ -17,11 +19,14 @@ export default function AddProduct() {
     try {
       const product = await createProduct(payload);
       if (imageFile) {
-        await uploadProductImage(product.id, imageFile);
+        enqueueUpload(product.id, imageFile);
       }
       navigate("/owner/products", { replace: true });
     } catch (err) {
-      setFormError(err.response?.data?.detail || "Couldn't add this product. Please try again.");
+      setFormError(
+        err.response?.data?.detail ||
+          "Couldn't add this product. Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -38,9 +43,12 @@ export default function AddProduct() {
       </Link>
 
       <div>
-        <h1 className="font-display text-2xl font-bold text-[var(--color-ink)]">Add a product</h1>
+        <h1 className="font-display text-2xl font-bold text-[var(--color-ink)]">
+          Add a product
+        </h1>
         <p className="mt-1 text-sm text-[var(--color-muted)]">
-          This will appear in your storefront once customer browsing is live (Phase 5).
+          This will appear in your storefront once customer browsing is live
+          (Phase 5).
         </p>
       </div>
 

@@ -5,6 +5,7 @@ import ErrorBoundary from "./components/common/ErrorBoundary";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { CartProvider } from "./context/CartContext";
+import { UploadQueueProvider } from "./context/UploadQueueContext";
 import AppRoutes from "./routes/AppRoutes";
 
 function App() {
@@ -12,11 +13,11 @@ function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <AuthProvider>
-          {/* ThemeProvider needs useAuth() to scope dark mode per account,
-              so it has to sit inside AuthProvider. */}
           <ThemeProvider>
             <CartProvider>
-              <AppRoutes />
+              <UploadQueueProvider>
+                <AppRoutes />
+              </UploadQueueProvider>
             </CartProvider>
           </ThemeProvider>
         </AuthProvider>

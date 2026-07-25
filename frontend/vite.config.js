@@ -26,48 +26,53 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // App shell (JS/CSS/HTML) is precached automatically. These are
-        // the runtime strategies for everything fetched afterward — the
-        // whole point is that a store owner mid-sale on a spotty
-        // connection still sees their catalog and can keep scanning.
-        runtimeCaching: [
-          {
-            // Product images rarely change once uploaded — serve from
-            // cache first, only hit the network for ones not seen yet.
-            urlPattern: ({ url }) => url.pathname.startsWith('/uploads/'),
-            handler: 'CacheFirst',
-            method: 'GET',
-            options: {
-              cacheName: 'saricart-uploads',
-              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+         runtimeCaching: [
+           {
+             urlPattern: ({ url }) => url.pathname.startsWith('/uploads/'),
+             handler: 'CacheFirst',
+             method: 'GET',
+             options: {
+               cacheName: 'saricart-uploads',
+               expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+             },
             },
-          },
-          {
-            // Catalog/browsing data: show the cached response instantly,
-            // refresh it in the background when online. Good fit for data
-            // that's fine being a few minutes stale.
+           {
+            // Owner's own data: these change because of the owner's own
+            // actions moments earlier (just added a product, just adjusted
+            // stock, just edited the store profile) — a stale cached read
+            // here would show a list that's missing what they just did.
+            // Correctness beats offline convenience for this bucket, so
+            // it's NetworkFirst rather than StaleWhileRevalidate. This rule
+            // must come before the general /api/products rule below, since
+            // Workbox matches routes in registration order and
+            // /api/products/mine would otherwise also match that one.
             urlPattern: ({ url }) =>
-              url.pathname.startsWith('/api/products') ||
-              url.pathname.startsWith('/api/stores'),
-            handler: 'StaleWhileRevalidate',
-            method: 'GET',
-            options: { cacheName: 'saricart-catalog' },
-          },
-          {
-            // Orders and account data: prefer a fresh answer (status
-            // changes matter), but fall back to the last known state
-            // instead of failing outright when there's no connection.
-            urlPattern: ({ url }) =>
-              url.pathname.startsWith('/api/orders') ||
-              url.pathname.startsWith('/api/users') ||
-              url.pathname.startsWith('/api/analytics'),
+              url.pathname.startsWith('/api/products/mine') ||
+              url.pathname.startsWith('/api/products/stock-history') ||
+              url.pathname.startsWith('/api/stores/mine'),
             handler: 'NetworkFirst',
             method: 'GET',
             options: {
-              cacheName: 'saricart-account-data',
+              cacheName: 'saricart-owner-data',
               networkTimeoutSeconds: 4,
             },
           },
+           {
+            // Catalog/browsing data: show the cached response instantly,
+            // refresh it in the background when online. Good fit for data
+            // that's fine being a few minutes stale.
+            // Public catalog/browsing data (what customers see): show the
+            // cached response instantly, refresh it in the background when
+            // online. Good fit for data that's fine being a few minutes
+            // stale, since it isn't reflecting the current viewer's own
+            // just-made changes.
+             urlPattern: ({ url }) =>
+               url.pathname.startsWith('/api/products') ||
+               url.pathname.startsWith('/api/stores'),
+             handler: 'StaleWhileRevalidate',
+             method: 'GET',
+             options: { cacheName: 'saricart-catalog' },
+           },
         ],
       },
     }),
