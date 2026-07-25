@@ -1,5 +1,7 @@
 import { BrowserRouter } from "react-router-dom";
 import ErrorBoundary from "./components/common/ErrorBoundary";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { CartProvider } from "./context/CartContext";
@@ -20,6 +22,8 @@ function App() {
           </ThemeProvider>
         </AuthProvider>
       </BrowserRouter>
+      <SpeedInsights />
+      <Analytics />
     </ErrorBoundary>
   );
 }
