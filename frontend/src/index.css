@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Work+Sans:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Work+Sans:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
 /*
@@ -12,21 +12,21 @@
   --font-display: "Baloo 2", system-ui, sans-serif;
   --font-body: "Work Sans", system-ui, sans-serif;
 
-  --color-storefront: #123832;      /* deep bottle-green wall */
+  --color-storefront: #123832; /* deep bottle-green wall */
   --color-storefront-light: #1c5049;
-  --color-awning: #F2A93B;          /* marigold awning / signage yellow */
-  --color-awning-dark: #D98E1F;
-  --color-crate: #E24A3B;           /* chili-red / cola-crate accent */
-  --color-crate-dark: #BE3A2D;
-  --color-paper: #FFFDF7;           /* sachet / receipt paper */
-  --color-ink: #1B2E2A;             /* body text */
-  --color-muted: #6E7D77;
+  --color-awning: #f2a93b; /* marigold awning / signage yellow */
+  --color-awning-dark: #d98e1f;
+  --color-crate: #e24a3b; /* chili-red / cola-crate accent */
+  --color-crate-dark: #be3a2d;
+  --color-paper: #fffdf7; /* sachet / receipt paper */
+  --color-ink: #1b2e2a; /* body text */
+  --color-muted: #6e7d77;
 
   /* Semantic surface tokens — every card/border/hover in the app goes
      through these instead of literal bg-white / border-black, so dark
      mode below is a matter of re-pointing these variables rather than
      touching every component. */
-  --color-surface: #FFFFFF;
+  --color-surface: #ffffff;
   --color-border: rgba(0, 0, 0, 0.1);
   --color-border-subtle: rgba(0, 0, 0, 0.05);
   --color-overlay: rgba(0, 0, 0, 0.05);
@@ -36,17 +36,17 @@
    ThemeContext). Brand colors are brightened slightly so they still pop
    against a dark background; paper/surface/border invert accordingly. */
 .dark {
-  --color-storefront: #3CA48F;
-  --color-storefront-light: #4FBBA3;
-  --color-awning: #F2B255;
-  --color-awning-dark: #E0993A;
-  --color-crate: #FF7A67;
-  --color-crate-dark: #E85C48;
-  --color-paper: #0E1B18;
-  --color-ink: #F1EFE6;
-  --color-muted: #93A69F;
+  --color-storefront: #3ca48f;
+  --color-storefront-light: #4fbba3;
+  --color-awning: #f2b255;
+  --color-awning-dark: #e0993a;
+  --color-crate: #ff7a67;
+  --color-crate-dark: #e85c48;
+  --color-paper: #0e1b18;
+  --color-ink: #f1efe6;
+  --color-muted: #93a69f;
 
-  --color-surface: #15251F;
+  --color-surface: #15251f;
   --color-border: rgba(255, 255, 255, 0.12);
   --color-border-subtle: rgba(255, 255, 255, 0.06);
   --color-overlay: rgba(255, 255, 255, 0.07);
@@ -57,10 +57,15 @@ body {
   font-family: var(--font-body);
   background-color: var(--color-paper);
   color: var(--color-ink);
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
-h1, h2, h3, .font-display {
+h1,
+h2,
+h3,
+.font-display {
   font-family: var(--font-display);
 }
 
@@ -77,4 +82,31 @@ h1, h2, h3, .font-display {
     var(--color-paper) 28px,
     var(--color-paper) 56px
   );
+}
+
+/* Thin, theme-colored scrollbar for scrollable panels (e.g. the
+   notifications dropdown). Firefox uses scrollbar-color; everything
+   WebKit/Chromium/Safari uses the ::-webkit-scrollbar pseudo-elements. */
+.themed-scrollbar {
+  --webkit-scrollbar-width: thin;
+  scrollbar-width: thin;
+  --webkit-scrollbar-color: var(--color-storefront) transparent;
+  scrollbar-color: var(--color-storefront) transparent;
+}
+
+.themed-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.themed-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.themed-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--color-storefront);
+  border-radius: 9999px;
+}
+
+.themed-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-storefront-light);
 }

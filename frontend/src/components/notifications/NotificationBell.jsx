@@ -6,6 +6,7 @@ import {
   Package,
   ClipboardList,
   AlertTriangle,
+  Trash2,
 } from "lucide-react";
 import { useNotifications } from "../../hooks/useNotifications";
 
@@ -27,7 +28,10 @@ function formatDate(isoString) {
   });
 }
 
-export default function NotificationBell() {
+export default function NotificationBell({
+  variant = "full",
+  collapsed = false,
+}) {
   const navigate = useNavigate();
   const {
     notifications,
@@ -36,6 +40,7 @@ export default function NotificationBell() {
     loadNotifications,
     markRead,
     markAllRead,
+    removeNotification,
   } = useNotifications();
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState(null);
@@ -98,19 +103,35 @@ export default function NotificationBell() {
     if (notification.link) navigate(notification.link);
   }
 
+  const isCompact = variant === "compact";
+
   return (
     <>
       <button
         ref={buttonRef}
         onClick={() => setOpen((o) => !o)}
         aria-label="Notifications"
-        className="relative rounded-lg p-2 text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-ink)]"
+        title={isCompact ? undefined : "Notifications"}
+        className={
+          isCompact
+            ? "relative rounded-lg p-2 text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-ink)]"
+            : `flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium
+               text-[var(--color-muted)] transition
+               hover:bg-[var(--color-overlay)] hover:text-[var(--color-ink)]
+               ${collapsed ? "justify-center px-2.5" : "w-full"}`
+        }
       >
-        <Bell className="h-4 w-4" />
-        {unreadCount > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-crate)] px-1 text-[9px] font-semibold text-white">
-            {unreadCount > 9 ? "9+" : unreadCount}
-          </span>
+        <span className="relative shrink-0">
+          <Bell className="h-4 w-4" />
+          {unreadCount > 0 && (
+            <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-crate)] px-1 text-[9px] font-semibold text-white">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
+        </span>
+
+        {!isCompact && (
+          <span className={collapsed ? "hidden" : ""}>Notifications</span>
         )}
       </button>
 
@@ -142,7 +163,7 @@ export default function NotificationBell() {
             )}
           </div>
 
-          <div className="overflow-y-auto">
+          <div className="themed-scrollbar overflow-y-auto">
             {notifications.length === 0 ? (
               <p className="px-4 py-8 text-center text-sm text-[var(--color-muted)]">
                 Nothing yet — you're all caught up.
@@ -152,41 +173,54 @@ export default function NotificationBell() {
                 {notifications.map((n) => {
                   const Icon = ICON_BY_TYPE[n.type] || Bell;
                   return (
-                    <button
+                    <div
                       key={n.id}
-                      onClick={() => handleSelect(n)}
-                      className={`flex items-start gap-3 px-4 py-3 text-left transition hover:bg-[var(--color-overlay)]
+                      className={`flex items-start gap-2 px-4 py-3 transition hover:bg-[var(--color-overlay)]
                         ${!n.is_read ? "bg-[var(--color-storefront)]/5" : ""}`}
                     >
-                      <span
-                        className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full
-                          ${
-                            n.type === "low_stock"
-                              ? "bg-[var(--color-crate)]/10 text-[var(--color-crate)]"
-                              : "bg-[var(--color-storefront)]/10 text-[var(--color-storefront)]"
-                          }`}
+                      <button
+                        onClick={() => handleSelect(n)}
+                        className="flex min-w-0 flex-1 items-start gap-3 text-left"
                       >
-                        <Icon className="h-3.5 w-3.5" />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="flex items-start justify-between gap-2">
-                          <span className="text-sm font-medium text-[var(--color-ink)]">
-                            {n.title}
+                        <span
+                          className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full
+                            ${
+                              n.type === "low_stock"
+                                ? "bg-[var(--color-crate)]/10 text-[var(--color-crate)]"
+                                : "bg-[var(--color-storefront)]/10 text-[var(--color-storefront)]"
+                            }`}
+                        >
+                          <Icon className="h-3.5 w-3.5" />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="flex items-start justify-between gap-2">
+                            <span className="text-sm font-medium text-[var(--color-ink)]">
+                              {n.title}
+                            </span>
+                            {!n.is_read && (
+                              <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--color-storefront)]" />
+                            )}
                           </span>
-                          {!n.is_read && (
-                            <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--color-storefront)]" />
+                          {n.body && (
+                            <span className="mt-0.5 block text-xs text-[var(--color-muted)]">
+                              {n.body}
+                            </span>
                           )}
-                        </span>
-                        {n.body && (
-                          <span className="mt-0.5 block text-xs text-[var(--color-muted)]">
-                            {n.body}
+                          <span className="mt-1 block text-[11px] text-[var(--color-muted)]">
+                            {formatDate(n.created_at)}
                           </span>
-                        )}
-                        <span className="mt-1 block text-[11px] text-[var(--color-muted)]">
-                          {formatDate(n.created_at)}
                         </span>
-                      </span>
-                    </button>
+                      </button>
+
+                      <button
+                        onClick={() => removeNotification(n.id)}
+                        aria-label="Delete notification"
+                        title="Delete"
+                        className="mt-0.5 shrink-0 rounded-lg p-1.5 text-[var(--color-muted)] transition hover:bg-[var(--color-crate)]/10 hover:text-[var(--color-crate)]"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   );
                 })}
               </div>

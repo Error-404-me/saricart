@@ -38,3 +38,11 @@ def mark_all_notifications_read(
     db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
     notification_service.mark_all_read(db, current_user.id)
+    
+@router.delete("/{notification_id}", status_code=204)
+def delete_notification(
+    notification_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    notification_service.delete_notification(db, current_user.id, notification_id)

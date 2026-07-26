@@ -175,8 +175,8 @@ export default function Sidebar({ collapsed, onToggleCollapse }) {
         </div>
 
         <div className="shrink-0 border-t border-[var(--color-border)] p-3">
-          <div className={`mb-1 flex ${collapsed ? "justify-center" : "px-1"}`}>
-            <NotificationBell />
+          <div className="mb-1">
+            <NotificationBell collapsed={collapsed} />
           </div>
 
           <button
@@ -227,7 +227,7 @@ export default function Sidebar({ collapsed, onToggleCollapse }) {
           </Link>
 
           <div className="flex items-center gap-1">
-            <NotificationBell />
+            <NotificationBell variant="compact" />
 
             <button
               onClick={() => setMobileOpen(true)}
