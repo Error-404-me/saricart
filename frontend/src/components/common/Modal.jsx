@@ -1,5 +1,3 @@
-import { X } from "lucide-react";
-
 export default function Modal({ open, onClose, title, children, footer }) {
   if (!open) return null;
 
@@ -17,15 +15,9 @@ export default function Modal({ open, onClose, title, children, footer }) {
         aria-label={title}
       >
         <div className="flex items-start justify-between gap-4">
-          <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">{title}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="rounded-lg p-1 text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-ink)]"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">
+            {title}
+          </h2>
         </div>
         <div className="mt-3 text-sm text-[var(--color-muted)]">{children}</div>
         {footer && <div className="mt-6 flex justify-end gap-2">{footer}</div>}
