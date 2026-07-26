@@ -28,6 +28,10 @@ class Settings:
     
     DOCS_USERNAME: str = os.getenv("DOCS_USERNAME", "admin")
     DOCS_PASSWORD: str = os.getenv("DOCS_PASSWORD", "")
+    
+    VAPID_PUBLIC_KEY: str = os.getenv("VAPID_PUBLIC_KEY", "")
+    VAPID_PRIVATE_KEY: str = os.getenv("VAPID_PRIVATE_KEY", "")
+    VAPID_SUBJECT: str = os.getenv("VAPID_SUBJECT", "mailto:pasuquinargie29@gmail.com")
 
 
 settings = Settings()

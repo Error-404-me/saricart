@@ -12,3 +12,4 @@ tzdata
 gunicorn==23.0.0
 alembic
 cloudinary
+pywebpush==1.14.0

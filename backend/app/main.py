@@ -12,8 +12,8 @@ from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.database import Base, engine
-from app.models import favorite, notification, order, order_item, product, review, stock_history, store, user  # noqa: F401
-from app.routes import analytics, auth, customers, notifications, orders, products, reviews, stores, users
+from app.models import favorite, notification, order, order_item, product, push_subscription, review, stock_history, store, user  # noqa: F401
+from app.routes import analytics, auth, customers, notifications, orders, products, push, reviews, stores, users
 
 if settings.ENVIRONMENT == "development":
     Base.metadata.create_all(bind=engine)
@@ -73,6 +73,7 @@ app.include_router(stores.router)
 app.include_router(reviews.router)
 app.include_router(customers.router)
 app.include_router(notifications.router)
+app.include_router(push.router)
 
 
 @app.get("/api/health")

@@ -1,11 +1,13 @@
+import logging
+
 from sqlalchemy.orm import Session
 
 from app.models.notification import Notification, NotificationType
 from app.models.user import User
+from app.services import push_service
 
-# Maps each notification type to the User preference column that gates it
-# (the toggles already live on Settings > Notifications). A type with no
-# entry here always fires.
+logger = logging.getLogger(__name__)
+
 _PREFERENCE_BY_TYPE = {
     NotificationType.ORDER_PLACED: "notify_order_updates",
     NotificationType.ORDER_STATUS_CHANGED: "notify_order_updates",
@@ -21,19 +23,34 @@ def create_notification(
     body: str | None = None,
     link: str | None = None,
 ) -> Notification | None:
-    """Queues a notification for insertion — deliberately does NOT commit.
-    Callers (order/stock services) are usually mid-transaction; this rides
-    along on whatever commit they issue at the end of their own operation,
-    so a notification never persists for a change that itself got rolled
-    back."""
+    """Best-effort on two fronts — the in-app row and the push fan-out —
+    each isolated in its own SAVEPOINT so neither can break the order/stock
+    operation this rides along on. Callers don't need to know push exists;
+    it's entirely internal to this function."""
     pref_field = _PREFERENCE_BY_TYPE.get(type_)
     if pref_field is not None and not getattr(recipient, pref_field, True):
-        return None  # recipient opted out of this category
+        return None
 
-    notification = Notification(
-        user_id=recipient.id, type=type_, title=title, body=body, link=link
-    )
-    db.add(notification)
+    notification = None
+    try:
+        with db.begin_nested():
+            notification = Notification(
+                user_id=recipient.id, type=type_, title=title, body=body, link=link
+            )
+            db.add(notification)
+            db.flush()
+    except Exception:
+        logger.exception(
+            "Failed to create notification (type=%s, user_id=%s)", type_.value, recipient.id
+        )
+        return None
+
+    try:
+        with db.begin_nested():
+            push_service.send_push_to_user(db, recipient.id, title, body, link)
+    except Exception:
+        logger.exception("Push notification failed for user_id=%s", recipient.id)
+
     return notification
 
 

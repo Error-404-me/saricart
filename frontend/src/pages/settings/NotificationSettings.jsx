@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Bell } from "lucide-react";
+import { Bell, BellRing } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
+import { usePushNotifications } from "../../hooks/usePushNotifications";
 import { updateNotificationPreferences } from "../../services/userService";
 
 function Toggle({ checked, onChange, disabled }) {
@@ -25,6 +26,7 @@ export default function NotificationSettings() {
   const { user, updateUser } = useAuth();
   const [saving, setSaving] = useState(null);
   const [error, setError] = useState("");
+  const push = usePushNotifications();
 
   async function handleToggle(key) {
     const next = {
@@ -45,6 +47,14 @@ export default function NotificationSettings() {
     }
   }
 
+  async function handlePushToggle() {
+    if (push.subscribed) {
+      await push.disable();
+    } else {
+      await push.enable();
+    }
+  }
+
   const rows = [
     {
       key: "notify_order_updates",
@@ -59,41 +69,102 @@ export default function NotificationSettings() {
           {
             key: "notify_low_stock",
             title: "Low stock alerts",
-            description: "Get notified when a product runs low or is about to sell out.",
+            description:
+              "Get notified when a product runs low or is about to sell out.",
           },
         ]
       : []),
     {
       key: "notify_promotions",
       title: "Product & promo updates",
-      description: "Occasional emails about new features and offers from SariCart.",
+      description:
+        "Occasional emails about new features and offers from SariCart.",
     },
   ];
 
   return (
-    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
-      <h2 className="flex items-center gap-2 font-display text-lg font-bold text-[var(--color-ink)]">
-        <Bell className="h-4 w-4 text-[var(--color-storefront)]" />
-        Notifications
-      </h2>
-      <p className="mt-1 text-sm text-[var(--color-muted)]">Choose what SariCart lets you know about.</p>
-
-      {error && (
-        <p className="mt-4 rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]" role="alert">
-          {error}
+    <div className="flex flex-col gap-5">
+      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+        <h2 className="flex items-center gap-2 font-display text-lg font-bold text-[var(--color-ink)]">
+          <BellRing className="h-4 w-4 text-[var(--color-storefront)]" />
+          Push notifications
+        </h2>
+        <p className="mt-1 text-sm text-[var(--color-muted)]">
+          Get notified even when SariCart isn't open in a tab.
         </p>
-      )}
 
-      <div className="mt-3 flex flex-col divide-y divide-[var(--color-border-subtle)]">
-        {rows.map((row) => (
-          <div key={row.key} className="flex items-center justify-between gap-4 py-4">
+        {!push.supported ? (
+          <p className="mt-4 text-sm text-[var(--color-muted)]">
+            Your browser doesn't support push notifications.
+          </p>
+        ) : push.permission === "denied" ? (
+          <p className="mt-4 text-sm text-[var(--color-muted)]">
+            Notifications are blocked for this site in your browser settings.
+            Enable them there, then reload this page.
+          </p>
+        ) : (
+          <div className="mt-4 flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-medium text-[var(--color-ink)]">{row.title}</p>
-              <p className="text-sm text-[var(--color-muted)]">{row.description}</p>
+              <p className="text-sm font-medium text-[var(--color-ink)]">
+                {push.subscribed
+                  ? "Enabled on this device"
+                  : "Turn on for this device"}
+              </p>
+              <p className="text-sm text-[var(--color-muted)]">
+                {push.subscribed
+                  ? "You'll get notified on this browser."
+                  : "You'll need to allow the permission prompt."}
+              </p>
             </div>
-            <Toggle checked={!!user?.[row.key]} onChange={() => handleToggle(row.key)} disabled={saving === row.key} />
+            <Toggle
+              checked={push.subscribed}
+              onChange={handlePushToggle}
+              disabled={push.loading}
+            />
           </div>
-        ))}
+        )}
+      </div>
+
+      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+        <h2 className="flex items-center gap-2 font-display text-lg font-bold text-[var(--color-ink)]">
+          <Bell className="h-4 w-4 text-[var(--color-storefront)]" />
+          Notifications
+        </h2>
+        <p className="mt-1 text-sm text-[var(--color-muted)]">
+          Choose what SariCart lets you know about.
+        </p>
+
+        {error && (
+          <p
+            className="mt-4 rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]"
+            role="alert"
+          >
+            {error}
+          </p>
+        )}
+
+        <div className="mt-3 flex flex-col divide-y divide-[var(--color-border-subtle)]">
+          {rows.map((row) => (
+            <div
+              key={row.key}
+              className="flex items-center justify-between gap-4 py-4"
+            >
+              <div>
+                <p className="text-sm font-medium text-[var(--color-ink)]">
+                  {row.title}
+                </p>
+                <p className="text-sm text-[var(--color-muted)]">
+                  {row.description}
+                </p>
+              </div>
+              <Toggle
+                checked={!!user?.[row.key]}
+                onChange={() => handleToggle(row.key)}
+                disabled={saving === row.key}
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
