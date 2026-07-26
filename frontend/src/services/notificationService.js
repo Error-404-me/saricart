@@ -21,3 +21,7 @@ export async function markAllNotificationsRead() {
 export async function deleteNotification(id) {
   await api.delete(`/notifications/${id}`);
 }
+
+export async function sendTestNotification() {
+  await api.post("/notifications/test");
+}

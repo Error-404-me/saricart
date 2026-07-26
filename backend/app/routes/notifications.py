@@ -46,3 +46,10 @@ def delete_notification(
     current_user: User = Depends(get_current_user),
 ):
     notification_service.delete_notification(db, current_user.id, notification_id)
+    
+@router.post("/test", status_code=201)
+def send_test_notification(
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
+):
+    notification_service.send_test_notification(db, current_user)
+    return {"status": "sent"}

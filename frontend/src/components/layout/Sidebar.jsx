@@ -24,6 +24,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { useCart } from "../../hooks/useCart";
 import { useTheme } from "../../hooks/useTheme";
 import NotificationBell from "../notifications/NotificationBell";
+import ConfirmModal from "../common/ConfirmModal";
 
 const OWNER_NAV_ITEMS = [
   {
@@ -128,6 +129,7 @@ export default function Sidebar({ collapsed, onToggleCollapse }) {
   const { itemCount } = useCart();
   const { theme, toggleTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
 
   const navItems =
     user?.role === "owner" ? OWNER_NAV_ITEMS : CUSTOMER_NAV_ITEMS;
@@ -152,6 +154,12 @@ export default function Sidebar({ collapsed, onToggleCollapse }) {
 
   function closeMobile() {
     setMobileOpen(false);
+  }
+
+  function confirmLogout() {
+    setLogoutConfirmOpen(false);
+    setMobileOpen(false); // no-op if already closed on desktop
+    logout();
   }
 
   return (
@@ -202,7 +210,7 @@ export default function Sidebar({ collapsed, onToggleCollapse }) {
           </button>
 
           <button
-            onClick={logout}
+            onClick={() => setLogoutConfirmOpen(true)}
             title="Log out"
             className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium
               text-[var(--color-crate)] transition
@@ -296,10 +304,7 @@ export default function Sidebar({ collapsed, onToggleCollapse }) {
             </button>
 
             <button
-              onClick={() => {
-                closeMobile();
-                logout();
-              }}
+              onClick={() => setLogoutConfirmOpen(true)}
               className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium
                 text-[var(--color-crate)] transition hover:bg-[var(--color-crate)]/10"
             >
@@ -309,6 +314,15 @@ export default function Sidebar({ collapsed, onToggleCollapse }) {
           </div>
         </nav>
       </div>
+      <ConfirmModal
+        open={logoutConfirmOpen}
+        onClose={() => setLogoutConfirmOpen(false)}
+        onConfirm={confirmLogout}
+        title="Log out?"
+        confirmLabel="Log out"
+      >
+        <p>You'll need to log back in to access your account.</p>
+      </ConfirmModal>
     </>
   );
 }

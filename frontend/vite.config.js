@@ -21,7 +21,7 @@ export default defineConfig({
         name: "SariCart",
         short_name: "SariCart",
         description:
-          "Your neighborhood sari-sari store, online — browse, pre-order, and pick up in store.",
+          "It enables store owners to manage inventory, record sales, accept customer pre-orders, monitor business performance, and grow their stores through a single, easy-to-use web platform.",
         theme_color: "#123832",
         background_color: "#FFFDF7",
         display: "standalone",

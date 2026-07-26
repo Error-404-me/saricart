@@ -90,3 +90,38 @@ def delete_notification(db: Session, user_id: int, notification_id: int) -> None
         Notification.id == notification_id, Notification.user_id == user_id
     ).delete()
     db.commit()
+    
+def send_test_notification(db: Session, user: User) -> Notification | None:
+    """Diagnostic helper — unlike create_notification, ignores the
+    category preference toggles entirely, so a click always attempts
+    delivery regardless of settings. Purely for verifying push works."""
+    notification = None
+    try:
+        with db.begin_nested():
+            notification = Notification(
+                user_id=user.id,
+                type=NotificationType.ORDER_STATUS_CHANGED,
+                title="Test notification",
+                body="If this reached your device, push notifications are working.",
+                link="/settings/notifications",
+            )
+            db.add(notification)
+            db.flush()
+    except Exception:
+        logger.exception("Failed to create test notification (user_id=%s)", user.id)
+        return None
+
+    try:
+        with db.begin_nested():
+            push_service.send_push_to_user(
+                db,
+                user.id,
+                "Test notification",
+                "If this reached your device, push notifications are working.",
+                "/settings/notifications",
+            )
+    except Exception:
+        logger.exception("Test push failed for user_id=%s", user.id)
+
+    db.commit()
+    return notification

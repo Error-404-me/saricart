@@ -3,6 +3,7 @@ import { Bell, BellRing } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { usePushNotifications } from "../../hooks/usePushNotifications";
 import { updateNotificationPreferences } from "../../services/userService";
+// import { sendTestNotification } from "../../services/notificationService";
 
 function Toggle({ checked, onChange, disabled }) {
   return (
@@ -132,6 +133,15 @@ export default function NotificationSettings() {
             />
           </div>
         )}
+
+        {/* {push.subscribed && (
+          <button
+            onClick={() => sendTestNotification()}
+            className="mt-4 text-sm font-medium text-[var(--color-storefront)] hover:underline"
+          >
+            Send test notification
+          </button>
+        )} */}
       </div>
 
       <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">

@@ -9,6 +9,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useNotifications } from "../../hooks/useNotifications";
+import ConfirmModal from "../common/ConfirmModal";
 
 const ICON_BY_TYPE = {
   order_placed: ClipboardList,
@@ -44,6 +45,7 @@ export default function NotificationBell({
   } = useNotifications();
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
   const buttonRef = useRef(null);
   const panelRef = useRef(null);
 
@@ -101,6 +103,11 @@ export default function NotificationBell({
     if (!notification.is_read) markRead(notification.id);
     setOpen(false);
     if (notification.link) navigate(notification.link);
+  }
+
+  function confirmDelete() {
+    if (pendingDeleteId != null) removeNotification(pendingDeleteId);
+    setPendingDeleteId(null);
   }
 
   const isCompact = variant === "compact";
@@ -213,7 +220,7 @@ export default function NotificationBell({
                       </button>
 
                       <button
-                        onClick={() => removeNotification(n.id)}
+                        onClick={() => setPendingDeleteId(n.id)}
                         aria-label="Delete notification"
                         title="Delete"
                         className="mt-0.5 shrink-0 rounded-lg p-1.5 text-[var(--color-muted)] transition hover:bg-[var(--color-crate)]/10 hover:text-[var(--color-crate)]"
@@ -228,6 +235,15 @@ export default function NotificationBell({
           </div>
         </div>
       )}
+      <ConfirmModal
+        open={pendingDeleteId != null}
+        onClose={() => setPendingDeleteId(null)}
+        onConfirm={confirmDelete}
+        title="Delete this notification?"
+        confirmLabel="Delete"
+      >
+        <p>This can't be undone.</p>
+      </ConfirmModal>
     </>
   );
 }
