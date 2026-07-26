@@ -90,8 +90,17 @@ export default function NotificationSettings() {
           Push notifications
         </h2>
         <p className="mt-1 text-sm text-[var(--color-muted)]">
-          Get notified even when SariCart isn't open in a tab.
+          Get notified even you exit SariCart.
         </p>
+
+        {push.error && (
+          <p
+            className="mt-4 rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]"
+            role="alert"
+          >
+            {push.error}
+          </p>
+        )}
 
         {!push.supported ? (
           <p className="mt-4 text-sm text-[var(--color-muted)]">
