@@ -58,8 +58,6 @@ export default function AuthLayout({ title, subtitle, children, footer }) {
 
       {/* Form panel */}
       <div className="flex flex-1 flex-col">
-        <div className="awning-stripes h-3 w-full lg:hidden" />
-
         <div className="flex flex-1 items-center justify-center px-4 py-10 sm:px-8">
           <div className="w-full max-w-md">
             <div className="mb-7 text-center lg:hidden">

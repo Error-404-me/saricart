@@ -15,7 +15,7 @@ function Toggle({ checked, onChange, disabled }) {
         ${checked ? "bg-[var(--color-storefront)]" : "bg-[var(--color-border)]"}`}
     >
       <span
-        className={`absolute top-1 h-5 w-5 rounded-full bg-[var(--color-surface)] shadow transition-transform
+        className={`absolute flex top-1 h-5 w-5 rounded-full bg-[var(--color-surface)] shadow transition-transform
           ${checked ? "translate-x-6" : "translate-x-1"}`}
       />
     </button>

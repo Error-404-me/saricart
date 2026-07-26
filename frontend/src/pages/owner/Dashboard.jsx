@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { Package, ClipboardList, Wallet, AlertTriangle, Plus } from "lucide-react";
+import {
+  Package,
+  ClipboardList,
+  Wallet,
+  AlertTriangle,
+  Plus,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import StatCard from "../../components/common/StatCard";
@@ -51,7 +57,9 @@ export default function Dashboard() {
     };
   }, []);
 
-  const lowStockCount = products.filter((p) => p.stock <= LOW_STOCK_THRESHOLD).length;
+  const lowStockCount = products.filter(
+    (p) => p.stock <= LOW_STOCK_THRESHOLD,
+  ).length;
   const pendingCount = orders.filter((o) => o.status === "pending").length;
   const todaysSales = orders
     .filter((o) => o.status === "completed" && isToday(o.updated_at))
@@ -63,7 +71,7 @@ export default function Dashboard() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-[var(--color-ink)]">
-            Welcome back, {user?.username} 🏪
+            Welcome back, {user?.username}
           </h1>
           <p className="mt-1 text-sm text-[var(--color-muted)]">
             Here's how your store is doing today.
@@ -82,14 +90,22 @@ export default function Dashboard() {
           icon={Package}
           label="Total products"
           value={loadingProducts ? "…" : products.length}
-          hint={products.length === 0 ? "Add your first item to get started" : "In your catalog"}
+          hint={
+            products.length === 0
+              ? "Add your first item to get started"
+              : "In your catalog"
+          }
           accent="storefront"
         />
         <StatCard
           icon={ClipboardList}
           label="Pending orders"
           value={loadingOrders ? "…" : pendingCount}
-          hint={pendingCount > 0 ? "Waiting on you to accept" : "You're all caught up"}
+          hint={
+            pendingCount > 0
+              ? "Waiting on you to accept"
+              : "You're all caught up"
+          }
           accent="crate"
         />
         <StatCard
@@ -129,19 +145,24 @@ export default function Dashboard() {
           <div className="mt-4 flex flex-col items-center justify-center gap-2 rounded-xl bg-[var(--color-paper)] py-10 text-center">
             <ClipboardList className="h-6 w-6 text-[var(--color-muted)]" />
             <p className="text-sm text-[var(--color-muted)]">
-              No orders yet — they'll show up here once customers start pre-ordering.
+              No orders yet. They'll show up here once customers start
+              pre-ordering.
             </p>
           </div>
         ) : (
           <div className="mt-4 flex flex-col divide-y divide-[var(--color-border-subtle)]">
             {recentOrders.map((order) => (
-              <div key={order.id} className="flex items-center justify-between py-3">
+              <div
+                key={order.id}
+                className="flex items-center justify-between py-3"
+              >
                 <div>
                   <p className="text-sm font-medium text-[var(--color-ink)]">
-                    Order #{order.id} · {order.customer_username}
+                    Order by: {order.customer_username}
                   </p>
                   <p className="text-xs text-[var(--color-muted)]">
-                    {order.items.length} {order.items.length === 1 ? "item" : "items"} ·{" "}
+                    {order.items.length}{" "}
+                    {order.items.length === 1 ? "item" : "items"} ·{" "}
                     {formatCurrency(order.total)}
                   </p>
                 </div>

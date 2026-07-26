@@ -47,8 +47,7 @@ export default function AddProduct() {
           Add a product
         </h1>
         <p className="mt-1 text-sm text-[var(--color-muted)]">
-          This will appear in your storefront once customer browsing is live
-          (Phase 5).
+          This will appear in your storefront.
         </p>
       </div>
 

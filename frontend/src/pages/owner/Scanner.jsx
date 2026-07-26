@@ -171,7 +171,7 @@ export default function Scanner() {
           Barcode scanner
         </h1>
         <p className="mt-1 text-sm text-[var(--color-muted)]">
-          Scan to find a product, update its stock, or ring up a sale — no keyboard needed.
+          Scan to find a product, update its stock, or ring up a sale. No keyboard needed.
         </p>
       </div>
 

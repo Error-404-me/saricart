@@ -166,7 +166,7 @@ export default function NotificationBell({
           <div className="themed-scrollbar overflow-y-auto">
             {notifications.length === 0 ? (
               <p className="px-4 py-8 text-center text-sm text-[var(--color-muted)]">
-                Nothing yet — you're all caught up.
+                You're all caught up.
               </p>
             ) : (
               <div className="flex flex-col divide-y divide-[var(--color-border-subtle)]">

@@ -30,7 +30,11 @@ const ACTIONS_BY_STATUS = {
   cancelled: [],
 };
 
-export default function OrderTable({ orders, onStatusChange, updatingOrderId }) {
+export default function OrderTable({
+  orders,
+  onStatusChange,
+  updatingOrderId,
+}) {
   if (orders.length === 0) return null;
 
   return (
@@ -40,24 +44,34 @@ export default function OrderTable({ orders, onStatusChange, updatingOrderId }) 
         const isUpdating = updatingOrderId === order.id;
 
         return (
-          <div key={order.id} className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
+          <div
+            key={order.id}
+            className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5"
+          >
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
                 <p className="text-sm font-medium text-[var(--color-ink)]">
-                  Order #{order.id} · {order.customer_username}
+                  Order by: {order.customer_username}
                 </p>
-                <p className="text-xs text-[var(--color-muted)]">{formatDate(order.created_at)}</p>
+                <p className="text-xs text-[var(--color-muted)]">
+                  {formatDate(order.created_at)}
+                </p>
               </div>
               <OrderStatusBadge status={order.status} />
             </div>
 
             <div className="mt-3 flex flex-col gap-1.5">
               {order.items.map((item) => (
-                <div key={item.id} className="flex items-center justify-between text-sm">
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between text-sm"
+                >
                   <span className="text-[var(--color-ink)]">
                     {item.quantity}× {item.product_name}
                   </span>
-                  <span className="text-[var(--color-muted)]">{formatCurrency(item.subtotal)}</span>
+                  <span className="text-[var(--color-muted)]">
+                    {formatCurrency(item.subtotal)}
+                  </span>
                 </div>
               ))}
             </div>

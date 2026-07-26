@@ -117,7 +117,7 @@ export default function Analytics() {
           Analytics
         </h1>
         <p className="mt-1 text-sm text-[var(--color-muted)]">
-          Revenue from completed orders — pending and cancelled orders aren't
+          Revenue from completed orders. Pending and cancelled orders aren't
           counted.
         </p>
       </div>

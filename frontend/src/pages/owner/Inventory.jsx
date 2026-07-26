@@ -139,7 +139,7 @@ export default function Inventory() {
           Smart restocking
         </h2>
         <p className="-mt-1 text-sm text-[var(--color-muted)]">
-          Based on the last 30 days of sales — products expected to run out
+          Based on the last 30 days of sales. Products expected to run out
           within a week.
         </p>
         <RestockSuggestions suggestions={restockSuggestions} />

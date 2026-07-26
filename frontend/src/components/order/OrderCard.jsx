@@ -22,7 +22,7 @@ export default function OrderCard({ order, onReviewed }) {
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="text-sm font-medium text-[var(--color-ink)]">
-            Order #{order.id} · {order.owner_username}'s store
+            Ordered from: {order.owner_username}'s store
           </p>
           <p className="text-xs text-[var(--color-muted)]">{formatDate(order.created_at)}</p>
         </div>
