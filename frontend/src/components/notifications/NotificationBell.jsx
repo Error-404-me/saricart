@@ -9,6 +9,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useNotifications } from "../../hooks/useNotifications";
+import { useLanguage } from "../../hooks/useLanguage";
 import ConfirmModal from "../common/ConfirmModal";
 
 const ICON_BY_TYPE = {
@@ -34,6 +35,7 @@ export default function NotificationBell({
   collapsed = false,
 }) {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const {
     notifications,
     unreadCount,
@@ -60,9 +62,6 @@ export default function NotificationBell({
       const rect = buttonRef.current.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
       const spaceAbove = rect.top;
-      // Prefer opening downward; flip upward only when there's genuinely
-      // more room that way — this is what fixes a trigger pinned to the
-      // bottom of the screen (desktop sidebar) or a short viewport (mobile).
       const openUpward = spaceBelow < 340 && spaceAbove > spaceBelow;
 
       let left = rect.right - PANEL_WIDTH;
@@ -111,14 +110,15 @@ export default function NotificationBell({
   }
 
   const isCompact = variant === "compact";
+  const label = t("notifications.title");
 
   return (
     <>
       <button
         ref={buttonRef}
         onClick={() => setOpen((o) => !o)}
-        aria-label="Notifications"
-        title={isCompact ? undefined : "Notifications"}
+        aria-label={label}
+        title={isCompact ? undefined : label}
         className={
           isCompact
             ? "relative rounded-lg p-2 text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-ink)]"
@@ -138,7 +138,7 @@ export default function NotificationBell({
         </span>
 
         {!isCompact && (
-          <span className={collapsed ? "hidden" : ""}>Notifications</span>
+          <span className={collapsed ? "hidden" : ""}>{label}</span>
         )}
       </button>
 
@@ -157,7 +157,7 @@ export default function NotificationBell({
         >
           <div className="flex shrink-0 items-center justify-between border-b border-[var(--color-border-subtle)] px-4 py-3">
             <p className="font-display text-sm font-bold text-[var(--color-ink)]">
-              Notifications
+              {label}
             </p>
             {unreadCount > 0 && (
               <button
@@ -165,7 +165,7 @@ export default function NotificationBell({
                 className="flex items-center gap-1 text-xs font-medium text-[var(--color-storefront)] hover:underline"
               >
                 <CheckCheck className="h-3.5 w-3.5" />
-                Mark all read
+                {t("notifications.markAllRead")}
               </button>
             )}
           </div>
@@ -173,7 +173,7 @@ export default function NotificationBell({
           <div className="themed-scrollbar overflow-y-auto">
             {notifications.length === 0 ? (
               <p className="px-4 py-8 text-center text-sm text-[var(--color-muted)]">
-                You're all caught up.
+                {t("notifications.empty")}
               </p>
             ) : (
               <div className="flex flex-col divide-y divide-[var(--color-border-subtle)]">
@@ -221,8 +221,8 @@ export default function NotificationBell({
 
                       <button
                         onClick={() => setPendingDeleteId(n.id)}
-                        aria-label="Delete notification"
-                        title="Delete"
+                        aria-label={t("notifications.delete")}
+                        title={t("notifications.delete")}
                         className="mt-0.5 shrink-0 rounded-lg p-1.5 text-[var(--color-muted)] transition hover:bg-[var(--color-crate)]/10 hover:text-[var(--color-crate)]"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -239,10 +239,10 @@ export default function NotificationBell({
         open={pendingDeleteId != null}
         onClose={() => setPendingDeleteId(null)}
         onConfirm={confirmDelete}
-        title="Delete this notification?"
-        confirmLabel="Delete"
+        title={t("notifications.deleteConfirmTitle")}
+        confirmLabel={t("notifications.delete")}
       >
-        <p>This can't be undone.</p>
+        <p>{t("notifications.deleteConfirmBody")}</p>
       </ConfirmModal>
     </>
   );

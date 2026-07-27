@@ -1,15 +1,26 @@
 import { Link } from "react-router-dom";
 import { CheckCircle2 } from "lucide-react";
-
-const BRAND_HIGHLIGHTS = [
-  "Browse what's in stock before you go",
-  "Pre-order and skip the wait",
-  "Support your neighborhood store",
-];
+import { useLanguage } from "../hooks/useLanguage";
+import LanguageToggle from "../components/common/LanguageToggle";
 
 export default function AuthLayout({ title, subtitle, children, footer }) {
+  const { t } = useLanguage();
+
+  const BRAND_HIGHLIGHTS = [
+    t("auth.brandHighlight1"),
+    t("auth.brandHighlight2"),
+    t("auth.brandHighlight3"),
+  ];
+
   return (
-    <div className="min-h-screen bg-[var(--color-paper)] lg:flex">
+    <div className="relative min-h-screen bg-[var(--color-paper)] lg:flex">
+      {/* Visible before login — so someone who isn't yet comfortable in
+          English can switch to Filipino before they even try to read the
+          form below. */}
+      <div className="absolute right-4 top-4 z-10 lg:right-6 lg:top-6">
+        <LanguageToggle />
+      </div>
+
       {/* Brand panel — desktop only */}
       <div className="relative hidden overflow-hidden bg-[var(--color-storefront)] lg:flex lg:w-[44%] lg:flex-col lg:justify-between lg:p-12">
         <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[var(--color-awning)]/10 blur-3xl" />
@@ -23,18 +34,17 @@ export default function AuthLayout({ title, subtitle, children, footer }) {
             Sari<span className="text-[var(--color-awning)]">Cart</span>
           </Link>
           <p className="mt-3 max-w-xs text-sm text-white/70">
-            Your neighborhood sari-sari store, online.
+            {t("auth.brandTagline")}
           </p>
         </div>
 
         <div className="relative z-10 flex flex-col gap-6">
           <blockquote className="rounded-2xl bg-white/5 p-5 backdrop-blur-sm">
             <p className="text-sm leading-relaxed text-white/85">
-              "I used to close the gate not knowing what to restock. Now I see
-              it before opening."
+              {t("auth.brandQuote")}
             </p>
             <footer className="mt-3 text-xs text-white/50">
-              — Aling Nena, store owner
+              {t("auth.brandQuoteAuthor")}
             </footer>
           </blockquote>
 

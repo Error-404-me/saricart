@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import { useLanguage } from "../../hooks/useLanguage";
 import Input from "../common/Input";
 import PasswordInput from "../common/PasswordInput";
 import Button from "../common/Button";
@@ -8,6 +9,7 @@ import { isValidEmail } from "../../utils/validators";
 
 export default function LoginForm() {
   const { login } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -55,7 +57,7 @@ export default function LoginForm() {
         id="email"
         name="email"
         type="email"
-        label="Email"
+        label={t("auth.emailLabel")}
         placeholder="you@example.com"
         autoComplete="email"
         value={form.email}
@@ -65,7 +67,7 @@ export default function LoginForm() {
       <PasswordInput
         id="password"
         name="password"
-        label="Password"
+        label={t("auth.passwordLabel")}
         placeholder="••••••••"
         autoComplete="current-password"
         value={form.password}
@@ -83,16 +85,16 @@ export default function LoginForm() {
       )}
 
       <Button type="submit" loading={submitting} className="mt-1 w-full">
-        Log in
+        {t("auth.logInButton")}
       </Button>
 
       <p className="text-center text-sm text-[var(--color-muted)]">
-        New to SariCart?{" "}
+        {t("auth.newToApp")}{" "}
         <Link
           to="/register"
           className="font-medium text-[var(--color-storefront)] hover:underline"
         >
-          Create an account
+          {t("auth.createOne")}
         </Link>
       </p>
     </form>

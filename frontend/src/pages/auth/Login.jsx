@@ -1,9 +1,11 @@
 import AuthLayout from "../../layouts/AuthLayout";
 import LoginForm from "../../components/auth/LoginForm";
+import { useLanguage } from "../../hooks/useLanguage";
 
 export default function Login() {
+  const { t } = useLanguage();
   return (
-    <AuthLayout title="Welcome back" subtitle="Log in to pick up where you left off.">
+    <AuthLayout title={t("auth.loginTitle")} subtitle={t("auth.loginSubtitle")}>
       <LoginForm />
     </AuthLayout>
   );

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { User, Store } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
+import { useLanguage } from "../../hooks/useLanguage";
 import Input from "../common/Input";
 import PasswordInput from "../common/PasswordInput";
 import Button from "../common/Button";
@@ -11,24 +12,28 @@ import {
   passwordIssues,
 } from "../../utils/validators";
 
-const ROLES = [
-  {
-    value: "customer",
-    label: "I'm a customer",
-    hint: "Browse stores & pre-order",
-    icon: User,
-  },
-  {
-    value: "owner",
-    label: "I own a store",
-    hint: "List products & manage orders",
-    icon: Store,
-  },
-];
-
 export default function RegisterForm() {
   const { register } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
+
+  // Built from t() at render time (rather than a module-level constant)
+  // so the labels re-render in the current language immediately when it
+  // changes, without needing a page reload.
+  const ROLES = [
+    {
+      value: "customer",
+      label: t("auth.roleCustomerLabel"),
+      hint: t("auth.roleCustomerHint"),
+      icon: User,
+    },
+    {
+      value: "owner",
+      label: t("auth.roleOwnerLabel"),
+      hint: t("auth.roleOwnerHint"),
+      icon: Store,
+    },
+  ];
 
   const [form, setForm] = useState({
     username: "",
@@ -120,7 +125,7 @@ export default function RegisterForm() {
       <Input
         id="username"
         name="username"
-        label="Username"
+        label={t("auth.usernameLabel")}
         placeholder="aling_nena"
         autoComplete="username"
         value={form.username}
@@ -131,7 +136,7 @@ export default function RegisterForm() {
         id="email"
         name="email"
         type="email"
-        label="Email"
+        label={t("auth.emailLabel")}
         placeholder="you@example.com"
         autoComplete="email"
         value={form.email}
@@ -141,7 +146,7 @@ export default function RegisterForm() {
       <PasswordInput
         id="password"
         name="password"
-        label="Password"
+        label={t("auth.passwordLabel")}
         placeholder="At least 8 characters"
         autoComplete="new-password"
         value={form.password}
@@ -159,16 +164,16 @@ export default function RegisterForm() {
       )}
 
       <Button type="submit" loading={submitting} className="mt-1 w-full">
-        Create account
+        {t("auth.createAccountButton")}
       </Button>
 
       <p className="text-center text-sm text-[var(--color-muted)]">
-        Already have an account?{" "}
+        {t("auth.alreadyHaveAccount")}{" "}
         <Link
           to="/login"
           className="font-medium text-[var(--color-storefront)] hover:underline"
         >
-          Log in
+          {t("auth.logInLink")}
         </Link>
       </p>
     </form>

@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
+import { LanguageProvider } from "./context/LanguageContext";
 import { CartProvider } from "./context/CartContext";
 import { UploadQueueProvider } from "./context/UploadQueueContext";
 import AppRoutes from "./routes/AppRoutes";
@@ -14,11 +15,13 @@ function App() {
       <BrowserRouter>
         <AuthProvider>
           <ThemeProvider>
-            <CartProvider>
-              <UploadQueueProvider>
-                <AppRoutes />
-              </UploadQueueProvider>
-            </CartProvider>
+            <LanguageProvider>
+              <CartProvider>
+                <UploadQueueProvider>
+                  <AppRoutes />
+                </UploadQueueProvider>
+              </CartProvider>
+            </LanguageProvider>
           </ThemeProvider>
         </AuthProvider>
       </BrowserRouter>

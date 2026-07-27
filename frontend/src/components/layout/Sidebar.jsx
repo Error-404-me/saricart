@@ -23,32 +23,39 @@ import {
 import { useAuth } from "../../hooks/useAuth";
 import { useCart } from "../../hooks/useCart";
 import { useTheme } from "../../hooks/useTheme";
+import { useLanguage } from "../../hooks/useLanguage";
 import NotificationBell from "../notifications/NotificationBell";
+import LanguageToggle from "../common/LanguageToggle";
 import ConfirmModal from "../common/ConfirmModal";
 
 const OWNER_NAV_ITEMS = [
   {
     to: "/owner/dashboard",
-    label: "Dashboard",
+    labelKey: "nav.dashboard",
     icon: LayoutDashboard,
     end: true,
   },
-  { to: "/owner/products", label: "Products", icon: Package },
-  { to: "/owner/scanner", label: "Scanner", icon: ScanBarcode },
-  { to: "/owner/inventory", label: "Inventory", icon: Boxes },
-  { to: "/owner/orders", label: "Orders", icon: ClipboardList },
-  { to: "/owner/analytics", label: "Analytics", icon: BarChart3 },
-  { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/owner/products", labelKey: "nav.products", icon: Package },
+  { to: "/owner/scanner", labelKey: "nav.scanner", icon: ScanBarcode },
+  { to: "/owner/inventory", labelKey: "nav.inventory", icon: Boxes },
+  { to: "/owner/orders", labelKey: "nav.orders", icon: ClipboardList },
+  { to: "/owner/analytics", labelKey: "nav.analytics", icon: BarChart3 },
+  { to: "/settings", labelKey: "nav.settings", icon: Settings },
 ];
 
 const CUSTOMER_NAV_ITEMS = [
-  { to: "/", label: "Home", icon: Home, end: true },
-  { to: "/products", label: "Browse", icon: Package },
-  { to: "/stores", label: "Nearby Stores", icon: MapPin },
-  { to: "/favorites", label: "Favorites", icon: Heart },
-  { to: "/cart", label: "Cart", icon: ShoppingCart, showCartBadge: true },
-  { to: "/orders", label: "My orders", icon: ClipboardList },
-  { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/", labelKey: "nav.home", icon: Home, end: true },
+  { to: "/products", labelKey: "nav.browse", icon: Package },
+  { to: "/stores", labelKey: "nav.nearbyStores", icon: MapPin },
+  { to: "/favorites", labelKey: "nav.favorites", icon: Heart },
+  {
+    to: "/cart",
+    labelKey: "nav.cart",
+    icon: ShoppingCart,
+    showCartBadge: true,
+  },
+  { to: "/orders", labelKey: "nav.myOrders", icon: ClipboardList },
+  { to: "/settings", labelKey: "nav.settings", icon: Settings },
 ];
 
 function Logo({ collapsed, onToggleCollapse }) {
@@ -87,39 +94,42 @@ function Logo({ collapsed, onToggleCollapse }) {
 }
 
 function NavItems({ items, collapsed, itemCount, onNavigate }) {
+  const { t } = useLanguage();
   return (
     <ul className="flex flex-col gap-1 px-3">
-      {items.map(({ to, label, icon: Icon, end, showCartBadge }) => (
-        <li key={to}>
-          <NavLink
-            to={to}
-            end={end}
-            title={label}
-            onClick={onNavigate}
-            className={({ isActive }) =>
-              `flex items-center gap-2.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition
-              ${collapsed ? "md:justify-center md:px-0" : ""}
-              ${
-                isActive
-                  ? "bg-[var(--color-storefront)]/10 text-[var(--color-storefront)]"
-                  : "text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-ink)]"
-              }`
-            }
-          >
-            <span className="relative shrink-0">
-              <Icon className="h-4 w-4" />
+      {items.map(({ to, labelKey, icon: Icon, end, showCartBadge }) => {
+        const label = t(labelKey);
+        return (
+          <li key={to}>
+            <NavLink
+              to={to}
+              end={end}
+              title={label}
+              onClick={onNavigate}
+              className={({ isActive }) =>
+                `flex items-center gap-2.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition
+                ${collapsed ? "md:justify-center md:px-0" : ""}
+                ${
+                  isActive
+                    ? "bg-[var(--color-storefront)]/10 text-[var(--color-storefront)]"
+                    : "text-[var(--color-muted)] hover:bg-[var(--color-overlay)] hover:text-[var(--color-ink)]"
+                }`
+              }
+            >
+              <span className="relative shrink-0">
+                <Icon className="h-4 w-4" />
+                {showCartBadge && itemCount > 0 && (
+                  <span className="absolute -right-1.5 -top-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-[var(--color-crate)] px-1 text-[9px] font-semibold text-white">
+                    {itemCount}
+                  </span>
+                )}
+              </span>
 
-              {showCartBadge && itemCount > 0 && (
-                <span className="absolute -right-1.5 -top-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-[var(--color-crate)] px-1 text-[9px] font-semibold text-white">
-                  {itemCount}
-                </span>
-              )}
-            </span>
-
-            <span className={collapsed ? "md:hidden" : ""}>{label}</span>
-          </NavLink>
-        </li>
-      ))}
+              <span className={collapsed ? "md:hidden" : ""}>{label}</span>
+            </NavLink>
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -128,13 +138,13 @@ export default function Sidebar({ collapsed, onToggleCollapse }) {
   const { user, logout } = useAuth();
   const { itemCount } = useCart();
   const { theme, toggleTheme } = useTheme();
+  const { t } = useLanguage();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
 
   const navItems =
     user?.role === "owner" ? OWNER_NAV_ITEMS : CUSTOMER_NAV_ITEMS;
 
-  // Lock background scroll behind the mobile drawer while it's open.
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";
     return () => {
@@ -142,7 +152,6 @@ export default function Sidebar({ collapsed, onToggleCollapse }) {
     };
   }, [mobileOpen]);
 
-  // Let Escape close the drawer, same as the backdrop click.
   useEffect(() => {
     if (!mobileOpen) return;
     function handleKeyDown(e) {
@@ -158,7 +167,7 @@ export default function Sidebar({ collapsed, onToggleCollapse }) {
 
   function confirmLogout() {
     setLogoutConfirmOpen(false);
-    setMobileOpen(false); // no-op if already closed on desktop
+    setMobileOpen(false);
     logout();
   }
 
@@ -203,23 +212,21 @@ export default function Sidebar({ collapsed, onToggleCollapse }) {
             ) : (
               <Moon className="h-4 w-4 shrink-0" />
             )}
-
             <span className={collapsed ? "hidden" : ""}>
-              {theme === "dark" ? "Light mode" : "Dark mode"}
+              {theme === "dark" ? t("nav.lightMode") : t("nav.darkMode")}
             </span>
           </button>
 
           <button
             onClick={() => setLogoutConfirmOpen(true)}
-            title="Log out"
+            title={t("nav.logout")}
             className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium
               text-[var(--color-crate)] transition
               hover:bg-[var(--color-crate)]/10
               ${collapsed ? "justify-center px-2.5" : ""}`}
           >
             <LogOut className="h-4 w-4 shrink-0" />
-
-            <span className={collapsed ? "hidden" : ""}>Log out</span>
+            <span className={collapsed ? "hidden" : ""}>{t("nav.logout")}</span>
           </button>
         </div>
       </nav>
@@ -235,6 +242,7 @@ export default function Sidebar({ collapsed, onToggleCollapse }) {
           </Link>
 
           <div className="flex items-center gap-1">
+            <LanguageToggle compact />
             <NotificationBell variant="compact" />
 
             <button
@@ -300,7 +308,7 @@ export default function Sidebar({ collapsed, onToggleCollapse }) {
               ) : (
                 <Moon className="h-4 w-4 shrink-0" />
               )}
-              {theme === "dark" ? "Light mode" : "Dark mode"}
+              {theme === "dark" ? t("nav.lightMode") : t("nav.darkMode")}
             </button>
 
             <button
@@ -309,7 +317,7 @@ export default function Sidebar({ collapsed, onToggleCollapse }) {
                 text-[var(--color-crate)] transition hover:bg-[var(--color-crate)]/10"
             >
               <LogOut className="h-4 w-4 shrink-0" />
-              Log out
+              {t("nav.logout")}
             </button>
           </div>
         </nav>
@@ -318,10 +326,10 @@ export default function Sidebar({ collapsed, onToggleCollapse }) {
         open={logoutConfirmOpen}
         onClose={() => setLogoutConfirmOpen(false)}
         onConfirm={confirmLogout}
-        title="Log out?"
-        confirmLabel="Log out"
+        title={t("nav.logoutConfirmTitle")}
+        confirmLabel={t("nav.logout")}
       >
-        <p>You'll need to log back in to access your account.</p>
+        <p>{t("nav.logoutConfirmBody")}</p>
       </ConfirmModal>
     </>
   );

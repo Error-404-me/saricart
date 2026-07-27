@@ -14,8 +14,8 @@ export default function Landing() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[var(--color-paper)]">
-        <p className="text-sm text-[var(--color-muted)]">Loading…</p>
+      <div className="flex min-h-screen items-center justify-center bg-paper">
+        <p className="text-sm text-muted">Loading…</p>
       </div>
     );
   }
