@@ -1,7 +1,15 @@
+// frontend/src/components/scanner/ScanResultCard.jsx
 import { Link } from "react-router-dom";
-import { ImageOff, Pencil, Plus, PackagePlus, ScanBarcode, WifiOff } from "lucide-react";
+import {
+  ImageOff,
+  Pencil,
+  Plus,
+  Minus,
+  PackagePlus,
+  ScanBarcode,
+  WifiOff,
+} from "lucide-react";
 import Button from "../common/Button";
-import StockAdjuster from "../product/StockAdjuster";
 import { formatCurrency } from "../../utils/formatCurrency";
 
 export default function ScanResultCard({
@@ -9,7 +17,6 @@ export default function ScanResultCard({
   product,
   scannedCode,
   isOffline,
-  onAddToSale,
   onAdjustStock,
 }) {
   if (state === "loading") {
@@ -29,7 +36,9 @@ export default function ScanResultCard({
         </span>
         <div>
           <p className="font-medium text-[var(--color-ink)]">
-            {isOffline ? "Not in your last-synced catalog" : "No product with this barcode"}
+            {isOffline
+              ? "Not in your last-synced catalog"
+              : "No product with this barcode"}
           </p>
           <p className="mt-0.5 text-sm text-[var(--color-muted)]">
             Scanned: <span className="font-mono">{scannedCode}</span>
@@ -41,7 +50,9 @@ export default function ScanResultCard({
             Reconnect to check again or add a new product
           </p>
         ) : (
-          <Link to={`/owner/products/add?barcode=${encodeURIComponent(scannedCode)}`}>
+          <Link
+            to={`/owner/products/add?barcode=${encodeURIComponent(scannedCode)}`}
+          >
             <Button variant="secondary" className="gap-1.5">
               <Plus className="h-4 w-4" />
               Add this product
@@ -64,7 +75,11 @@ export default function ScanResultCard({
         <div className="flex items-center gap-4">
           <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--color-paper)]">
             {product.image ? (
-              <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+              <img
+                src={product.image}
+                alt={product.name}
+                className="h-full w-full object-cover"
+              />
             ) : (
               <ImageOff className="h-6 w-6 text-[var(--color-muted)]" />
             )}
@@ -77,36 +92,25 @@ export default function ScanResultCard({
               {formatCurrency(product.price)} · {product.stock} in stock
             </p>
           </div>
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-[var(--color-border-subtle)] pt-4">
-          <Button
-            variant="primary"
-            onClick={() => onAddToSale(product)}
-            disabled={product.stock === 0}
-            className="gap-1.5"
-          >
-            <Plus className="h-4 w-4" />
-            Add to sale
-          </Button>
-          {isOffline ? (
-            <Button variant="ghost" disabled title="Editing needs a connection" className="gap-1.5">
-              <Pencil className="h-4 w-4" />
-              Edit product
-            </Button>
-          ) : (
-            <Link to={`/owner/products/edit/${product.id}`}>
-              <Button variant="ghost" className="gap-1.5">
+          <div className="mt-4 flex items-center justify-between">
+            {isOffline ? (
+              <Button
+                variant="ghost"
+                disabled
+                title="Editing needs a connection"
+                className="gap-1.5"
+              >
                 <Pencil className="h-4 w-4" />
                 Edit product
               </Button>
-            </Link>
-          )}
-          <div className="ml-auto">
-            <StockAdjuster
-              stock={product.stock}
-              onAdjust={(delta) => onAdjustStock(product.id, delta)}
-            />
+            ) : (
+              <Link to={`/owner/products/edit/${product.id}`}>
+                <Button variant="ghost" className="gap-1.5">
+                  <Pencil className="h-4 w-4" />
+                  Edit product
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>

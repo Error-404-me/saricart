@@ -1,3 +1,4 @@
+// frontend/src/pages/owner/Scanner.jsx
 import { useCallback, useEffect, useState } from "react";
 import { ScanBarcode } from "lucide-react";
 import BarcodeScanner from "../../components/scanner/BarcodeScanner";
@@ -6,7 +7,11 @@ import SaleCart from "../../components/scanner/SaleCart";
 import SyncStatusBanner from "../../components/scanner/SyncStatusBanner";
 import { useAuth } from "../../hooks/useAuth";
 import { useOfflineSync } from "../../hooks/useOfflineSync";
-import { fetchMyProducts, fetchProductByBarcode, adjustStock } from "../../services/productService";
+import {
+  fetchMyProducts,
+  fetchProductByBarcode,
+  adjustStock,
+} from "../../services/productService";
 import { createWalkInSale } from "../../services/orderService";
 import { formatCurrency } from "../../utils/formatCurrency";
 import {
@@ -28,9 +33,6 @@ export default function Scanner() {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Warm the offline catalog cache on load (and whenever connectivity
-  // returns) so barcode lookups still work the moment the signal drops —
-  // a store owner mid-sale can't wait for a reconnect to find a product.
   useEffect(() => {
     if (!isOnline || !user) return;
     fetchMyProducts()
@@ -38,51 +40,17 @@ export default function Scanner() {
       .catch(() => {});
   }, [isOnline, user]);
 
-  const handleScan = useCallback(
-    async (code) => {
-      setScannedCode(code);
-      setScanState("loading");
-      setSuccessMessage("");
-
-      if (!isOnline) {
-        const cached = findCachedProductByBarcode(user.id, code);
-        setScannedProduct(cached);
-        setScanState(cached ? "found" : "not-found");
-        return;
-      }
-
-      try {
-        const product = await fetchProductByBarcode(code);
-        setScannedProduct(product);
-        setScanState("found");
-      } catch (err) {
-        if (err.response?.status === 404) {
-          setScanState("not-found");
-        } else {
-          // Network dropped mid-request — fall back to the cache rather
-          // than a dead end.
-          const cached = findCachedProductByBarcode(user.id, code);
-          if (cached) {
-            setScannedProduct(cached);
-            setScanState("found");
-          } else {
-            setScanState("error");
-            setError("Something went wrong looking up that barcode.");
-          }
-        }
-      }
-    },
-    [isOnline, user]
-  );
-
-  function handleAddToSale(product) {
+  // Scanning a product straight into the current sale is the whole point
+  // of the scanner flow — no separate "Add to sale" click needed. Quantity
+  // is capped at the product's stock, same as a manual add would be.
+  const handleAddToSale = useCallback((product) => {
     setSaleItems((prev) => {
       const existing = prev.find((i) => i.productId === product.id);
       if (existing) {
         return prev.map((i) =>
           i.productId === product.id
             ? { ...i, quantity: Math.min(i.quantity + 1, product.stock) }
-            : i
+            : i,
         );
       }
       return [
@@ -96,7 +64,47 @@ export default function Scanner() {
         },
       ];
     });
-  }
+  }, []);
+
+  const handleScan = useCallback(
+    async (code) => {
+      setScannedCode(code);
+      setScanState("loading");
+      setSuccessMessage("");
+
+      if (!isOnline) {
+        const cached = findCachedProductByBarcode(user.id, code);
+        setScannedProduct(cached);
+        setScanState(cached ? "found" : "not-found");
+        if (cached) handleAddToSale(cached);
+        return;
+      }
+
+      try {
+        const product = await fetchProductByBarcode(code);
+        setScannedProduct(product);
+        setScanState("found");
+        handleAddToSale(product);
+      } catch (err) {
+        if (err.response?.status === 404) {
+          setScanState("not-found");
+        } else {
+          // Network dropped mid-request — fall back to the cache rather
+          // than a dead end.
+          const cached = findCachedProductByBarcode(user.id, code);
+          if (cached) {
+            setScannedProduct(cached);
+            setScanState("found");
+            handleAddToSale(cached);
+          } else {
+            setScanState("error");
+            setError("Something went wrong looking up that barcode.");
+          }
+        }
+      }
+    },
+    [isOnline, user, handleAddToSale],
+  );
 
   async function handleAdjustStock(productId, delta) {
     if (!isOnline) {
@@ -109,7 +117,7 @@ export default function Scanner() {
       setScannedProduct((prev) =>
         prev && prev.id === productId
           ? { ...prev, stock: Math.max(0, prev.stock + delta) }
-          : prev
+          : prev,
       );
       return;
     }
@@ -124,7 +132,9 @@ export default function Scanner() {
     setSaleItems((prev) => {
       if (quantity <= 0) return prev.filter((i) => i.productId !== productId);
       return prev.map((i) =>
-        i.productId === productId ? { ...i, quantity: Math.min(quantity, i.stock) } : i
+        i.productId === productId
+          ? { ...i, quantity: Math.min(quantity, i.stock) }
+          : i,
       );
     });
   }
@@ -140,12 +150,19 @@ export default function Scanner() {
     if (!isOnline) {
       enqueueAction({
         type: "walk_in_sale",
-        items: saleItems.map(({ productId, quantity }) => ({ productId, quantity })),
+        items: saleItems.map(({ productId, quantity }) => ({
+          productId,
+          quantity,
+        })),
       });
-      saleItems.forEach((item) => applyLocalStockDelta(user.id, item.productId, -item.quantity));
+      saleItems.forEach((item) =>
+        applyLocalStockDelta(user.id, item.productId, -item.quantity),
+      );
       refreshQueue();
       setSaleItems([]);
-      setSuccessMessage("Sale saved — it'll sync automatically once you're back online.");
+      setSuccessMessage(
+        "Sale saved — it'll sync automatically once you're back online.",
+      );
       setTimeout(() => setSuccessMessage(""), 5000);
       setCompleting(false);
       return;
@@ -154,10 +171,15 @@ export default function Scanner() {
     try {
       const order = await createWalkInSale(saleItems);
       setSaleItems([]);
-      setSuccessMessage(`Sale completed — ${formatCurrency(order.total)} total.`);
+      setSuccessMessage(
+        `Sale completed — ${formatCurrency(order.total)} total.`,
+      );
       setTimeout(() => setSuccessMessage(""), 5000);
     } catch (err) {
-      setError(err.response?.data?.detail || "Couldn't complete the sale. Please try again.");
+      setError(
+        err.response?.data?.detail ||
+          "Couldn't complete the sale. Please try again.",
+      );
     } finally {
       setCompleting(false);
     }
@@ -171,11 +193,17 @@ export default function Scanner() {
           Barcode scanner
         </h1>
         <p className="mt-1 text-sm text-[var(--color-muted)]">
-          Scan to find a product, update its stock, or ring up a sale. No keyboard needed.
+          Scan to add a product to the sale, adjust its stock, or edit it. No
+          keyboard needed.
         </p>
       </div>
 
-      <SyncStatusBanner queue={queue} syncing={syncing} isOnline={isOnline} onSyncNow={sync} />
+      <SyncStatusBanner
+        queue={queue}
+        syncing={syncing}
+        isOnline={isOnline}
+        onSyncNow={sync}
+      />
 
       {successMessage && (
         <p className="rounded-lg bg-[var(--color-storefront)]/10 px-3 py-2 text-sm text-[var(--color-storefront)]">
@@ -183,21 +211,23 @@ export default function Scanner() {
         </p>
       )}
       {error && (
-        <p className="rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]" role="alert">
+        <p
+          className="rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]"
+          role="alert"
+        >
           {error}
         </p>
       )}
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <div className="flex flex-col gap-4">
-          <BarcodeScanner onScan={handleScan} autoStart={false}/>
+          <BarcodeScanner onScan={handleScan} autoStart={false} />
           {scanState !== "idle" && (
             <ScanResultCard
               state={scanState}
               product={scannedProduct}
               scannedCode={scannedCode}
               isOffline={!isOnline}
-              onAddToSale={handleAddToSale}
               onAdjustStock={handleAdjustStock}
             />
           )}
