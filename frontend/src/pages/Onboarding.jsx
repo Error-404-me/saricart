@@ -2,11 +2,15 @@ import { Link } from "react-router-dom";
 import {
   Search,
   ShoppingBag,
+  ShoppingCart,
   Store,
   MapPin,
   Star,
   ArrowRight,
   ScanBarcode,
+  BarChart3,
+  Smartphone,
+  Package,
   Users,
 } from "lucide-react";
 import Button from "../components/common/Button";
@@ -53,10 +57,12 @@ const STEPS = [
   },
 ];
 
-const STATS = [
-  { value: "1,200+", labelKey: "onboarding.statStores" },
-  { value: "45,000+", labelKey: "onboarding.statOrders" },
-  { value: "4.8★", labelKey: "onboarding.statRating" },
+const HERO_HIGHLIGHTS = [
+  { icon: Package, labelKey: "onboarding.heroHighlight1" },
+  { icon: BarChart3, labelKey: "onboarding.heroHighlight2" },
+  { icon: ShoppingCart, labelKey: "onboarding.heroHighlight3" },
+  { icon: ScanBarcode, labelKey: "onboarding.heroHighlight4" },
+  { icon: Smartphone, labelKey: "onboarding.heroHighlight5" },
 ];
 
 export default function Onboarding() {
@@ -65,20 +71,23 @@ export default function Onboarding() {
   return (
     <div className="min-h-screen bg-[var(--color-paper)]">
       {/* Top bar */}
-      <header className="border-b border-[var(--color-border-subtle)] sticky top-0 z-40 bg-black opacity-95">
+      <header className="bg-[var(--color-storefront)] sticky top-0 z-50 bg-[var(--color-paper)]">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
-          <span className="font-display text-xl font-extrabold tracking-tight text-[var(--color-ink)]">
-            Sari<span className="text-awning">Cart</span>
+          <span className="font-display text-xl font-extrabold tracking-tight text-white">
+            Sari<span className="text-[var(--color-awning)]">Cart</span>
           </span>
           <div className="flex items-center gap-2">
             <Link
               to="/login"
-              className="rounded-lg px-3.5 py-2 text-sm font-medium text-[var(--color-muted)] hover:text-[var(--color-ink)]"
+              className="rounded-lg px-3.5 py-2 text-sm font-medium text-white/75 hover:text-white"
             >
               {t("onboarding.logIn")}
             </Link>
             <Link to="/register">
-              <Button variant="primary" className="!px-4 !py-2 text-sm">
+              <Button
+                variant="secondary"
+                className="!px-4 !py-2 text-sm !bg-[var(--color-awning)] !text-[var(--color-ink)] hover:!bg-[var(--color-awning-dark)]"
+              >
                 {t("onboarding.getStarted")}
               </Button>
             </Link>
@@ -108,32 +117,31 @@ export default function Onboarding() {
                   variant="secondary"
                   className="w-full gap-1.5 !bg-[var(--color-awning)] !text-[var(--color-ink)] hover:!bg-[var(--color-awning-dark)]"
                 >
-                  {t("onboarding.createAccount")}
+                  {t("onboarding.startFree")}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-              <Link to="/login" className="w-full sm:w-auto">
+              <a href="#features" className="w-full sm:w-auto">
                 <Button
                   variant="secondary"
                   className="w-full !bg-white/10 !text-white hover:!bg-white/20"
                 >
-                  {t("onboarding.logIn")}
+                  {t("onboarding.exploreFeatures")}
                 </Button>
-              </Link>
+              </a>
             </div>
 
-            <div className="mt-9 grid grid-cols-3 gap-4 border-t border-white/10 pt-6">
-              {STATS.map((stat) => (
-                <div key={stat.labelKey}>
-                  <p className="font-display text-xl font-bold text-white sm:text-2xl">
-                    {stat.value}
-                  </p>
-                  <p className="mt-0.5 text-xs text-white/60">
-                    {t(stat.labelKey)}
-                  </p>
-                </div>
+            <ul className="mt-9 grid grid-cols-1 gap-x-6 gap-y-3 border-t border-white/10 pt-6 sm:grid-cols-2">
+              {HERO_HIGHLIGHTS.map(({ icon: Icon, labelKey }) => (
+                <li
+                  key={labelKey}
+                  className="flex items-center justify-center gap-2 text-sm text-white/85 lg:justify-start"
+                >
+                  <Icon className="h-4 w-4 shrink-0 text-[var(--color-awning)]" />
+                  {t(labelKey)}
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
 
           {/* App preview mockup — decorative demo screen, left in English
@@ -194,7 +202,10 @@ export default function Onboarding() {
       </section>
 
       {/* Features */}
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+      <section
+        className="mx-auto max-w-6xl px-4 py-16 sm:px-6 scroll-smooth"
+        id="features"
+      >
         <div className="text-center">
           <h2 className="font-display text-2xl font-bold text-[var(--color-ink)] sm:text-3xl">
             {t("onboarding.featuresHeading")}
