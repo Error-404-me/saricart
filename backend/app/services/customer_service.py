@@ -191,6 +191,7 @@ def get_personalized_suggestions(db: Session, customer_id: int) -> dict:
                 "owner_id": candidate.owner_id,
                 "owner_username": candidate.owner_username,
                 "price": candidate.price,
+                "unit": candidate.unit,
                 "reason": f"Because you often buy {category.lower()}",
             }
             break
