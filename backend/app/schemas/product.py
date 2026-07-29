@@ -13,7 +13,9 @@ class ProductBase(BaseModel):
     category: Optional[str] = Field(default=None, max_length=80)
     price: Decimal = Field(gt=0, decimal_places=2)
     unit: ProductUnit = Field(default=ProductUnit.PIECE)
-    stock: Decimal = Field(ge=0, decimal_places=3, default=Decimal("0"))
+    stock: Decimal = Field(ge=0, decimal_places=4, default=Decimal("0"))
+    sub_unit: Optional[ProductUnit] = None
+    sub_unit_ratio: Optional[Decimal] = Field(default=None, gt=0, decimal_places=4)
     barcode: Optional[str] = Field(default=None, max_length=64)
 
 
@@ -27,7 +29,9 @@ class ProductUpdate(BaseModel):
     category: Optional[str] = Field(default=None, max_length=80)
     price: Optional[Decimal] = Field(default=None, gt=0, decimal_places=2)
     unit: Optional[ProductUnit] = None
-    stock: Optional[Decimal] = Field(default=None, ge=0, decimal_places=3)
+    stock: Optional[Decimal] = Field(default=None, ge=0, decimal_places=4)
+    sub_unit: Optional[ProductUnit] = None
+    sub_unit_ratio: Optional[Decimal] = Field(default=None, gt=0, decimal_places=4)
     barcode: Optional[str] = Field(default=None, max_length=64)
 
 

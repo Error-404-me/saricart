@@ -7,6 +7,10 @@ import {
 } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { loadCart, saveCart, clearStoredCart } from "../services/cartService";
+import {
+  resolveTransactionUnit,
+  getMaxQuantityInUnit,
+} from "../utils/unitConversion";
 
 export const CartContext = createContext(null);
 
@@ -14,7 +18,6 @@ export function CartProvider({ children }) {
   const { user } = useAuth();
   const [items, setItems] = useState([]);
 
-  // Load the right cart whenever the logged-in user changes (login/logout/switch account).
   useEffect(() => {
     setItems(user ? loadCart(user.id) : []);
   }, [user?.id]);
@@ -24,31 +27,44 @@ export function CartProvider({ children }) {
   }, [items, user]);
 
   /**
-   * Adds a product to the cart.
-   * Since pickup happens at one physical store, a cart can only hold items
-   * from a single owner at a time. If the cart already has items from a
-   * different store, this returns a "conflict" instead of adding — the
-   * caller should confirm with the person, then retry with `force: true`.
+   * Adds a product to the cart in the given unit (defaults to the
+   * product's primary unit). Since the same product can be bought in two
+   * different units in one cart (e.g. 1 box + 3 loose pcs), lines are
+   * keyed by `${productId}:${unit}` rather than productId alone.
+   *
+   * Since pickup happens at one physical store, a cart can only hold
+   * items from a single owner at a time — a different owner returns a
+   * "conflict" instead of adding; the caller should confirm, then retry
+   * with `force: true`.
    */
   const addItem = useCallback(
-    (product, quantity = 1, { force = false } = {}) => {
+    (product, quantity = 1, { force = false, unit } = {}) => {
+      const requestedUnit = unit || product.unit;
+      const resolved = resolveTransactionUnit(product, requestedUnit);
+      if (!resolved) {
+        return {
+          status: "error",
+          message: `This item isn't sold by ${requestedUnit}.`,
+        };
+      }
+      const maxQuantity = getMaxQuantityInUnit(product, requestedUnit);
+      const lineId = `${product.id}:${requestedUnit}`;
+
       const currentOwnerId = items[0]?.ownerId;
       const conflict =
         !force && items.length > 0 && currentOwnerId !== product.owner_id;
-
       if (conflict) {
         return { status: "conflict", ownerUsername: items[0].ownerUsername };
       }
 
       setItems((prev) => {
         const base = force && currentOwnerId !== product.owner_id ? [] : prev;
-        const existing = base.find((i) => i.productId === product.id);
-        const maxQty = product.stock;
+        const existing = base.find((i) => i.lineId === lineId);
 
         if (existing) {
           return base.map((i) =>
-            i.productId === product.id
-              ? { ...i, quantity: Math.min(i.quantity + quantity, maxQty) }
+            i.lineId === lineId
+              ? { ...i, quantity: Math.min(i.quantity + quantity, maxQuantity) }
               : i,
           );
         }
@@ -56,15 +72,16 @@ export function CartProvider({ children }) {
         return [
           ...base,
           {
+            lineId,
             productId: product.id,
             name: product.name,
-            price: Number(product.price),
             image: product.image,
-            stock: product.stock,
-            unit: product.unit,
             ownerId: product.owner_id,
             ownerUsername: product.owner_username,
-            quantity: Math.min(quantity, maxQty),
+            unit: requestedUnit,
+            unitPrice: resolved.unitPrice,
+            maxQuantity,
+            quantity: Math.min(quantity, maxQuantity),
           },
         ];
       });
@@ -74,19 +91,19 @@ export function CartProvider({ children }) {
     [items],
   );
 
-  const updateQuantity = useCallback((productId, quantity) => {
+  const updateQuantity = useCallback((lineId, quantity) => {
     setItems((prev) => {
-      if (quantity <= 0) return prev.filter((i) => i.productId !== productId);
+      if (quantity <= 0) return prev.filter((i) => i.lineId !== lineId);
       return prev.map((i) =>
-        i.productId === productId
-          ? { ...i, quantity: Math.min(quantity, i.stock) }
+        i.lineId === lineId
+          ? { ...i, quantity: Math.min(quantity, i.maxQuantity) }
           : i,
       );
     });
   }, []);
 
-  const removeItem = useCallback((productId) => {
-    setItems((prev) => prev.filter((i) => i.productId !== productId));
+  const removeItem = useCallback((lineId) => {
+    setItems((prev) => prev.filter((i) => i.lineId !== lineId));
   }, []);
 
   const clearCart = useCallback(() => {
@@ -99,7 +116,7 @@ export function CartProvider({ children }) {
     [items],
   );
   const subtotal = useMemo(
-    () => items.reduce((sum, i) => sum + i.price * i.quantity, 0),
+    () => items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0),
     [items],
   );
 

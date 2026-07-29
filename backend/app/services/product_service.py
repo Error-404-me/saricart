@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.models.order_item import OrderItem
-from app.models.product import Product, ProductUnit, DECIMAL_ALLOWED_UNITS
+from app.models.product import Product, ProductUnit, DECIMAL_ALLOWED_UNITS, UNIT_HIERARCHY
 from app.models.stock_history import StockHistory, StockChangeReason
 from app.models.user import User
 from app.schemas.product import ProductCreate, ProductUpdate
@@ -82,9 +82,43 @@ def _validate_stock_for_unit(unit: ProductUnit, stock: Decimal) -> None:
             detail=f"Stock must be a whole number for unit '{unit.value}'.",
         )
 
+def _resolve_sub_unit(
+    unit: ProductUnit, sub_unit: ProductUnit | None, sub_unit_ratio: Decimal | None
+) -> tuple[ProductUnit | None, Decimal | None]:
+    """Validates (sub_unit, sub_unit_ratio) against the selling unit and
+    returns the values to persist, auto-filling the ratio for pairs with
+    a universally fixed conversion (kg/g, L/ml, dozen/pc)."""
+    if sub_unit is None:
+        return None, None
+
+    hierarchy = UNIT_HIERARCHY.get(unit)
+    if not hierarchy or hierarchy["sub_unit"] != sub_unit:
+        valid = hierarchy["sub_unit"].value if hierarchy else "none"
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"'{unit.value}' can only optionally be sold by '{valid}', not '{sub_unit.value}'.",
+        )
+
+    if hierarchy["fixed_ratio"] is not None:
+        return sub_unit, hierarchy["fixed_ratio"]
+
+    if not sub_unit_ratio or sub_unit_ratio <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Enter how many {sub_unit.value} make up one {unit.value}.",
+        )
+    return sub_unit, sub_unit_ratio
+
+
 def create_product(db: Session, product_in: ProductCreate, owner: User) -> Product:
     _validate_stock_for_unit(product_in.unit, product_in.stock)
-    product = Product(**product_in.model_dump(), owner_id=owner.id)
+    sub_unit, sub_unit_ratio = _resolve_sub_unit(
+        product_in.unit, product_in.sub_unit, product_in.sub_unit_ratio
+    )
+    payload = product_in.model_dump(exclude={"sub_unit", "sub_unit_ratio"})
+    product = Product(
+        **payload, sub_unit=sub_unit, sub_unit_ratio=sub_unit_ratio, owner_id=owner.id
+    )
     db.add(product)
     try:
         db.commit()
@@ -108,6 +142,15 @@ def update_product(
     effective_unit = updates.get("unit", product.unit)
     effective_stock = updates.get("stock", product.stock)
     _validate_stock_for_unit(effective_unit, effective_stock)
+
+    if "sub_unit" in updates or "sub_unit_ratio" in updates or "unit" in updates:
+        requested_sub_unit = updates.get("sub_unit", product.sub_unit)
+        requested_ratio = updates.get("sub_unit_ratio", product.sub_unit_ratio)
+        resolved_sub_unit, resolved_ratio = _resolve_sub_unit(
+            effective_unit, requested_sub_unit, requested_ratio
+        )
+        updates["sub_unit"] = resolved_sub_unit
+        updates["sub_unit_ratio"] = resolved_ratio
 
     if "stock" in updates:
         new_stock = updates.pop("stock")

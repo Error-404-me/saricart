@@ -60,6 +60,7 @@ export default function Scanner() {
           name: product.name,
           price: parseFloat(product.price),
           stock: product.stock,
+          unit: product.unit,
           quantity: 1,
         },
       ];
@@ -150,9 +151,10 @@ export default function Scanner() {
     if (!isOnline) {
       enqueueAction({
         type: "walk_in_sale",
-        items: saleItems.map(({ productId, quantity }) => ({
+        items: saleItems.map(({ productId, quantity, unit }) => ({
           productId,
           quantity,
+          unit,
         })),
       });
       saleItems.forEach((item) =>

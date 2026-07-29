@@ -1,9 +1,3 @@
-/**
- * Single source of truth for purchasable units. Mirrors the backend's
- * ProductUnit enum (values must match exactly). `allowsDecimal` units
- * (weight/volume/length) can be sold in fractions of the base amount —
- * e.g. buying 1kg from a 25kg sack. Count-based units must stay whole.
- */
 export const PRODUCT_UNITS = [
   {
     value: "pc",
@@ -89,3 +83,19 @@ const DEFAULT_UNIT = PRODUCT_UNITS[0];
 export function getUnitConfig(value) {
   return UNIT_MAP.get(value) || DEFAULT_UNIT;
 }
+
+/**
+ * Mirrors backend/app/models/product.py's UNIT_HIERARCHY. Maps a selling
+ * unit to the smaller unit it may optionally be sold in. fixedRatio is
+ * set for universally fixed conversions (kg/g, L/ml, dozen/pc); for the
+ * rest the owner must supply the ratio.
+ */
+export const UNIT_HIERARCHY = {
+  sack: { subUnit: "kg", fixedRatio: null },
+  box: { subUnit: "pc", fixedRatio: null },
+  pack: { subUnit: "pc", fixedRatio: null },
+  bundle: { subUnit: "pc", fixedRatio: null },
+  dozen: { subUnit: "pc", fixedRatio: 12 },
+  kg: { subUnit: "g", fixedRatio: 1000 },
+  L: { subUnit: "ml", fixedRatio: 1000 },
+};

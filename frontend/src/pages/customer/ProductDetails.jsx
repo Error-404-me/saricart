@@ -15,6 +15,11 @@ import { formatCurrency } from "../../utils/formatCurrency";
 import { formatQuantity } from "../../utils/formatQuantity";
 import { incrementQuantity, decrementQuantity } from "../../utils/quantity";
 import { getUnitConfig } from "../../constants/units";
+import {
+  resolveTransactionUnit,
+  getPurchaseUnitOptions,
+  getMaxQuantityInUnit,
+} from "../../utils/unitConversion";
 import { fetchProduct } from "../../services/productService";
 import { useCart } from "../../hooks/useCart";
 
@@ -25,6 +30,7 @@ export default function ProductDetails() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [chosenUnit, setChosenUnit] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [conflict, setConflict] = useState(null); // { ownerUsername } | null
@@ -36,8 +42,8 @@ export default function ProductDetails() {
       .then((data) => {
         if (cancelled) return;
         setProduct(data);
-        const cfg = getUnitConfig(data.unit);
-        setQuantity(Math.min(cfg.step, data.stock || cfg.step));
+        setChosenUnit(data.unit);
+        setQuantity(getUnitConfig(data.unit).step);
       })
       .catch(() => {
         if (!cancelled)
@@ -51,10 +57,22 @@ export default function ProductDetails() {
     };
   }, [id]);
 
-  const unitConfig = product ? getUnitConfig(product.unit) : null;
+  const purchaseUnits = product ? getPurchaseUnitOptions(product) : [];
+  const resolved =
+    product && chosenUnit ? resolveTransactionUnit(product, chosenUnit) : null;
+  const unitStepConfig = chosenUnit ? getUnitConfig(chosenUnit) : null;
+  const maxInChosenUnit =
+    product && chosenUnit ? getMaxQuantityInUnit(product, chosenUnit) : 0;
+
+  function handleUnitSelect(nextUnit) {
+    setChosenUnit(nextUnit);
+    const cfg = getUnitConfig(nextUnit);
+    const max = getMaxQuantityInUnit(product, nextUnit);
+    setQuantity(Math.min(cfg.step, max || cfg.step));
+  }
 
   function handleAddToCart(force = false) {
-    const result = addItem(product, quantity, { force });
+    const result = addItem(product, quantity, { force, unit: chosenUnit });
     if (result.status === "conflict") {
       setConflict({ ownerUsername: result.ownerUsername });
       return;
@@ -63,8 +81,8 @@ export default function ProductDetails() {
     setTimeout(() => setAdded(false), 2000);
   }
 
-  const atMax = product ? quantity >= product.stock : false;
-  const atMin = unitConfig ? quantity <= unitConfig.step : false;
+  const atMax = maxInChosenUnit > 0 && quantity >= maxInChosenUnit;
+  const atMin = unitStepConfig && quantity <= unitStepConfig.step;
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-5">
@@ -115,10 +133,35 @@ export default function ProductDetails() {
                 </span>
               </p>
             )}
+
+            {purchaseUnits.length > 1 && (
+              <div className="flex flex-col gap-1.5">
+                <span className="text-xs font-medium uppercase tracking-wide text-[var(--color-muted)]">
+                  Buy by
+                </span>
+                <div className="flex gap-2">
+                  {purchaseUnits.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => handleUnitSelect(option.value)}
+                      className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition
+                        ${
+                          chosenUnit === option.value
+                            ? "bg-[var(--color-storefront)] text-white"
+                            : "bg-[var(--color-surface)] text-[var(--color-muted)] border border-[var(--color-border)] hover:border-[var(--color-storefront)]/40"
+                        }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <p className="font-display text-3xl font-bold text-[var(--color-storefront)]">
-              {formatCurrency(product.price)}
+              {resolved && formatCurrency(resolved.unitPrice)}
               <span className="ml-1.5 text-sm font-medium text-[var(--color-muted)]">
-                / {unitConfig.label}
+                / {getUnitConfig(chosenUnit).label}
               </span>
             </p>
 
@@ -142,35 +185,51 @@ export default function ProductDetails() {
               </p>
             )}
 
-            {product.stock > 0 && (
-              <div className="flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-1.5 py-1 w-fit">
-                <button
-                  onClick={() =>
-                    setQuantity((q) =>
-                      decrementQuantity(q, unitConfig.step, unitConfig.step),
-                    )
-                  }
-                  disabled={atMin}
-                  aria-label="Decrease quantity"
-                  className="rounded-md p-1.5 text-[var(--color-storefront)] hover:bg-[var(--color-storefront)]/10 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <Minus className="h-3.5 w-3.5" />
-                </button>
-                <span className="min-w-14 px-1 text-center text-sm font-medium text-[var(--color-ink)]">
-                  {formatQuantity(quantity, product.unit)}
-                </span>
-                <button
-                  onClick={() =>
-                    setQuantity((q) =>
-                      incrementQuantity(q, unitConfig.step, product.stock),
-                    )
-                  }
-                  disabled={atMax}
-                  aria-label="Increase quantity"
-                  className="rounded-md p-1.5 text-[var(--color-storefront)] hover:bg-[var(--color-storefront)]/10 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                </button>
+            {product.stock > 0 && chosenUnit && (
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-1.5 py-1 w-fit">
+                  <button
+                    onClick={() =>
+                      setQuantity((q) =>
+                        decrementQuantity(
+                          q,
+                          unitStepConfig.step,
+                          unitStepConfig.step,
+                        ),
+                      )
+                    }
+                    disabled={atMin}
+                    aria-label="Decrease quantity"
+                    className="rounded-md p-1.5 text-[var(--color-storefront)] hover:bg-[var(--color-storefront)]/10 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <Minus className="h-3.5 w-3.5" />
+                  </button>
+                  <span className="min-w-16 px-1 text-center text-sm font-medium text-[var(--color-ink)]">
+                    {formatQuantity(quantity, chosenUnit)}
+                  </span>
+                  <button
+                    onClick={() =>
+                      setQuantity((q) =>
+                        incrementQuantity(
+                          q,
+                          unitStepConfig.step,
+                          maxInChosenUnit,
+                        ),
+                      )
+                    }
+                    disabled={atMax}
+                    aria-label="Increase quantity"
+                    className="rounded-md p-1.5 text-[var(--color-storefront)] hover:bg-[var(--color-storefront)]/10 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                {chosenUnit !== product.unit && (
+                  <p className="text-xs text-[var(--color-muted)]">
+                    Up to {formatQuantity(maxInChosenUnit, chosenUnit)}{" "}
+                    available
+                  </p>
+                )}
               </div>
             )}
 

@@ -27,11 +27,13 @@ export default function Cart() {
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div className="lg:col-span-2">
-        <h1 className="font-display text-2xl font-bold text-[var(--color-ink)]">Your cart</h1>
+        <h1 className="font-display text-2xl font-bold text-[var(--color-ink)]">
+          Your cart
+        </h1>
         <div className="mt-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-5">
           {items.map((item) => (
             <CartItem
-              key={item.productId}
+              key={item.lineId}
               item={item}
               onUpdateQuantity={updateQuantity}
               onRemove={removeItem}

@@ -2,27 +2,23 @@ import { Minus, Plus, Trash2, ImageOff } from "lucide-react";
 import { formatCurrency } from "../../utils/formatCurrency";
 import { formatQuantity } from "../../utils/formatQuantity";
 import { getUnitConfig } from "../../constants/units";
-import {
-  roundToStep,
-  incrementQuantity,
-  decrementQuantity,
-} from "../../utils/quantity";
+import { roundToStep, incrementQuantity } from "../../utils/quantity";
 
 export default function CartItem({ item, onUpdateQuantity, onRemove }) {
   const unitConfig = getUnitConfig(item.unit);
-  const atMax = item.quantity >= item.stock;
+  const atMax = item.quantity >= item.maxQuantity;
 
   function handleDecrease() {
     onUpdateQuantity(
-      item.productId,
+      item.lineId,
       roundToStep(item.quantity - unitConfig.step, unitConfig.step),
     );
   }
 
   function handleIncrease() {
     onUpdateQuantity(
-      item.productId,
-      incrementQuantity(item.quantity, unitConfig.step, item.stock),
+      item.lineId,
+      incrementQuantity(item.quantity, unitConfig.step, item.maxQuantity),
     );
   }
 
@@ -45,7 +41,7 @@ export default function CartItem({ item, onUpdateQuantity, onRemove }) {
           {item.name}
         </p>
         <p className="text-sm text-[var(--color-muted)]">
-          {formatCurrency(item.price)} per {unitConfig.label}
+          {formatCurrency(item.unitPrice)} per {unitConfig.label}
         </p>
         {atMax && (
           <p className="mt-0.5 text-xs text-[var(--color-awning-dark)]">
@@ -62,7 +58,7 @@ export default function CartItem({ item, onUpdateQuantity, onRemove }) {
         >
           <Minus className="h-3.5 w-3.5" />
         </button>
-        <span className="min-w-12 px-1 text-center text-sm font-medium text-[var(--color-ink)]">
+        <span className="min-w-14 px-1 text-center text-sm font-medium text-[var(--color-ink)]">
           {formatQuantity(item.quantity, item.unit)}
         </span>
         <button
@@ -76,11 +72,11 @@ export default function CartItem({ item, onUpdateQuantity, onRemove }) {
       </div>
 
       <p className="w-20 shrink-0 text-right font-medium text-[var(--color-ink)]">
-        {formatCurrency(item.price * item.quantity)}
+        {formatCurrency(item.unitPrice * item.quantity)}
       </p>
 
       <button
-        onClick={() => onRemove(item.productId)}
+        onClick={() => onRemove(item.lineId)}
         aria-label={`Remove ${item.name} from cart`}
         className="shrink-0 rounded-lg p-2 text-[var(--color-crate)] hover:bg-[var(--color-crate)]/10"
       >

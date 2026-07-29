@@ -9,7 +9,8 @@ from app.models.order import OrderStatus
 
 class OrderItemCreate(BaseModel):
     product_id: int
-    quantity: Decimal = Field(gt=0, decimal_places=3)
+    quantity: Decimal = Field(gt=0, decimal_places=4)
+    unit: str = Field(min_length=1, max_length=20)
 
 
 class OrderCreate(BaseModel):

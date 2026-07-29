@@ -4,7 +4,11 @@ import Input from "../common/Input";
 import Button from "../common/Button";
 import Modal from "../common/Modal";
 import BarcodeScanner from "../scanner/BarcodeScanner";
-import { PRODUCT_UNITS, getUnitConfig } from "../../constants/units";
+import {
+  PRODUCT_UNITS,
+  UNIT_HIERARCHY,
+  getUnitConfig,
+} from "../../constants/units";
 
 const CURRENT_CATEGORIES_HINT =
   "e.g. Snacks, Instant Noodles, Beverages, Canned Goods";
@@ -24,6 +28,11 @@ export default function ProductForm({
     price: initialValues.price ?? "",
     unit: initialValues.unit || "pc",
     stock: initialValues.stock ?? "",
+    sellByBaseUnit: !!initialValues.sub_unit,
+    subUnitRatio:
+      initialValues.sub_unit_ratio != null
+        ? String(initialValues.sub_unit_ratio)
+        : "",
     barcode: initialValues.barcode || "",
   });
   const [imageFile, setImageFile] = useState(null);
@@ -32,10 +41,23 @@ export default function ProductForm({
   const [scannerOpen, setScannerOpen] = useState(false);
 
   const unitConfig = getUnitConfig(form.unit);
+  const hierarchyEntry = UNIT_HIERARCHY[form.unit];
 
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+  }
+
+  // Changing the primary unit resets sub-unit config, since a ratio
+  // configured for one unit family (e.g. "24 pcs per box") is
+  // meaningless once the owner switches to a different unit (e.g. "kg").
+  function handleUnitChange(e) {
+    setForm((prev) => ({
+      ...prev,
+      unit: e.target.value,
+      sellByBaseUnit: false,
+      subUnitRatio: "",
+    }));
   }
 
   function handleImageChange(e) {
@@ -61,6 +83,14 @@ export default function ProductForm({
       errors.stock = `Whole numbers only for ${unitConfig.fullLabel.toLowerCase()}.`;
     }
 
+    if (form.sellByBaseUnit && hierarchyEntry && !hierarchyEntry.fixedRatio) {
+      const ratio = parseFloat(form.subUnitRatio);
+      const subLabel = getUnitConfig(hierarchyEntry.subUnit).label;
+      if (Number.isNaN(ratio) || ratio <= 0) {
+        errors.subUnitRatio = `Enter how many ${subLabel} per ${form.unit}.`;
+      }
+    }
+
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   }
@@ -69,6 +99,12 @@ export default function ProductForm({
     e.preventDefault();
     if (!validate()) return;
 
+    const subUnit =
+      form.sellByBaseUnit && hierarchyEntry ? hierarchyEntry.subUnit : null;
+    const subUnitRatio = subUnit
+      ? (hierarchyEntry.fixedRatio ?? parseFloat(form.subUnitRatio))
+      : null;
+
     onSubmit({
       name: form.name.trim(),
       description: form.description.trim() || null,
@@ -76,6 +112,8 @@ export default function ProductForm({
       price: parseFloat(form.price),
       unit: form.unit,
       stock: parseFloat(form.stock),
+      sub_unit: subUnit,
+      sub_unit_ratio: subUnitRatio,
       barcode: form.barcode.trim() || null,
       imageFile,
     });
@@ -177,7 +215,7 @@ export default function ProductForm({
             id="unit"
             name="unit"
             value={form.unit}
-            onChange={handleChange}
+            onChange={handleUnitChange}
             className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm text-[var(--color-ink)] outline-none transition
               focus:border-[var(--color-storefront)] focus:ring-2 focus:ring-[var(--color-storefront)]/20"
           >
@@ -187,15 +225,56 @@ export default function ProductForm({
               </option>
             ))}
           </select>
-          {unitConfig.allowsDecimal && (
-            <p className="text-xs text-[var(--color-muted)]">
-              Customers can order in fractions of a{" "}
-              {unitConfig.fullLabel.toLowerCase()} — e.g. buy 1{" "}
-              {unitConfig.label} out of a {form.stock || "25"}{" "}
-              {unitConfig.label} stock.
-            </p>
-          )}
         </div>
+
+        {hierarchyEntry && (
+          <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-paper)] p-3.5">
+            <label className="flex items-center gap-2.5 text-sm font-medium text-[var(--color-ink)]">
+              <input
+                type="checkbox"
+                checked={form.sellByBaseUnit}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    sellByBaseUnit: e.target.checked,
+                  }))
+                }
+                className="h-4 w-4 rounded border-[var(--color-border)]"
+              />
+              Also sell by the{" "}
+              {getUnitConfig(hierarchyEntry.subUnit).fullLabel.toLowerCase()}
+            </label>
+            <p className="mt-1 pl-6.5 text-xs text-[var(--color-muted)]">
+              Lets customers buy a single{" "}
+              {getUnitConfig(hierarchyEntry.subUnit).label} instead of a whole{" "}
+              {unitConfig.fullLabel.toLowerCase()} — e.g. 1kg out of a 25kg
+              sack.
+            </p>
+
+            {form.sellByBaseUnit &&
+              (hierarchyEntry.fixedRatio ? (
+                <p className="mt-2 pl-6.5 text-xs text-[var(--color-muted)]">
+                  Fixed: 1 {form.unit} = {hierarchyEntry.fixedRatio}{" "}
+                  {getUnitConfig(hierarchyEntry.subUnit).label}
+                </p>
+              ) : (
+                <div className="mt-2.5 pl-6.5">
+                  <Input
+                    id="subUnitRatio"
+                    name="subUnitRatio"
+                    type="number"
+                    min="0"
+                    step="1"
+                    label={`How many ${getUnitConfig(hierarchyEntry.subUnit).label} per ${form.unit}?`}
+                    placeholder="e.g. 24"
+                    value={form.subUnitRatio}
+                    onChange={handleChange}
+                    error={fieldErrors.subUnitRatio}
+                  />
+                </div>
+              ))}
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-4">
           <Input

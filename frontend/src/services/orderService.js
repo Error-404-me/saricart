@@ -3,14 +3,22 @@ import api from "../api/axios";
 export async function placeOrder({ ownerId, items }) {
   const { data } = await api.post("/orders", {
     owner_id: ownerId,
-    items: items.map((item) => ({ product_id: item.productId, quantity: item.quantity })),
+    items: items.map((item) => ({
+      product_id: item.productId,
+      quantity: item.quantity,
+      unit: item.unit,
+    })),
   });
   return data;
 }
 
 export async function createWalkInSale(items) {
   const { data } = await api.post("/orders/walk-in", {
-    items: items.map((item) => ({ product_id: item.productId, quantity: item.quantity })),
+    items: items.map((item) => ({
+      product_id: item.productId,
+      quantity: item.quantity,
+      unit: item.unit,
+    })),
   });
   return data;
 }
@@ -21,7 +29,9 @@ export async function fetchMyOrders() {
 }
 
 export async function fetchStoreOrders({ status } = {}) {
-  const { data } = await api.get("/orders/store", { params: { status_filter: status } });
+  const { data } = await api.get("/orders/store", {
+    params: { status_filter: status },
+  });
   return data;
 }
 

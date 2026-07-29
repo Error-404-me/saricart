@@ -1,6 +1,7 @@
 import { Minus, Plus, Trash2, ShoppingBag, WifiOff } from "lucide-react";
 import Button from "../common/Button";
 import { formatCurrency } from "../../utils/formatCurrency";
+import { formatQuantity } from "../../utils/formatQuantity";
 
 export default function SaleCart({
   items,
@@ -43,7 +44,8 @@ export default function SaleCart({
                 {item.name}
               </p>
               <p className="text-xs text-[var(--color-muted)]">
-                {formatCurrency(item.price)} each
+                {formatCurrency(item.price)} per{" "}
+                {formatQuantity(1, item.unit).split(" ")[1]}
               </p>
             </div>
             <div className="flex items-center gap-1.5">

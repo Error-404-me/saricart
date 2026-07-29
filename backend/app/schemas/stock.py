@@ -9,7 +9,7 @@ from app.models.stock_history import StockChangeReason
 
 class StockAdjustment(BaseModel):
     delta: Decimal = Field(
-        decimal_places=3,
+        decimal_places=4,
         description="Positive to add stock, negative to remove it.",
     )
 

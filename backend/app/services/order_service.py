@@ -5,11 +5,17 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.models.order import Order, OrderStatus, ALLOWED_TRANSITIONS, RESTOCKING_STATUSES
 from app.models.order_item import OrderItem
-from app.models.product import Product
+from app.models.product import Product, ProductUnit
 from app.models.stock_history import StockChangeReason
 from app.models.user import User
 from app.schemas.order import OrderCreate, OrderItemCreate
 from app.services import stock_service
+from app.services.unit_conversion import (
+    validate_transaction_quantity,
+    resolve_transaction,
+    to_selling_unit_quantity,
+    line_total,
+)
 from app.models.notification import NotificationType
 from app.services import notification_service
 
@@ -28,9 +34,11 @@ def _with_items(query):
 
 def _validate_and_price_items(
     db: Session, items: list[OrderItemCreate], owner_id: int
-) -> tuple[dict[int, Product], Decimal]:
+) -> tuple[list[dict], Decimal]:
     """Shared by online checkout and walk-in (scanner) sales: same store,
-    same stock checks, same server-computed total either way."""
+    same stock checks, same server-computed total either way. Returns
+    (resolved_items, total); each resolved item carries everything needed
+    to decrement stock and create its OrderItem row."""
     product_ids = [item.product_id for item in items]
     products = db.query(Product).filter(Product.id.in_(product_ids)).all()
     products_by_id = {p.id: p for p in products}
@@ -48,41 +56,70 @@ def _validate_and_price_items(
                 detail="All items in an order must come from the same store.",
             )
 
+    resolved_items = []
+    total = Decimal("0")
     for item in items:
         product = products_by_id[item.product_id]
-        if item.quantity > product.stock:
+        try:
+            requested_unit = ProductUnit(item.unit)
+        except ValueError:
             raise HTTPException(
                 status_code=http_status.HTTP_400_BAD_REQUEST,
-                detail=f"Only {product.stock} of '{product.name}' left in stock.",
+                detail=f"Unrecognized unit '{item.unit}'.",
             )
 
-    total = sum(products_by_id[item.product_id].price * item.quantity for item in items)
-    return products_by_id, total
+        validate_transaction_quantity(requested_unit, item.quantity)
+        unit_price, ratio_to_selling_unit = resolve_transaction(product, requested_unit)
+        selling_unit_quantity = to_selling_unit_quantity(item.quantity, ratio_to_selling_unit)
+
+        if selling_unit_quantity > product.stock:
+            raise HTTPException(
+                status_code=http_status.HTTP_400_BAD_REQUEST,
+                detail=f"Only {product.stock} {product.unit.value} of '{product.name}' left in stock.",
+            )
+
+        total += line_total(unit_price, item.quantity)
+        resolved_items.append({
+            "product": product,
+            "requested_unit": requested_unit,
+            "quantity": item.quantity,
+            "unit_price": unit_price,
+            "selling_unit_quantity": selling_unit_quantity,
+        })
+
+    return resolved_items, total
 
 
-def create_order(db: Session, order_in: OrderCreate, customer: User) -> Order:
-    products_by_id, total = _validate_and_price_items(db, order_in.items, order_in.owner_id)
-
-    order = Order(customer_id=customer.id, owner_id=order_in.owner_id, total=total)
-    db.add(order)
-    db.flush()  # assign order.id before creating its items
-
-    for item in order_in.items:
-        product = products_by_id[item.product_id]
-        stock_service.record_stock_change(db, product, -item.quantity, StockChangeReason.SALE)
+def _add_order_items(db: Session, order: Order, resolved_items: list[dict]) -> None:
+    for resolved in resolved_items:
+        product = resolved["product"]
+        stock_service.record_stock_change(
+            db, product, -resolved["selling_unit_quantity"], StockChangeReason.SALE
+        )
         db.add(
             OrderItem(
                 order_id=order.id,
                 product_id=product.id,
                 product_name=product.name,
                 product_image=product.image,
-                product_unit=product.unit.value,
-                quantity=item.quantity,
-                price=product.price,
+                product_unit=resolved["requested_unit"].value,
+                quantity=resolved["quantity"],
+                price=resolved["unit_price"],
+                selling_unit_quantity=resolved["selling_unit_quantity"],
             )
         )
 
-    owner = products_by_id[order_in.items[0].product_id].owner
+
+def create_order(db: Session, order_in: OrderCreate, customer: User) -> Order:
+    resolved_items, total = _validate_and_price_items(db, order_in.items, order_in.owner_id)
+
+    order = Order(customer_id=customer.id, owner_id=order_in.owner_id, total=total)
+    db.add(order)
+    db.flush()
+
+    _add_order_items(db, order, resolved_items)
+
+    owner = resolved_items[0]["product"].owner
     if owner:
         notification_service.create_notification(
             db,
@@ -99,18 +136,15 @@ def create_order(db: Session, order_in: OrderCreate, customer: User) -> Order:
 
 
 def create_walk_in_sale(db: Session, items: list[OrderItemCreate], owner: User) -> Order:
-    """A sale rung up in person (e.g. via the barcode scanner) rather than
-    placed online by a customer account. Modeled as an Order where the
-    store is both the seller and the "customer", created already completed
-    since there's no pickup to wait for — the goods left the shelf right
-    now. Counts toward analytics revenue the same as any other completed
-    order, and still logs stock history with the usual SALE reason."""
+    """A sale rung up in person, created already completed since there's
+    no pickup to wait for. Counts toward analytics revenue like any other
+    completed order and still logs stock history with the usual SALE reason."""
     if not items:
         raise HTTPException(
             status_code=http_status.HTTP_400_BAD_REQUEST, detail="Scan at least one item first."
         )
 
-    products_by_id, total = _validate_and_price_items(db, items, owner.id)
+    resolved_items, total = _validate_and_price_items(db, items, owner.id)
 
     order = Order(
         customer_id=owner.id,
@@ -121,20 +155,7 @@ def create_walk_in_sale(db: Session, items: list[OrderItemCreate], owner: User) 
     db.add(order)
     db.flush()
 
-    for item in items:
-        product = products_by_id[item.product_id]
-        stock_service.record_stock_change(db, product, -item.quantity, StockChangeReason.SALE)
-        db.add(
-            OrderItem(
-                order_id=order.id,
-                product_id=product.id,
-                product_name=product.name,
-                product_image=product.image,
-                product_unit=product.unit.value,
-                quantity=item.quantity,
-                price=product.price,
-            )
-        )
+    _add_order_items(db, order, resolved_items)
 
     db.commit()
     db.refresh(order)
@@ -212,12 +233,17 @@ def update_order_status(
 
 
 def _restock(db: Session, order: Order) -> None:
-    """Return reserved quantities to the shelf when an order is cancelled."""
+    """Returns reserved quantities to the shelf when an order is
+    cancelled. Uses the snapshotted selling-unit-equivalent quantity, not
+    the raw transacted quantity — an item bought by the piece from a box
+    must return a fraction of a box back to stock, not a raw piece count."""
     for item in order.items:
         if item.product_id is None:
             continue
         product = db.query(Product).filter(Product.id == item.product_id).first()
-        if product:
-            stock_service.record_stock_change(
-                db, product, item.quantity, StockChangeReason.CANCELLED
-            )
+        if not product:
+            continue
+        restock_amount = item.selling_unit_quantity
+        if restock_amount is None:
+            restock_amount = item.quantity  # legacy rows without a snapshot
+        stock_service.record_stock_change(db, product, restock_amount, StockChangeReason.CANCELLED)

@@ -78,14 +78,14 @@ export default function Checkout() {
         <div className="flex flex-col gap-2.5">
           {items.map((item) => (
             <div
-              key={item.productId}
+              key={item.lineId}
               className="flex items-center justify-between text-sm"
             >
               <span className="text-[var(--color-ink)]">
                 {item.name} · {formatQuantity(item.quantity, item.unit)}
               </span>
               <span className="text-[var(--color-muted)]">
-                {formatCurrency(item.price * item.quantity)}
+                {formatCurrency(item.unitPrice * item.quantity)}
               </span>
             </div>
           ))}

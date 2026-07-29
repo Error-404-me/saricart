@@ -22,9 +22,9 @@ class StockHistory(Base):
 
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
 
-    change = Column(Numeric(12, 3), nullable=False)
+    change = Column(Numeric(14, 4), nullable=False)
     reason = Column(Enum(StockChangeReason), nullable=False)
-    previous_stock = Column(Numeric(12, 3), nullable=False)
-    new_stock = Column(Numeric(12, 3), nullable=False)
+    previous_stock = Column(Numeric(14, 4), nullable=False)
+    new_stock = Column(Numeric(14, 4), nullable=False)
 
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

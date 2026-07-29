@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Pencil, Trash2, ImageOff } from "lucide-react";
 import { formatCurrency } from "../../utils/formatCurrency";
 import { formatQuantity } from "../../utils/formatQuantity";
+import { getUnitConfig } from "../../constants/units";
 
 export default function ProductTable({
   products,
@@ -62,6 +63,11 @@ export default function ProductTable({
                       {product.barcode && (
                         <span className="block font-mono text-xs text-[var(--color-muted)]">
                           {product.barcode}
+                        </span>
+                      )}
+                      {product.sub_unit && (
+                        <span className="block text-xs text-[var(--color-muted)]">
+                          Also sold per {getUnitConfig(product.sub_unit).label}
                         </span>
                       )}
                       {isUploading && (
