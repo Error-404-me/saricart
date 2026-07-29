@@ -28,7 +28,8 @@ class ReorderableItem(BaseModel):
     last_purchased_at: datetime
     available: bool
     current_price: Optional[Decimal] = None
-    current_stock: Optional[int] = None
+    current_stock: Optional[Decimal] = None
+    current_unit: Optional[str] = None
 
 
 class RecommendedProduct(BaseModel):
@@ -38,6 +39,7 @@ class RecommendedProduct(BaseModel):
     owner_id: int
     owner_username: Optional[str] = None
     price: Decimal
+    unit: str
     reason: str
 
 

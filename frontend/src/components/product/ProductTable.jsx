@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Pencil, Trash2, ImageOff } from "lucide-react";
 import { formatCurrency } from "../../utils/formatCurrency";
+import { formatQuantity } from "../../utils/formatQuantity";
 
 export default function ProductTable({
   products,
@@ -101,7 +102,7 @@ export default function ProductTable({
                           : "text-[var(--color-ink)]"
                     }
                   >
-                    {product.stock}
+                    {formatQuantity(product.stock, product.unit)}
                   </span>
                 </td>
                 <td className="px-4 py-3">

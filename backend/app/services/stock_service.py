@@ -6,12 +6,13 @@ from app.models.stock_history import StockHistory, StockChangeReason
 from app.models.user import User
 from app.models.notification import NotificationType
 from app.services import notification_service
+from decimal import Decimal
 
 LOW_STOCK_THRESHOLD = 5
 
 
 def record_stock_change(
-    db: Session, product: Product, delta: int, reason: StockChangeReason
+    db: Session, product: Product, delta: Decimal, reason: StockChangeReason
 ) -> None:
     """Apply a stock delta to a product and log it. Does not commit —
     callers control the transaction (e.g. order creation logs several of
@@ -46,21 +47,22 @@ def record_stock_change(
         )
 
 
-def adjust_stock(db: Session, product_id: int, delta: int, current_user: User) -> Product:
-    from app.services.product_service import get_product, _require_ownership
+def adjust_stock(db: Session, product_id: int, delta: Decimal, current_user: User) -> Product:
+    from app.services.product_service import get_product, _require_ownership, _validate_stock_for_unit
 
     product = get_product(db, product_id)
     _require_ownership(product, current_user)
 
     if delta == 0:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Enter a non-zero amount."
-        )
-    if product.stock + delta < 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Enter a non-zero amount.")
+
+    new_stock = product.stock + delta
+    if new_stock < 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Can't remove {abs(delta)} — only {product.stock} in stock.",
         )
+    _validate_stock_for_unit(product.unit, new_stock)
 
     record_stock_change(db, product, delta, StockChangeReason.ADJUSTMENT)
     db.commit()

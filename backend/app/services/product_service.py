@@ -8,12 +8,13 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.models.order_item import OrderItem
-from app.models.product import Product
+from app.models.product import Product, ProductUnit, DECIMAL_ALLOWED_UNITS
 from app.models.stock_history import StockHistory, StockChangeReason
 from app.models.user import User
 from app.schemas.product import ProductCreate, ProductUpdate
 from app.services import storage_service
 from io import BytesIO
+from decimal import Decimal
 
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
@@ -74,8 +75,15 @@ def _require_ownership(product: Product, current_user: User) -> None:
             detail="You don't own this product.",
         )
 
+def _validate_stock_for_unit(unit: ProductUnit, stock: Decimal) -> None:
+    if unit not in DECIMAL_ALLOWED_UNITS and stock % 1 != 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Stock must be a whole number for unit '{unit.value}'.",
+        )
 
 def create_product(db: Session, product_in: ProductCreate, owner: User) -> Product:
+    _validate_stock_for_unit(product_in.unit, product_in.stock)
     product = Product(**product_in.model_dump(), owner_id=owner.id)
     db.add(product)
     try:
@@ -96,6 +104,10 @@ def update_product(
     _require_ownership(product, current_user)
 
     updates = product_in.model_dump(exclude_unset=True)
+
+    effective_unit = updates.get("unit", product.unit)
+    effective_stock = updates.get("stock", product.stock)
+    _validate_stock_for_unit(effective_unit, effective_stock)
 
     if "stock" in updates:
         new_stock = updates.pop("stock")

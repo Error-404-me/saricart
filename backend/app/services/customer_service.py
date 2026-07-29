@@ -80,9 +80,6 @@ def _customer_order_items(db: Session, customer_id: int):
 
 
 def _attach_live_details(db: Session, entries: list[dict]) -> list[dict]:
-    """Attach current price/stock/store so the UI can offer — or correctly
-    disable — one-click reorder for products later edited, sold out, or
-    deleted since the last purchase."""
     product_ids = [e["product_id"] for e in entries if e["product_id"]]
     products_by_id = (
         {p.id: p for p in db.query(Product).filter(Product.id.in_(product_ids)).all()}
@@ -99,6 +96,7 @@ def _attach_live_details(db: Session, entries: list[dict]) -> list[dict]:
             "available": bool(product and product.stock > 0),
             "current_price": product.price if product else None,
             "current_stock": product.stock if product else None,
+            "current_unit": product.unit.value if product else None,
         })
     return results
 

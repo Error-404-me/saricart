@@ -1,4 +1,10 @@
-import { createContext, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useAuth } from "../hooks/useAuth";
 import { loadCart, saveCart, clearStoredCart } from "../services/cartService";
 
@@ -43,7 +49,7 @@ export function CartProvider({ children }) {
           return base.map((i) =>
             i.productId === product.id
               ? { ...i, quantity: Math.min(i.quantity + quantity, maxQty) }
-              : i
+              : i,
           );
         }
 
@@ -55,6 +61,7 @@ export function CartProvider({ children }) {
             price: Number(product.price),
             image: product.image,
             stock: product.stock,
+            unit: product.unit,
             ownerId: product.owner_id,
             ownerUsername: product.owner_username,
             quantity: Math.min(quantity, maxQty),
@@ -64,7 +71,7 @@ export function CartProvider({ children }) {
 
       return { status: "ok" };
     },
-    [items]
+    [items],
   );
 
   const updateQuantity = useCallback((productId, quantity) => {
@@ -73,7 +80,7 @@ export function CartProvider({ children }) {
       return prev.map((i) =>
         i.productId === productId
           ? { ...i, quantity: Math.min(quantity, i.stock) }
-          : i
+          : i,
       );
     });
   }, []);
@@ -87,10 +94,13 @@ export function CartProvider({ children }) {
     if (user) clearStoredCart(user.id);
   }, [user]);
 
-  const itemCount = useMemo(() => items.reduce((sum, i) => sum + i.quantity, 0), [items]);
+  const itemCount = useMemo(
+    () => items.reduce((sum, i) => sum + i.quantity, 0),
+    [items],
+  );
   const subtotal = useMemo(
     () => items.reduce((sum, i) => sum + i.price * i.quantity, 0),
-    [items]
+    [items],
   );
 
   const value = {

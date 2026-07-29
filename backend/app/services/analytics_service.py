@@ -158,9 +158,6 @@ def get_best_sellers(db: Session, owner_id: int, limit: int = 10) -> list[dict]:
     return sorted(aggregates.values(), key=lambda e: e["quantity_sold"], reverse=True)[:limit]
 
 def get_restock_suggestions(db: Session, owner_id: int) -> list[dict]:
-    """Products likely to run out soon, based on recent sale velocity —
-    only ones needing action within STOCKOUT_URGENCY_DAYS, so this stays a
-    short, actionable list rather than a rundown of the whole catalog."""
     products = db.query(Product).filter(Product.owner_id == owner_id).all()
     if not products:
         return []
@@ -177,29 +174,29 @@ def get_restock_suggestions(db: Session, owner_id: int) -> list[dict]:
         .all()
     )
 
-    sold_by_product: dict[int, int] = {}
+    sold_by_product: dict[int, float] = {}
     for entry in sales:
-        sold_by_product[entry.product_id] = sold_by_product.get(entry.product_id, 0) + abs(entry.change)
+        sold_by_product[entry.product_id] = sold_by_product.get(entry.product_id, 0.0) + float(abs(entry.change))
 
     suggestions = []
     for product in products:
-        total_sold = sold_by_product.get(product.id, 0)
-        avg_daily_sales = total_sold / REORDER_LOOKBACK_DAYS
+        avg_daily_sales = sold_by_product.get(product.id, 0.0) / REORDER_LOOKBACK_DAYS
         if avg_daily_sales <= 0:
-            continue  # not selling — nothing meaningful to project
+            continue
 
-        days_until_stockout = product.stock / avg_daily_sales
+        current_stock = float(product.stock)
+        days_until_stockout = current_stock / avg_daily_sales
         if days_until_stockout > STOCKOUT_URGENCY_DAYS:
-            continue  # not urgent yet
+            continue
 
-        suggested_reorder = max(0, math.ceil(avg_daily_sales * REORDER_COVER_DAYS) - product.stock)
+        suggested_reorder = max(0.0, round(avg_daily_sales * REORDER_COVER_DAYS - current_stock, 3))
 
         suggestions.append({
             "product_id": product.id,
             "product_name": product.name,
             "product_image": product.image,
-            "current_stock": product.stock,
-            "avg_daily_sales": round(avg_daily_sales, 1),
+            "current_stock": current_stock,
+            "avg_daily_sales": round(avg_daily_sales, 2),
             "days_until_stockout": round(days_until_stockout, 1),
             "suggested_reorder": suggested_reorder,
         })
@@ -272,8 +269,6 @@ def get_slow_moving_products(db: Session, owner_id: int) -> list[dict]:
 
 
 def get_fastest_selling(db: Session, owner_id: int, days: int = 30, limit: int = 5) -> list[dict]:
-    """Top products by units sold over a rolling window — a "velocity"
-    view distinct from the all-time Best Sellers on the Analytics page."""
     since = datetime.now(timezone.utc) - timedelta(days=days)
     sales = (
         db.query(StockHistory)
@@ -289,9 +284,9 @@ def get_fastest_selling(db: Session, owner_id: int, days: int = 30, limit: int =
     for entry in sales:
         item = aggregates.setdefault(
             entry.product_name,
-            {"product_name": entry.product_name, "product_id": entry.product_id, "quantity_sold": 0},
+            {"product_name": entry.product_name, "product_id": entry.product_id, "quantity_sold": 0.0},
         )
-        item["quantity_sold"] += abs(entry.change)
+        item["quantity_sold"] += float(abs(entry.change))
 
     ranked = sorted(aggregates.values(), key=lambda e: e["quantity_sold"], reverse=True)[:limit]
     for rank, item in enumerate(ranked, start=1):

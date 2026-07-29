@@ -76,6 +76,7 @@ def create_order(db: Session, order_in: OrderCreate, customer: User) -> Order:
                 product_id=product.id,
                 product_name=product.name,
                 product_image=product.image,
+                product_unit=product.unit.value,
                 quantity=item.quantity,
                 price=product.price,
             )
@@ -129,6 +130,7 @@ def create_walk_in_sale(db: Session, items: list[OrderItemCreate], owner: User) 
                 product_id=product.id,
                 product_name=product.name,
                 product_image=product.image,
+                product_unit=product.unit.value,
                 quantity=item.quantity,
                 price=product.price,
             )

@@ -1,10 +1,20 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, ImageOff, ShoppingCart, Minus, Plus, Check } from "lucide-react";
+import {
+  ArrowLeft,
+  ImageOff,
+  ShoppingCart,
+  Minus,
+  Plus,
+  Check,
+} from "lucide-react";
 import Spinner from "../../components/common/Spinner";
 import Button from "../../components/common/Button";
 import Modal from "../../components/common/Modal";
 import { formatCurrency } from "../../utils/formatCurrency";
+import { formatQuantity } from "../../utils/formatQuantity";
+import { incrementQuantity, decrementQuantity } from "../../utils/quantity";
+import { getUnitConfig } from "../../constants/units";
 import { fetchProduct } from "../../services/productService";
 import { useCart } from "../../hooks/useCart";
 
@@ -24,10 +34,14 @@ export default function ProductDetails() {
     setLoading(true);
     fetchProduct(id)
       .then((data) => {
-        if (!cancelled) setProduct(data);
+        if (cancelled) return;
+        setProduct(data);
+        const cfg = getUnitConfig(data.unit);
+        setQuantity(Math.min(cfg.step, data.stock || cfg.step));
       })
       .catch(() => {
-        if (!cancelled) setError("This product doesn't exist or has been removed.");
+        if (!cancelled)
+          setError("This product doesn't exist or has been removed.");
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -36,6 +50,8 @@ export default function ProductDetails() {
       cancelled = true;
     };
   }, [id]);
+
+  const unitConfig = product ? getUnitConfig(product.unit) : null;
 
   function handleAddToCart(force = false) {
     const result = addItem(product, quantity, { force });
@@ -46,6 +62,9 @@ export default function ProductDetails() {
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   }
+
+  const atMax = product ? quantity >= product.stock : false;
+  const atMin = unitConfig ? quantity <= unitConfig.step : false;
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-5">
@@ -67,7 +86,11 @@ export default function ProductDetails() {
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div className="aspect-square w-full overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-paper)]">
             {product.image ? (
-              <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+              <img
+                src={product.image}
+                alt={product.name}
+                className="h-full w-full object-cover"
+              />
             ) : (
               <div className="flex h-full w-full items-center justify-center">
                 <ImageOff className="h-10 w-10 text-[var(--color-muted)]" />
@@ -86,21 +109,31 @@ export default function ProductDetails() {
             </h1>
             {product.owner_username && (
               <p className="text-sm text-[var(--color-muted)]">
-                Sold by <span className="font-medium text-[var(--color-ink)]">{product.owner_username}</span>
+                Sold by{" "}
+                <span className="font-medium text-[var(--color-ink)]">
+                  {product.owner_username}
+                </span>
               </p>
             )}
             <p className="font-display text-3xl font-bold text-[var(--color-storefront)]">
               {formatCurrency(product.price)}
+              <span className="ml-1.5 text-sm font-medium text-[var(--color-muted)]">
+                / {unitConfig.label}
+              </span>
             </p>
 
             {product.stock === 0 ? (
-              <p className="text-sm font-medium text-[var(--color-crate)]">Out of stock</p>
+              <p className="text-sm font-medium text-[var(--color-crate)]">
+                Out of stock
+              </p>
             ) : product.stock <= 5 ? (
               <p className="text-sm font-medium text-[var(--color-awning-dark)]">
-                Only {product.stock} left
+                Only {formatQuantity(product.stock, product.unit)} left
               </p>
             ) : (
-              <p className="text-sm text-[var(--color-muted)]">In stock</p>
+              <p className="text-sm text-[var(--color-muted)]">
+                {formatQuantity(product.stock, product.unit)} in stock
+              </p>
             )}
 
             {product.description && (
@@ -112,18 +145,27 @@ export default function ProductDetails() {
             {product.stock > 0 && (
               <div className="flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-1.5 py-1 w-fit">
                 <button
-                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  onClick={() =>
+                    setQuantity((q) =>
+                      decrementQuantity(q, unitConfig.step, unitConfig.step),
+                    )
+                  }
+                  disabled={atMin}
                   aria-label="Decrease quantity"
-                  className="rounded-md p-1.5 text-[var(--color-storefront)] hover:bg-[var(--color-storefront)]/10"
+                  className="rounded-md p-1.5 text-[var(--color-storefront)] hover:bg-[var(--color-storefront)]/10 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <Minus className="h-3.5 w-3.5" />
                 </button>
-                <span className="w-8 text-center text-sm font-medium text-[var(--color-ink)]">
-                  {quantity}
+                <span className="min-w-14 px-1 text-center text-sm font-medium text-[var(--color-ink)]">
+                  {formatQuantity(quantity, product.unit)}
                 </span>
                 <button
-                  onClick={() => setQuantity((q) => Math.min(product.stock, q + 1))}
-                  disabled={quantity >= product.stock}
+                  onClick={() =>
+                    setQuantity((q) =>
+                      incrementQuantity(q, unitConfig.step, product.stock),
+                    )
+                  }
+                  disabled={atMax}
                   aria-label="Increase quantity"
                   className="rounded-md p-1.5 text-[var(--color-storefront)] hover:bg-[var(--color-storefront)]/10 disabled:cursor-not-allowed disabled:opacity-40"
                 >
@@ -138,8 +180,16 @@ export default function ProductDetails() {
               onClick={() => handleAddToCart(false)}
               className="mt-1 w-full gap-1.5 sm:w-auto"
             >
-              {added ? <Check className="h-4 w-4" /> : <ShoppingCart className="h-4 w-4" />}
-              {added ? "Added to cart" : product.stock === 0 ? "Out of stock" : "Add to cart"}
+              {added ? (
+                <Check className="h-4 w-4" />
+              ) : (
+                <ShoppingCart className="h-4 w-4" />
+              )}
+              {added
+                ? "Added to cart"
+                : product.stock === 0
+                  ? "Out of stock"
+                  : "Add to cart"}
             </Button>
           </div>
         </div>
@@ -167,8 +217,12 @@ export default function ProductDetails() {
         }
       >
         <p>
-          Your cart has items from <strong className="text-[var(--color-ink)]">{conflict?.ownerUsername}'s store</strong>.
-          Since pickup happens at one store, adding this item will clear your current cart.
+          Your cart has items from{" "}
+          <strong className="text-[var(--color-ink)]">
+            {conflict?.ownerUsername}'s store
+          </strong>
+          . Since pickup happens at one store, adding this item will clear your
+          current cart.
         </p>
       </Modal>
     </div>

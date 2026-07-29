@@ -16,6 +16,7 @@ export function useReorder() {
         price: Number(item.current_price),
         image: item.product_image,
         stock: item.current_stock,
+        unit: item.current_unit,
         owner_id: item.owner_id,
         owner_username: item.owner_username,
       };
@@ -38,8 +39,13 @@ export function useReorder() {
 
       attempt(false);
     },
-    [addItem]
+    [addItem],
   );
 
-  return { reorder, conflict, dismissConflict: () => setConflict(null), addedId };
+  return {
+    reorder,
+    conflict,
+    dismissConflict: () => setConflict(null),
+    addedId,
+  };
 }

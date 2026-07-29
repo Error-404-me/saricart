@@ -1,3 +1,4 @@
+import enum
 from datetime import datetime, timezone
 
 from sqlalchemy import (
@@ -7,6 +8,7 @@ from sqlalchemy import (
     Text,
     Numeric,
     DateTime,
+    Enum,
     ForeignKey,
     UniqueConstraint,
 )
@@ -15,27 +17,51 @@ from sqlalchemy.orm import relationship
 from app.database import Base
 
 
+class ProductUnit(str, enum.Enum):
+    PIECE = "pc"
+    KILOGRAM = "kg"
+    GRAM = "g"
+    LITER = "L"
+    MILLILITER = "ml"
+    DOZEN = "dozen"
+    PACK = "pack"
+    BOX = "box"
+    SACK = "sack"
+    BUNDLE = "bundle"
+    METER = "m"
+
+
+# Units sold by weight/volume/length may be purchased in fractional amounts
+# (e.g. 1kg out of a 25kg sack). Count-based units must stay whole numbers.
+DECIMAL_ALLOWED_UNITS = {
+    ProductUnit.KILOGRAM,
+    ProductUnit.GRAM,
+    ProductUnit.LITER,
+    ProductUnit.MILLILITER,
+    ProductUnit.METER,
+}
+
+
 class Product(Base):
     __tablename__ = "products"
     __table_args__ = (
-        # NULLs don't conflict under a unique constraint, so products
-        # without a scanned barcode yet are unaffected; this only stops the
-        # same owner from assigning one barcode to two different products.
         UniqueConstraint("owner_id", "barcode", name="uq_owner_barcode"),
     )
 
     id = Column(Integer, primary_key=True, index=True)
-
-    # Not in the original schema doc, but required so products belong to a
-    # specific store (multiple owners can each list their own catalog).
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
 
     name = Column(String(150), nullable=False)
     description = Column(Text, nullable=True)
     category = Column(String(80), nullable=True, index=True)
     price = Column(Numeric(10, 2), nullable=False)
-    stock = Column(Integer, nullable=False, default=0)
-    image = Column(String(255), nullable=True)  # relative URL, e.g. /uploads/xyz.jpg
+
+    unit = Column(Enum(ProductUnit), nullable=False, default=ProductUnit.PIECE)
+    # 3 decimal places supports gram-level precision on kg/L quantities
+    # while still storing whole counts for piece-based units.
+    stock = Column(Numeric(12, 3), nullable=False, default=0)
+
+    image = Column(String(255), nullable=True)
     barcode = Column(String(64), nullable=True, index=True)
 
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

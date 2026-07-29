@@ -1,16 +1,22 @@
 import { useState } from "react";
 import { Plus, Minus } from "lucide-react";
+import { getUnitConfig } from "../../constants/units";
+import { formatQuantity } from "../../utils/formatQuantity";
 
-export default function StockAdjuster({ stock, onAdjust, disabled }) {
+export default function StockAdjuster({ stock, unit, onAdjust, disabled }) {
   const [amount, setAmount] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const parsed = parseInt(amount, 10);
-  const hasValidAmount = !Number.isNaN(parsed) && parsed > 0;
+  const unitConfig = getUnitConfig(unit);
+  const parsed = parseFloat(amount);
+  const isValidAmount =
+    !Number.isNaN(parsed) &&
+    parsed > 0 &&
+    (unitConfig.allowsDecimal || Number.isInteger(parsed));
 
   async function handleAdjust(sign) {
-    if (!hasValidAmount) return;
+    if (!isValidAmount) return;
     setSubmitting(true);
     setError("");
     try {
@@ -28,7 +34,7 @@ export default function StockAdjuster({ stock, onAdjust, disabled }) {
       <div className="flex items-center gap-1.5">
         <button
           type="button"
-          disabled={disabled || submitting || !hasValidAmount}
+          disabled={disabled || submitting || !isValidAmount}
           onClick={() => handleAdjust(-1)}
           aria-label="Remove stock"
           className="rounded-lg border border-[var(--color-border)] p-1.5 text-[var(--color-crate)] transition hover:bg-[var(--color-crate)]/10 disabled:cursor-not-allowed disabled:opacity-40"
@@ -37,17 +43,18 @@ export default function StockAdjuster({ stock, onAdjust, disabled }) {
         </button>
         <input
           type="number"
-          min="1"
-          placeholder="Qty"
+          min="0"
+          step={unitConfig.allowsDecimal ? unitConfig.step : 1}
+          placeholder={unitConfig.label}
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           disabled={disabled || submitting}
-          className="w-16 rounded-lg border border-[var(--color-border)] px-2 py-1.5 text-center text-sm outline-none
+          className="w-20 rounded-lg border border-[var(--color-border)] px-2 py-1.5 text-center text-sm outline-none
             focus:border-[var(--color-storefront)] focus:ring-2 focus:ring-[var(--color-storefront)]/20"
         />
         <button
           type="button"
-          disabled={disabled || submitting || !hasValidAmount}
+          disabled={disabled || submitting || !isValidAmount}
           onClick={() => handleAdjust(1)}
           aria-label="Add stock"
           className="rounded-lg border border-[var(--color-border)] p-1.5 text-[var(--color-storefront)] transition hover:bg-[var(--color-storefront)]/10 disabled:cursor-not-allowed disabled:opacity-40"
@@ -55,7 +62,7 @@ export default function StockAdjuster({ stock, onAdjust, disabled }) {
           <Plus className="h-3.5 w-3.5" />
         </button>
         <span className="ml-1 text-xs text-[var(--color-muted)]">
-          {stock} in stock
+          {formatQuantity(stock, unit)} in stock
         </span>
       </div>
       {error && <p className="text-xs text-[var(--color-crate)]">{error}</p>}

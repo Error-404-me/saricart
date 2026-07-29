@@ -18,11 +18,13 @@ export default function PersonalizedSuggestions({ usuallyBuys, recommended }) {
       owner_username: recommended.owner_username,
       current_price: recommended.price,
       current_stock: 1,
+      current_unit: recommended.unit,
       available: true,
     });
   }
 
-  const justAddedRecommended = recommended && addedId === recommended.product_id;
+  const justAddedRecommended =
+    recommended && addedId === recommended.product_id;
 
   return (
     <>
@@ -67,7 +69,11 @@ export default function PersonalizedSuggestions({ usuallyBuys, recommended }) {
               onClick={handleAddRecommended}
               className="flex shrink-0 items-center gap-1.5 rounded-lg bg-[var(--color-storefront)] px-3 py-2 text-xs font-semibold text-white hover:bg-[var(--color-storefront-light)]"
             >
-              {justAddedRecommended ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+              {justAddedRecommended ? (
+                <Check className="h-3.5 w-3.5" />
+              ) : (
+                <Plus className="h-3.5 w-3.5" />
+              )}
               {justAddedRecommended ? "Added" : "Add"}
             </button>
           </div>

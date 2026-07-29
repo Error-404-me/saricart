@@ -3,6 +3,7 @@ import { Star } from "lucide-react";
 import { formatCurrency } from "../../utils/formatCurrency";
 import OrderStatusBadge from "./OrderStatusBadge";
 import ReviewModal from "./ReviewModal";
+import { formatQuantity } from "../../utils/formatQuantity";
 
 function formatDate(isoString) {
   return new Date(isoString).toLocaleString("en-PH", {
@@ -24,24 +25,34 @@ export default function OrderCard({ order, onReviewed }) {
           <p className="text-sm font-medium text-[var(--color-ink)]">
             Ordered from: {order.owner_username}'s store
           </p>
-          <p className="text-xs text-[var(--color-muted)]">{formatDate(order.created_at)}</p>
+          <p className="text-xs text-[var(--color-muted)]">
+            {formatDate(order.created_at)}
+          </p>
         </div>
         <OrderStatusBadge status={order.status} />
       </div>
 
       <div className="mt-4 flex flex-col gap-2">
         {order.items.map((item) => (
-          <div key={item.id} className="flex items-center justify-between text-sm">
+          <div
+            key={item.id}
+            className="flex items-center justify-between text-sm"
+          >
             <span className="text-[var(--color-ink)]">
-              {item.quantity}× {item.product_name}
+              {item.product_name} ·{" "}
+              {formatQuantity(item.quantity, item.product_unit || "pc")}
             </span>
-            <span className="text-[var(--color-muted)]">{formatCurrency(item.subtotal)}</span>
+            <span className="text-[var(--color-muted)]">
+              {formatCurrency(item.subtotal)}
+            </span>
           </div>
         ))}
       </div>
 
       <div className="mt-4 flex items-center justify-between border-t border-dashed border-[var(--color-border)] pt-3">
-        <span className="text-sm font-medium text-[var(--color-ink)]">Total</span>
+        <span className="text-sm font-medium text-[var(--color-ink)]">
+          Total
+        </span>
         <span className="font-display text-lg font-bold text-[var(--color-storefront)]">
           {formatCurrency(order.total)}
         </span>

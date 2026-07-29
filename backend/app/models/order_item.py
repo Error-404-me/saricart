@@ -10,14 +10,14 @@ class OrderItem(Base):
     id = Column(Integer, primary_key=True, index=True)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=False, index=True)
 
-    # Nullable + no snapshot dependency on the live row: if a product is
-    # later edited or deleted, past orders should still read correctly, so
-    # name/image are captured at order time below rather than joined live.
     product_id = Column(Integer, ForeignKey("products.id"), nullable=True)
     product_name = Column(String(150), nullable=False)
     product_image = Column(String(255), nullable=True)
+    # Snapshotted like product_name/product_image — if the product's unit
+    # is later changed, past orders must still show what was actually sold.
+    product_unit = Column(String(20), nullable=True)
 
-    quantity = Column(Integer, nullable=False)
-    price = Column(Numeric(10, 2), nullable=False)  # unit price at order time
+    quantity = Column(Numeric(12, 3), nullable=False)
+    price = Column(Numeric(10, 2), nullable=False)
 
     order = relationship("Order", back_populates="items")

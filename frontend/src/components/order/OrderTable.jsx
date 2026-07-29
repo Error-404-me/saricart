@@ -3,6 +3,7 @@ import { formatCurrency } from "../../utils/formatCurrency";
 import OrderStatusBadge from "./OrderStatusBadge";
 import Button from "../common/Button";
 import ConfirmModal from "../common/ConfirmModal";
+import { formatQuantity } from "../../utils/formatQuantity";
 
 function formatDate(isoString) {
   return new Date(isoString).toLocaleString("en-PH", {
@@ -34,7 +35,11 @@ const ACTIONS_BY_STATUS = {
   cancelled: [],
 };
 
-export default function OrderTable({ orders, onStatusChange, updatingOrderId }) {
+export default function OrderTable({
+  orders,
+  onStatusChange,
+  updatingOrderId,
+}) {
   const [pendingCancel, setPendingCancel] = useState(null); // { orderId, label } | null
 
   if (orders.length === 0) return null;
@@ -61,24 +66,35 @@ export default function OrderTable({ orders, onStatusChange, updatingOrderId }) 
           const isUpdating = updatingOrderId === order.id;
 
           return (
-            <div key={order.id} className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
+            <div
+              key={order.id}
+              className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5"
+            >
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <p className="text-sm font-medium text-[var(--color-ink)]">
                     Order by: {order.customer_username}
                   </p>
-                  <p className="text-xs text-[var(--color-muted)]">{formatDate(order.created_at)}</p>
+                  <p className="text-xs text-[var(--color-muted)]">
+                    {formatDate(order.created_at)}
+                  </p>
                 </div>
                 <OrderStatusBadge status={order.status} />
               </div>
 
               <div className="mt-3 flex flex-col gap-1.5">
                 {order.items.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between text-sm">
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between text-sm"
+                  >
                     <span className="text-[var(--color-ink)]">
-                      {item.quantity}× {item.product_name}
+                      {item.product_name} ·{" "}
+                      {formatQuantity(item.quantity, item.product_unit || "pc")}
                     </span>
-                    <span className="text-[var(--color-muted)]">{formatCurrency(item.subtotal)}</span>
+                    <span className="text-[var(--color-muted)]">
+                      {formatCurrency(item.subtotal)}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -117,8 +133,8 @@ export default function OrderTable({ orders, onStatusChange, updatingOrderId }) 
         confirmLabel={pendingCancel?.label || "Confirm"}
       >
         <p>
-          This can't be undone — the customer will be notified, and any reserved stock will be
-          returned to the shelf.
+          This can't be undone — the customer will be notified, and any reserved
+          stock will be returned to the shelf.
         </p>
       </ConfirmModal>
     </>

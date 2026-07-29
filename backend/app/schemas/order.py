@@ -9,7 +9,7 @@ from app.models.order import OrderStatus
 
 class OrderItemCreate(BaseModel):
     product_id: int
-    quantity: int = Field(gt=0)
+    quantity: Decimal = Field(gt=0, decimal_places=3)
 
 
 class OrderCreate(BaseModel):
@@ -18,8 +18,6 @@ class OrderCreate(BaseModel):
 
 
 class WalkInSaleCreate(BaseModel):
-    """No owner_id — always the current owner's own store."""
-
     items: list[OrderItemCreate] = Field(min_length=1)
 
 
@@ -30,7 +28,8 @@ class OrderItemOut(BaseModel):
     product_id: Optional[int] = None
     product_name: str
     product_image: Optional[str] = None
-    quantity: int
+    product_unit: Optional[str] = None
+    quantity: Decimal
     price: Decimal
 
     @computed_field

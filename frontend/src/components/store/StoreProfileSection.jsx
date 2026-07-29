@@ -5,6 +5,7 @@ import Button from "../common/Button";
 import Spinner from "../common/Spinner";
 import StoreStatusBadge from "../store/StoreStatusBadge";
 import { fetchMyStore, updateMyStore } from "../../services/storeService";
+import StoreQrCode from "./StoreQrCode";
 
 export default function StoreProfileSection() {
   const [store, setStore] = useState(null);
@@ -179,6 +180,7 @@ export default function StoreProfileSection() {
       >
         Save store profile
       </Button>
+      {store && <StoreQrCode ownerId={store.owner_id} storeName={store.name} />}
     </div>
   );
 }

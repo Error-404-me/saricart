@@ -6,6 +6,7 @@ import { formatCurrency } from "../../utils/formatCurrency";
 import Button from "../../components/common/Button";
 import ComingSoon from "../../components/common/ComingSoon";
 import { placeOrder } from "../../services/orderService";
+import { formatQuantity } from "../../utils/formatQuantity";
 
 export default function Checkout() {
   const { items, itemCount, subtotal, clearCart } = useCart();
@@ -37,10 +38,14 @@ export default function Checkout() {
     try {
       const order = await placeOrder({ ownerId: items[0].ownerId, items });
       clearCart();
-      navigate("/orders", { state: { justPlacedOrderId: order.id }, replace: true });
+      navigate("/orders", {
+        state: { justPlacedOrderId: order.id },
+        replace: true,
+      });
     } catch (err) {
       setError(
-        err.response?.data?.detail || "Couldn't place your order. Please try again."
+        err.response?.data?.detail ||
+          "Couldn't place your order. Please try again.",
       );
     } finally {
       setSubmitting(false);
@@ -58,18 +63,26 @@ export default function Checkout() {
       </Link>
 
       <div>
-        <h1 className="font-display text-2xl font-bold text-[var(--color-ink)]">Checkout</h1>
+        <h1 className="font-display text-2xl font-bold text-[var(--color-ink)]">
+          Checkout
+        </h1>
         <p className="mt-1 text-sm text-[var(--color-muted)]">
-          Pickup from <span className="font-medium text-[var(--color-ink)]">{storeName}</span>
+          Pickup from{" "}
+          <span className="font-medium text-[var(--color-ink)]">
+            {storeName}
+          </span>
         </p>
       </div>
 
       <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
         <div className="flex flex-col gap-2.5">
           {items.map((item) => (
-            <div key={item.productId} className="flex items-center justify-between text-sm">
+            <div
+              key={item.productId}
+              className="flex items-center justify-between text-sm"
+            >
               <span className="text-[var(--color-ink)]">
-                {item.quantity}× {item.name}
+                {item.name} · {formatQuantity(item.quantity, item.unit)}
               </span>
               <span className="text-[var(--color-muted)]">
                 {formatCurrency(item.price * item.quantity)}
@@ -82,7 +95,9 @@ export default function Checkout() {
 
         <div className="flex items-center justify-between text-sm text-[var(--color-muted)]">
           <span>Items ({itemCount})</span>
-          <span className="font-medium text-[var(--color-ink)]">{formatCurrency(subtotal)}</span>
+          <span className="font-medium text-[var(--color-ink)]">
+            {formatCurrency(subtotal)}
+          </span>
         </div>
         <div className="mt-2 flex items-center justify-between">
           <span className="font-medium text-[var(--color-ink)]">Total</span>
@@ -92,12 +107,15 @@ export default function Checkout() {
         </div>
 
         <p className="mt-4 rounded-lg bg-[var(--color-paper)] px-3 py-2 text-xs text-[var(--color-muted)]">
-          Payment happens in person at pickup — this places a pre-order for the store to
-          prepare, it doesn't charge you now.
+          Payment happens in person at pickup — this places a pre-order for the
+          store to prepare, it doesn't charge you now.
         </p>
 
         {error && (
-          <p className="mt-3 rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]" role="alert">
+          <p
+            className="mt-3 rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]"
+            role="alert"
+          >
             {error}
           </p>
         )}

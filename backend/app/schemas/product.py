@@ -4,13 +4,16 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.models.product import ProductUnit
+
 
 class ProductBase(BaseModel):
     name: str = Field(min_length=1, max_length=150)
     description: Optional[str] = None
     category: Optional[str] = Field(default=None, max_length=80)
     price: Decimal = Field(gt=0, decimal_places=2)
-    stock: int = Field(ge=0, default=0)
+    unit: ProductUnit = Field(default=ProductUnit.PIECE)
+    stock: Decimal = Field(ge=0, decimal_places=3, default=Decimal("0"))
     barcode: Optional[str] = Field(default=None, max_length=64)
 
 
@@ -23,7 +26,8 @@ class ProductUpdate(BaseModel):
     description: Optional[str] = None
     category: Optional[str] = Field(default=None, max_length=80)
     price: Optional[Decimal] = Field(default=None, gt=0, decimal_places=2)
-    stock: Optional[int] = Field(default=None, ge=0)
+    unit: Optional[ProductUnit] = None
+    stock: Optional[Decimal] = Field(default=None, ge=0, decimal_places=3)
     barcode: Optional[str] = Field(default=None, max_length=64)
 
 

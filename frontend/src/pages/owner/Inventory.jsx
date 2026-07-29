@@ -190,6 +190,7 @@ export default function Inventory() {
               </div>
               <StockAdjuster
                 stock={product.stock}
+                unit={product.unit}
                 onAdjust={(delta) => handleAdjust(product.id, delta)}
               />
             </div>
