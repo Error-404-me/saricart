@@ -144,59 +144,8 @@ export default function Onboarding() {
             </ul>
           </div>
 
-          {/* App preview mockup — decorative demo screen, left in English
-              rather than translated: it's illustrative fake UI, not real
-              content a visitor needs to read to use the app. */}
-          <div className="mx-auto w-full max-w-sm lg:mx-0 lg:ml-auto">
-            <div className="rounded-3xl bg-[var(--color-paper)] p-3 shadow-2xl shadow-black/30">
-              <div className="rounded-2xl bg-[var(--color-surface)] p-4">
-                <div className="flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-paper)] px-3 py-2">
-                  <Search className="h-3.5 w-3.5 text-[var(--color-muted)]" />
-                  <span className="text-xs text-[var(--color-muted)]">
-                    Search products…
-                  </span>
-                </div>
-
-                <div className="mt-3 flex items-center gap-3 rounded-xl border border-[var(--color-border)] p-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--color-storefront)]/10 text-[var(--color-storefront)]">
-                    <Store className="h-4 w-4" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-[var(--color-ink)]">
-                      Aling Nena's Store
-                    </p>
-                    <div className="mt-0.5 flex items-center gap-1 text-xs text-[var(--color-muted)]">
-                      <Star className="h-3 w-3 fill-[var(--color-awning)] text-[var(--color-awning)]" />
-                      4.9 · 0.4km away
-                    </div>
-                  </div>
-                  <span className="rounded-full bg-[var(--color-storefront)]/10 px-2 py-1 text-[10px] font-medium text-[var(--color-storefront)]">
-                    Open
-                  </span>
-                </div>
-
-                <div className="mt-3 grid grid-cols-3 gap-2">
-                  {["🧴", "🥫", "🍜"].map((emoji, i) => (
-                    <div
-                      key={i}
-                      className="rounded-lg bg-[var(--color-paper)] p-2.5 text-center"
-                    >
-                      <span className="text-lg">{emoji}</span>
-                      <p className="mt-1 h-1.5 w-full rounded-full bg-[var(--color-border)]" />
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-3 flex items-center justify-between rounded-xl bg-[var(--color-storefront)] px-3.5 py-2.5">
-                  <span className="text-xs font-medium text-white/80">
-                    3 items · ₱127.00
-                  </span>
-                  <span className="rounded-lg bg-[var(--color-awning)] px-3 py-1 text-xs font-semibold text-[var(--color-ink)]">
-                    Checkout
-                  </span>
-                </div>
-              </div>
-            </div>
+          <div className="mx-auto w-full max-w-sm lg:mx-0 lg:ml-auto object-contain items-center justify-center">
+            <img src="/favicon.svg" alt="SariCart" />
           </div>
         </div>
       </section>

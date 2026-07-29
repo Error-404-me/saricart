@@ -39,14 +39,20 @@ export default function AuthLayout({ title, subtitle, children, footer }) {
         </div>
 
         <div className="relative z-10 flex flex-col gap-6">
-          <blockquote className="rounded-2xl bg-white/5 p-5 backdrop-blur-sm">
+          {/* <blockquote className="rounded-2xl bg-white/5 p-5 backdrop-blur-sm">
             <p className="text-sm leading-relaxed text-white/85">
               {t("auth.brandQuote")}
             </p>
             <footer className="mt-3 text-xs text-white/50">
               {t("auth.brandQuoteAuthor")}
             </footer>
-          </blockquote>
+          </blockquote> */}
+
+          <img
+            src="/favicon.svg"
+            alt="SariCart"
+            className="object-contain size-2/3 self-center"
+          />
 
           <ul className="flex flex-col gap-3">
             {BRAND_HIGHLIGHTS.map((item) => (
