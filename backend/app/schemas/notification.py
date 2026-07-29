@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.notification import NotificationType
 
@@ -20,3 +20,6 @@ class NotificationOut(BaseModel):
 
 class NotificationSummary(BaseModel):
     unread_count: int
+    
+class NotificationBulkDelete(BaseModel):
+    ids: list[int] = Field(min_length=1)

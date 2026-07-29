@@ -4,6 +4,7 @@ import {
   fetchUnreadCount,
   markNotificationRead,
   markAllNotificationsRead,
+  deleteNotifications,
   deleteNotification,
 } from "../services/notificationService";
 
@@ -84,6 +85,33 @@ export function useNotifications() {
     }
   }
 
+  async function removeNotifications(ids) {
+    if (!ids || ids.length === 0) return;
+    const idSet = new Set(ids);
+    const removed = notifications.filter((n) => idSet.has(n.id));
+    const unreadRemovedCount = removed.filter((n) => !n.is_read).length;
+
+    setNotifications((prev) => prev.filter((n) => !idSet.has(n.id)));
+    if (unreadRemovedCount > 0) {
+      setUnreadCount((prev) => Math.max(0, prev - unreadRemovedCount));
+    }
+
+    try {
+      await deleteNotifications(ids);
+    } catch {
+      // Same restore-on-failure approach as single delete.
+      setNotifications((prev) => {
+        const existingIds = new Set(prev.map((n) => n.id));
+        const restored = removed.filter((n) => !existingIds.has(n.id));
+        return [...prev, ...restored].sort(
+          (a, b) => new Date(b.created_at) - new Date(a.created_at),
+        );
+      });
+      if (unreadRemovedCount > 0)
+        setUnreadCount((prev) => prev + unreadRemovedCount);
+    }
+  }
+
   return {
     notifications,
     unreadCount,
@@ -92,5 +120,6 @@ export function useNotifications() {
     markRead,
     markAllRead,
     removeNotification,
+    removeNotifications,
   };
 }

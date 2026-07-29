@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.models.user import User
-from app.schemas.notification import NotificationOut, NotificationSummary
+from app.schemas.notification import NotificationOut, NotificationSummary, NotificationBulkDelete
 from app.services import notification_service
 
 router = APIRouter(prefix="/api/notifications", tags=["notifications"])
@@ -38,6 +38,14 @@ def mark_all_notifications_read(
     db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
     notification_service.mark_all_read(db, current_user.id)
+    
+@router.post("/bulk-delete", status_code=204)
+def bulk_delete_notifications(
+    payload: NotificationBulkDelete,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    notification_service.delete_notifications(db, current_user.id, payload.ids)
     
 @router.delete("/{notification_id}", status_code=204)
 def delete_notification(

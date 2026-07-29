@@ -27,6 +27,14 @@ _CUSTOMER_STATUS_MESSAGES = {
     OrderStatus.CANCELLED: "Your order was cancelled.",
 }
 
+_STATUS_TITLE_LABELS = {
+    OrderStatus.ACCEPTED: "Order accepted",
+    OrderStatus.PREPARING: "Order is being prepared",
+    OrderStatus.READY: "Ready for pickup",
+    OrderStatus.COMPLETED: "Order completed",
+    OrderStatus.CANCELLED: "Order cancelled",
+}
+
 
 def _with_items(query):
     return query.options(joinedload(Order.items), joinedload(Order.review))
@@ -218,11 +226,17 @@ def update_order_status(
     order.status = new_status
 
     if order.customer:
+        store_label = (
+            f"{order.owner_username}'s store" if order.owner_username else "Your order"
+        )
+        status_label = _STATUS_TITLE_LABELS.get(
+            new_status, new_status.value.replace("_", " ").title()
+        )
         notification_service.create_notification(
             db,
             order.customer,
             NotificationType.ORDER_STATUS_CHANGED,
-            title=f"Order #{order.id} — {new_status.value.replace('_', ' ').title()}",
+            title=f"{store_label} — {status_label}",
             body=_CUSTOMER_STATUS_MESSAGES.get(new_status, "Your order status was updated."),
             link="/orders",
         )

@@ -22,6 +22,10 @@ export async function deleteNotification(id) {
   await api.delete(`/notifications/${id}`);
 }
 
+export async function deleteNotifications(ids) {
+  await api.post("/notifications/bulk-delete", { ids });
+}
+
 export async function sendTestNotification() {
   await api.post("/notifications/test");
 }

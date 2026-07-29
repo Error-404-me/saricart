@@ -91,6 +91,15 @@ def delete_notification(db: Session, user_id: int, notification_id: int) -> None
     ).delete()
     db.commit()
     
+def delete_notifications(db: Session, user_id: int, notification_ids: list[int]) -> int:
+    deleted_count = (
+        db.query(Notification)
+        .filter(Notification.user_id == user_id, Notification.id.in_(notification_ids))
+        .delete(synchronize_session=False)
+    )
+    db.commit()
+    return deleted_count
+    
 def send_test_notification(db: Session, user: User) -> Notification | None:
     """Diagnostic helper — unlike create_notification, ignores the
     category preference toggles entirely, so a click always attempts

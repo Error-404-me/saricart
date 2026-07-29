@@ -39,9 +39,6 @@ export default function ProductCard({ product }) {
         <h3 className="font-medium leading-snug text-[var(--color-ink)]">
           {product.name}
         </h3>
-        <h3 className="font-medium leading-snug text-[var(--color-ink)]">
-          {product.name}
-        </h3>
         {product.owner_username && (
           <span className="text-xs text-[var(--color-muted)]">
             {product.owner_username}'s store
@@ -58,12 +55,6 @@ export default function ProductCard({ product }) {
             also by {getUnitConfig(product.sub_unit).label}
           </span>
         )}
-        <p className="mt-auto pt-1.5 font-display text-lg font-bold text-[var(--color-storefront)]">
-          {formatCurrency(product.price)}
-          <span className="ml-1 text-xs font-medium text-[var(--color-muted)]">
-            /{getUnitConfig(product.unit).label}
-          </span>
-        </p>
       </div>
     </Link>
   );
