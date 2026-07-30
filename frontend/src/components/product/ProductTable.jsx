@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Pencil, Trash2, ImageOff } from "lucide-react";
-import { formatCurrency } from "../../utils/formatCurrency";
+import PriceWithUnit from "./PriceWithUnit";
 import { formatQuantity } from "../../utils/formatQuantity";
 import { getUnitConfig } from "../../constants/units";
 
@@ -95,8 +95,8 @@ export default function ProductTable({
                     <span className="italic">Uncategorized</span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-[var(--color-ink)]">
-                  {formatCurrency(product.price)}
+                <td className="px-4 py-3">
+                  <PriceWithUnit product={product} size="sm" />
                 </td>
                 <td className="px-4 py-3">
                   <span

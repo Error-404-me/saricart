@@ -9,6 +9,7 @@ import {
   UNIT_HIERARCHY,
   getUnitConfig,
 } from "../../constants/units";
+import { formatCurrency } from "../../utils/formatCurrency";
 
 const CURRENT_CATEGORIES_HINT =
   "e.g. Snacks, Instant Noodles, Beverages, Canned Goods";
@@ -123,6 +124,14 @@ export default function ProductForm({
     setForm((prev) => ({ ...prev, barcode: code }));
     setScannerOpen(false);
   }, []);
+
+  const previewSubUnitPrice = (() => {
+    if (!form.sellByBaseUnit || !hierarchyEntry) return null;
+    const ratio = hierarchyEntry.fixedRatio ?? parseFloat(form.subUnitRatio);
+    const price = parseFloat(form.price);
+    if (!ratio || ratio <= 0 || Number.isNaN(price) || price <= 0) return null;
+    return price / ratio;
+  })();
 
   return (
     <>
@@ -244,35 +253,48 @@ export default function ProductForm({
               Also sell by the{" "}
               {getUnitConfig(hierarchyEntry.subUnit).fullLabel.toLowerCase()}
             </label>
-            <p className="mt-1 pl-6.5 text-xs text-[var(--color-muted)]">
+            <p className="mt-1 pl-[26px] text-xs text-[var(--color-muted)]">
               Lets customers buy a single{" "}
               {getUnitConfig(hierarchyEntry.subUnit).label} instead of a whole{" "}
               {unitConfig.fullLabel.toLowerCase()} — e.g. 1kg out of a 25kg
               sack.
             </p>
 
-            {form.sellByBaseUnit &&
-              (hierarchyEntry.fixedRatio ? (
-                <p className="mt-2 pl-6.5 text-xs text-[var(--color-muted)]">
-                  Fixed: 1 {form.unit} = {hierarchyEntry.fixedRatio}{" "}
-                  {getUnitConfig(hierarchyEntry.subUnit).label}
-                </p>
-              ) : (
-                <div className="mt-2.5 pl-6.5">
-                  <Input
-                    id="subUnitRatio"
-                    name="subUnitRatio"
-                    type="number"
-                    min="0"
-                    step="1"
-                    label={`How many ${getUnitConfig(hierarchyEntry.subUnit).label} per ${form.unit}?`}
-                    placeholder="e.g. 24"
-                    value={form.subUnitRatio}
-                    onChange={handleChange}
-                    error={fieldErrors.subUnitRatio}
-                  />
-                </div>
-              ))}
+            {form.sellByBaseUnit && (
+              <>
+                {hierarchyEntry.fixedRatio ? (
+                  <p className="mt-2 pl-[26px] text-xs text-[var(--color-muted)]">
+                    Fixed: 1 {form.unit} = {hierarchyEntry.fixedRatio}{" "}
+                    {getUnitConfig(hierarchyEntry.subUnit).label}
+                  </p>
+                ) : (
+                  <div className="mt-2.5 pl-[26px]">
+                    <Input
+                      id="subUnitRatio"
+                      name="subUnitRatio"
+                      type="number"
+                      min="0"
+                      step="1"
+                      label={`How many ${getUnitConfig(hierarchyEntry.subUnit).label} per ${form.unit}?`}
+                      placeholder="e.g. 24"
+                      value={form.subUnitRatio}
+                      onChange={handleChange}
+                      error={fieldErrors.subUnitRatio}
+                    />
+                  </div>
+                )}
+
+                {previewSubUnitPrice != null && (
+                  <p className="mt-2.5 pl-[26px] text-xs font-medium text-[var(--color-storefront)]">
+                    = {formatCurrency(previewSubUnitPrice)} per{" "}
+                    {getUnitConfig(hierarchyEntry.subUnit).label} — this is what
+                    customers will pay per{" "}
+                    {getUnitConfig(hierarchyEntry.subUnit).singularLabel ||
+                      getUnitConfig(hierarchyEntry.subUnit).label}
+                  </p>
+                )}
+              </>
+            )}
           </div>
         )}
 

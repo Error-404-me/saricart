@@ -79,12 +79,16 @@ export default function Checkout() {
           {items.map((item) => (
             <div
               key={item.lineId}
-              className="flex items-center justify-between text-sm"
+              className="flex items-center justify-between gap-3 text-sm"
             >
-              <span className="text-[var(--color-ink)]">
-                {item.name} · {formatQuantity(item.quantity, item.unit)}
-              </span>
-              <span className="text-[var(--color-muted)]">
+              <div className="min-w-0">
+                <p className="truncate text-[var(--color-ink)]">{item.name}</p>
+                <p className="text-xs text-[var(--color-muted)]">
+                  {formatQuantity(item.quantity, item.unit)} ×{" "}
+                  {formatCurrency(item.unitPrice)}
+                </p>
+              </div>
+              <span className="shrink-0 text-[var(--color-muted)]">
                 {formatCurrency(item.unitPrice * item.quantity)}
               </span>
             </div>

@@ -198,7 +198,7 @@ export default function NotificationBell({
             width: PANEL_WIDTH,
             maxHeight: coords.maxHeight,
           }}
-          className="z-50 flex flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl shadow-black/10"
+          className="z-50 flex flex-col w-[100%] overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl shadow-black/10"
         >
           <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[var(--color-border-subtle)] px-4 py-3">
             <p className="min-w-0 truncate font-display text-sm font-bold text-[var(--color-ink)]">

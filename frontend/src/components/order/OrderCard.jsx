@@ -36,13 +36,18 @@ export default function OrderCard({ order, onReviewed }) {
         {order.items.map((item) => (
           <div
             key={item.id}
-            className="flex items-center justify-between text-sm"
+            className="flex items-center justify-between gap-3 text-sm"
           >
-            <span className="text-[var(--color-ink)]">
-              {item.product_name} ·{" "}
-              {formatQuantity(item.quantity, item.product_unit || "pc")}
-            </span>
-            <span className="text-[var(--color-muted)]">
+            <div className="min-w-0">
+              <p className="truncate text-[var(--color-ink)]">
+                {item.product_name}
+              </p>
+              <p className="text-xs text-[var(--color-muted)]">
+                {formatQuantity(item.quantity, item.product_unit || "pc")} ×{" "}
+                {formatCurrency(item.price)}
+              </p>
+            </div>
+            <span className="shrink-0 text-[var(--color-muted)]">
               {formatCurrency(item.subtotal)}
             </span>
           </div>

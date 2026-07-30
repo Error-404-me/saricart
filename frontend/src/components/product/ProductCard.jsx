@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ImageOff } from "lucide-react";
+import PriceWithUnit from "./PriceWithUnit";
 import { formatCurrency } from "../../utils/formatCurrency";
 import { getUnitConfig } from "../../constants/units";
 
@@ -44,17 +45,7 @@ export default function ProductCard({ product }) {
             {product.owner_username}'s store
           </span>
         )}
-        <p className="mt-auto pt-1.5 font-display text-lg font-bold text-[var(--color-storefront)]">
-          {formatCurrency(product.price)}
-          <span className="ml-1 text-xs font-medium text-[var(--color-muted)]">
-            /{getUnitConfig(product.unit).label}
-          </span>
-        </p>
-        {product.sub_unit && (
-          <span className="text-[11px] text-[var(--color-muted)]">
-            also by {getUnitConfig(product.sub_unit).label}
-          </span>
-        )}
+        <PriceWithUnit product={product} size="md" className="mt-auto pt-1.5" />
       </div>
     </Link>
   );

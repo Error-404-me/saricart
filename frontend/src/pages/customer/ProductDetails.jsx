@@ -144,14 +144,23 @@ export default function ProductDetails() {
                     <button
                       key={option.value}
                       onClick={() => handleUnitSelect(option.value)}
-                      className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition
-                        ${
-                          chosenUnit === option.value
-                            ? "bg-[var(--color-storefront)] text-white"
-                            : "bg-[var(--color-surface)] text-[var(--color-muted)] border border-[var(--color-border)] hover:border-[var(--color-storefront)]/40"
-                        }`}
+                      className={`flex flex-col items-center rounded-xl px-3.5 py-2 text-sm font-medium transition
+            ${
+              chosenUnit === option.value
+                ? "bg-[var(--color-storefront)] text-white"
+                : "border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-ink)] hover:border-[var(--color-storefront)]/40"
+            }`}
                     >
-                      {option.label}
+                      <span>{option.label}</span>
+                      <span
+                        className={`text-xs font-normal ${
+                          chosenUnit === option.value
+                            ? "text-white/80"
+                            : "text-[var(--color-muted)]"
+                        }`}
+                      >
+                        {formatCurrency(option.unitPrice)}
+                      </span>
                     </button>
                   ))}
                 </div>
