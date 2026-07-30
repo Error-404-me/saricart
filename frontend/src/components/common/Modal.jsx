@@ -3,7 +3,7 @@ export default function Modal({ open, onClose, title, children, footer }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 p-4"
       onClick={onClose}
       role="presentation"
     >

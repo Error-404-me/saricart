@@ -1,4 +1,3 @@
-// frontend/src/components/notifications/NotificationBell.jsx (full file — changes below)
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -62,16 +61,28 @@ export default function NotificationBell({
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const buttonRef = useRef(null);
   const panelRef = useRef(null);
+  // Holds both ConfirmModals, which render outside panelRef. Needed so
+  // the outside-click handler below can recognize a click inside a modal
+  // as "inside" and not treat it as a click that should close the
+  // dropdown (which otherwise races with — and can wipe out — the
+  // bulk-delete confirmation before its onClick fires).
+  const modalsRef = useRef(null);
 
   useEffect(() => {
     if (open && !loaded) loadNotifications();
   }, [open, loaded, loadNotifications]);
 
   useEffect(() => {
-    if (!open) {
+    // Only clear the selection when the dropdown closes for a reason
+    // other than an in-flight delete confirmation — otherwise a
+    // mousedown on the confirm button (which fires before its own click)
+    // wipes selectedIds/pendingDeleteId to empty right before the
+    // delete actually runs.
+    if (!open && pendingDeleteId == null && !bulkDeleteConfirmOpen) {
       setSelectMode(false);
       setSelectedIds(new Set());
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   useLayoutEffect(() => {
@@ -108,7 +119,8 @@ export default function NotificationBell({
         buttonRef.current &&
         !buttonRef.current.contains(e.target) &&
         panelRef.current &&
-        !panelRef.current.contains(e.target)
+        !panelRef.current.contains(e.target) &&
+        !(modalsRef.current && modalsRef.current.contains(e.target))
       ) {
         setOpen(false);
       }
@@ -162,9 +174,6 @@ export default function NotificationBell({
     setSelectedIds(new Set());
   }
 
-  // Only exit select mode / clear the selection once the delete actually
-  // succeeds — on failure the selection (and select mode) stay put so the
-  // user can see the error and retry instead of silently losing their pick.
   async function confirmBulkDelete() {
     const ids = [...selectedIds];
     setBulkDeleteConfirmOpen(false);
@@ -384,29 +393,31 @@ export default function NotificationBell({
         </div>
       )}
 
-      <ConfirmModal
-        open={pendingDeleteId != null}
-        onClose={() => setPendingDeleteId(null)}
-        onConfirm={confirmDelete}
-        loading={deletingId != null}
-        title={t("notifications.deleteConfirmTitle")}
-        confirmLabel={t("notifications.delete")}
-      >
-        <p>{t("notifications.deleteConfirmBody")}</p>
-      </ConfirmModal>
+      <div ref={modalsRef}>
+        <ConfirmModal
+          open={pendingDeleteId != null}
+          onClose={() => setPendingDeleteId(null)}
+          onConfirm={confirmDelete}
+          loading={deletingId != null}
+          title={t("notifications.deleteConfirmTitle")}
+          confirmLabel={t("notifications.delete")}
+        >
+          <p>{t("notifications.deleteConfirmBody")}</p>
+        </ConfirmModal>
 
-      <ConfirmModal
-        open={bulkDeleteConfirmOpen}
-        onClose={() => setBulkDeleteConfirmOpen(false)}
-        onConfirm={confirmBulkDelete}
-        loading={bulkDeleting}
-        title={t("notifications.deleteSelectedConfirmTitle", {
-          count: selectedIds.size,
-        })}
-        confirmLabel={t("notifications.deleteSelected")}
-      >
-        <p>{t("notifications.deleteSelectedConfirmBody")}</p>
-      </ConfirmModal>
+        <ConfirmModal
+          open={bulkDeleteConfirmOpen}
+          onClose={() => setBulkDeleteConfirmOpen(false)}
+          onConfirm={confirmBulkDelete}
+          loading={bulkDeleting}
+          title={t("notifications.deleteSelectedConfirmTitle", {
+            count: selectedIds.size,
+          })}
+          confirmLabel={t("notifications.deleteSelected")}
+        >
+          <p>{t("notifications.deleteSelectedConfirmBody")}</p>
+        </ConfirmModal>
+      </div>
     </>
   );
 }
