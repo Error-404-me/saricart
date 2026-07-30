@@ -1,4 +1,4 @@
-// frontend/src/components/notifications/NotificationBell.jsx (full file — significant restructuring)
+// frontend/src/components/notifications/NotificationBell.jsx (full file — changes below)
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -44,6 +44,8 @@ export default function NotificationBell({
     notifications,
     unreadCount,
     loaded,
+    error,
+    clearError,
     loadNotifications,
     markRead,
     markAllRead,
@@ -53,9 +55,11 @@ export default function NotificationBell({
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState(null);
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
   const buttonRef = useRef(null);
   const panelRef = useRef(null);
 
@@ -113,14 +117,26 @@ export default function NotificationBell({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  function toggleOpen() {
+    setOpen((prev) => {
+      const next = !prev;
+      if (next) clearError();
+      return next;
+    });
+  }
+
   function handleSelect(notification) {
     if (!notification.is_read) markRead(notification.id);
     setOpen(false);
     if (notification.link) navigate(notification.link);
   }
 
-  function confirmDelete() {
-    if (pendingDeleteId != null) removeNotification(pendingDeleteId);
+  async function confirmDelete() {
+    if (pendingDeleteId == null) return;
+    const id = pendingDeleteId;
+    setDeletingId(id);
+    await removeNotification(id);
+    setDeletingId(null);
     setPendingDeleteId(null);
   }
 
@@ -146,12 +162,19 @@ export default function NotificationBell({
     setSelectedIds(new Set());
   }
 
+  // Only exit select mode / clear the selection once the delete actually
+  // succeeds — on failure the selection (and select mode) stay put so the
+  // user can see the error and retry instead of silently losing their pick.
   async function confirmBulkDelete() {
     const ids = [...selectedIds];
     setBulkDeleteConfirmOpen(false);
-    setSelectMode(false);
-    setSelectedIds(new Set());
-    await removeNotifications(ids);
+    setBulkDeleting(true);
+    const ok = await removeNotifications(ids);
+    setBulkDeleting(false);
+    if (ok) {
+      setSelectMode(false);
+      setSelectedIds(new Set());
+    }
   }
 
   const isCompact = variant === "compact";
@@ -161,7 +184,7 @@ export default function NotificationBell({
     <>
       <button
         ref={buttonRef}
-        onClick={() => setOpen((o) => !o)}
+        onClick={toggleOpen}
         aria-label={label}
         title={isCompact ? undefined : label}
         className={
@@ -237,6 +260,15 @@ export default function NotificationBell({
             )}
           </div>
 
+          {error && (
+            <p
+              role="alert"
+              className="mx-4 mt-2 shrink-0 rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-xs text-[var(--color-crate)]"
+            >
+              {error}
+            </p>
+          )}
+
           <div className="themed-scrollbar overflow-y-auto">
             {notifications.length === 0 ? (
               <p className="px-4 py-8 text-center text-sm text-[var(--color-muted)]">
@@ -311,9 +343,10 @@ export default function NotificationBell({
                       {!selectMode && (
                         <button
                           onClick={() => setPendingDeleteId(n.id)}
+                          disabled={deletingId === n.id}
                           aria-label={t("notifications.delete")}
                           title={t("notifications.delete")}
-                          className="mt-0.5 shrink-0 rounded-lg p-1.5 text-[var(--color-muted)] transition hover:bg-[var(--color-crate)]/10 hover:text-[var(--color-crate)]"
+                          className="mt-0.5 shrink-0 rounded-lg p-1.5 text-[var(--color-muted)] transition hover:bg-[var(--color-crate)]/10 hover:text-[var(--color-crate)] disabled:opacity-40"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -338,6 +371,7 @@ export default function NotificationBell({
               <Button
                 variant="primary"
                 disabled={selectedIds.size === 0}
+                loading={bulkDeleting}
                 onClick={() => setBulkDeleteConfirmOpen(true)}
                 className="!bg-[var(--color-crate)] gap-1.5 !px-3 !py-1.5 text-xs hover:!bg-[var(--color-crate-dark)]"
               >
@@ -354,6 +388,7 @@ export default function NotificationBell({
         open={pendingDeleteId != null}
         onClose={() => setPendingDeleteId(null)}
         onConfirm={confirmDelete}
+        loading={deletingId != null}
         title={t("notifications.deleteConfirmTitle")}
         confirmLabel={t("notifications.delete")}
       >
@@ -364,6 +399,7 @@ export default function NotificationBell({
         open={bulkDeleteConfirmOpen}
         onClose={() => setBulkDeleteConfirmOpen(false)}
         onConfirm={confirmBulkDelete}
+        loading={bulkDeleting}
         title={t("notifications.deleteSelectedConfirmTitle", {
           count: selectedIds.size,
         })}
