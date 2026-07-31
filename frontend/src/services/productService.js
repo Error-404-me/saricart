@@ -72,6 +72,10 @@ export async function deleteStockHistoryEntry(id) {
   await api.delete(`/products/stock-history/${id}`);
 }
 
+export async function deleteStockHistoryEntries(ids) {
+  await api.post("/products/stock-history/bulk-delete", { ids });
+}
+
 export async function uploadProductImage(id, file) {
   const formData = new FormData();
   formData.append("file", file);

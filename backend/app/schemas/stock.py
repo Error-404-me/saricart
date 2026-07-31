@@ -25,3 +25,7 @@ class StockHistoryOut(BaseModel):
     previous_stock: Decimal
     new_stock: Decimal
     created_at: datetime
+
+
+class StockHistoryBulkDelete(BaseModel):
+    ids: list[int] = Field(min_length=1)

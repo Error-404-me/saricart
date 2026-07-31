@@ -103,3 +103,13 @@ def delete_stock_history_entry(db: Session, owner_id: int, entry_id: int) -> Non
         )
     db.delete(entry)
     db.commit()
+
+
+def delete_stock_history_entries(db: Session, owner_id: int, ids: list[int]) -> int:
+    deleted_count = (
+        db.query(StockHistory)
+        .filter(StockHistory.owner_id == owner_id, StockHistory.id.in_(ids))
+        .delete(synchronize_session=False)
+    )
+    db.commit()
+    return deleted_count

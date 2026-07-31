@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { AlertTriangle, Boxes } from "lucide-react";
 import Spinner from "../../components/common/Spinner";
 import ComingSoon from "../../components/common/ComingSoon";
-import ConfirmModal from "../../components/common/ConfirmModal";
 import StockAdjuster from "../../components/product/StockAdjuster";
 import StockHistoryList from "../../components/product/StockHistoryList";
 import RestockSuggestions from "../../components/product/RestockSuggestions";
@@ -14,6 +13,7 @@ import {
   adjustStock,
   fetchStockHistory,
   deleteStockHistoryEntry,
+  deleteStockHistoryEntries,
 } from "../../services/productService";
 import {
   fetchRestockSuggestions,
@@ -29,8 +29,6 @@ export default function Inventory() {
   const [history, setHistory] = useState([]);
   const [historyHasMore, setHistoryHasMore] = useState(false);
   const [historyLoadingMore, setHistoryLoadingMore] = useState(false);
-  const [pendingHistoryDeleteId, setPendingHistoryDeleteId] = useState(null);
-  const [deletingHistoryId, setDeletingHistoryId] = useState(null);
   const [restockSuggestions, setRestockSuggestions] = useState([]);
   const [slowMoving, setSlowMoving] = useState([]);
   const [fastestSelling, setFastestSelling] = useState([]);
@@ -101,18 +99,26 @@ export default function Inventory() {
     }
   }
 
-  async function confirmDeleteHistoryEntry() {
-    if (pendingHistoryDeleteId == null) return;
-    const id = pendingHistoryDeleteId;
-    setDeletingHistoryId(id);
+  // Returns true/false so StockHistoryList knows whether to reset its
+  // own select-mode state — same contract as useNotifications.
+  async function handleDeleteHistoryEntry(id) {
     try {
       await deleteStockHistoryEntry(id);
       setHistory((prev) => prev.filter((entry) => entry.id !== id));
+      return true;
     } catch {
-      setError("Couldn't delete that activity entry. Please try again.");
-    } finally {
-      setDeletingHistoryId(null);
-      setPendingHistoryDeleteId(null);
+      return false;
+    }
+  }
+
+  async function handleBulkDeleteHistoryEntries(ids) {
+    try {
+      await deleteStockHistoryEntries(ids);
+      const idSet = new Set(ids);
+      setHistory((prev) => prev.filter((entry) => !idSet.has(entry.id)));
+      return true;
+    } catch {
+      return false;
     }
   }
 
@@ -246,27 +252,13 @@ export default function Inventory() {
         </h2>
         <StockHistoryList
           entries={history}
-          onDeleteRequest={setPendingHistoryDeleteId}
-          deletingId={deletingHistoryId}
+          onDelete={handleDeleteHistoryEntry}
+          onBulkDelete={handleBulkDeleteHistoryEntries}
           hasMore={historyHasMore}
           onLoadMore={handleLoadMoreHistory}
           loadingMore={historyLoadingMore}
         />
       </div>
-
-      <ConfirmModal
-        open={pendingHistoryDeleteId != null}
-        onClose={() => setPendingHistoryDeleteId(null)}
-        onConfirm={confirmDeleteHistoryEntry}
-        loading={deletingHistoryId != null}
-        title="Delete this activity entry?"
-        confirmLabel="Delete"
-      >
-        <p>
-          This only removes it from your activity log — it won't change your
-          current stock. This can't be undone.
-        </p>
-      </ConfirmModal>
     </div>
   );
 }

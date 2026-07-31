@@ -5,7 +5,7 @@ from app.database import get_db
 from app.dependencies.auth import require_owner
 from app.models.user import User
 from app.schemas.product import ProductCreate, ProductOut, ProductUpdate
-from app.schemas.stock import StockAdjustment, StockHistoryOut
+from app.schemas.stock import StockAdjustment, StockHistoryOut, StockHistoryBulkDelete
 from app.services import product_service, stock_service
 
 router = APIRouter(prefix="/api/products", tags=["products"])
@@ -49,6 +49,15 @@ def stock_history(
     current_user: User = Depends(require_owner),
 ):
     return stock_service.list_stock_history(db, current_user.id, product_id, limit, offset)
+
+
+@router.post("/stock-history/bulk-delete", status_code=204)
+def bulk_delete_stock_history(
+    payload: StockHistoryBulkDelete,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_owner),
+):
+    stock_service.delete_stock_history_entries(db, current_user.id, payload.ids)
 
 
 @router.delete("/stock-history/{entry_id}", status_code=204)
