@@ -80,7 +80,11 @@ export default function ProductForm({
     const stock = parseFloat(form.stock);
     if (Number.isNaN(stock) || stock < 0) {
       errors.stock = "Enter a stock amount of 0 or more.";
-    } else if (!unitConfig.allowsDecimal && !Number.isInteger(stock)) {
+    } else if (
+      !unitConfig.allowsDecimal &&
+      !form.sellByBaseUnit &&
+      !Number.isInteger(stock)
+    ) {
       errors.stock = `Whole numbers only for ${unitConfig.fullLabel.toLowerCase()}.`;
     }
 
@@ -315,10 +319,12 @@ export default function ProductForm({
             id="stock"
             name="stock"
             type="number"
-            step={unitConfig.allowsDecimal ? unitConfig.step : 1}
+            step={unitConfig.allowsDecimal || form.sellByBaseUnit ? 0.01 : 1}
             min="0"
             label={`Stock (${unitConfig.label})`}
-            placeholder={unitConfig.allowsDecimal ? "25" : "40"}
+            placeholder={
+              unitConfig.allowsDecimal || form.sellByBaseUnit ? "25" : "40"
+            }
             value={form.stock}
             onChange={handleChange}
             error={fieldErrors.stock}

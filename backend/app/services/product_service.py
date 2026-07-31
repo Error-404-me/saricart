@@ -1,5 +1,5 @@
 import os
-import uuid
+from decimal import Decimal
 
 from fastapi import HTTPException, UploadFile, status
 from sqlalchemy import or_
@@ -14,7 +14,6 @@ from app.models.user import User
 from app.schemas.product import ProductCreate, ProductUpdate
 from app.services import storage_service
 from io import BytesIO
-from decimal import Decimal
 
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
@@ -75,12 +74,24 @@ def _require_ownership(product: Product, current_user: User) -> None:
             detail="You don't own this product.",
         )
 
-def _validate_stock_for_unit(unit: ProductUnit, stock: Decimal) -> None:
+
+def _validate_stock_for_unit(
+    unit: ProductUnit, stock: Decimal, sub_unit: ProductUnit | None = None
+) -> None:
+    """Whole-number units (pc, dozen, box, sack, pack, bundle) must carry
+    whole-number stock — UNLESS the product also sells a configured
+    sub-unit (e.g. a sack sold by the kg). In that case fractional
+    primary-unit stock is the expected, correct result of sub-unit sales
+    (selling 1kg off a 50kg sack leaves 0.98 sacks in stock), so it's
+    explicitly allowed rather than rejected."""
+    if sub_unit is not None:
+        return
     if unit not in DECIMAL_ALLOWED_UNITS and stock % 1 != 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Stock must be a whole number for unit '{unit.value}'.",
         )
+
 
 def _resolve_sub_unit(
     unit: ProductUnit, sub_unit: ProductUnit | None, sub_unit_ratio: Decimal | None
@@ -111,10 +122,11 @@ def _resolve_sub_unit(
 
 
 def create_product(db: Session, product_in: ProductCreate, owner: User) -> Product:
-    _validate_stock_for_unit(product_in.unit, product_in.stock)
     sub_unit, sub_unit_ratio = _resolve_sub_unit(
         product_in.unit, product_in.sub_unit, product_in.sub_unit_ratio
     )
+    _validate_stock_for_unit(product_in.unit, product_in.stock, sub_unit)
+
     payload = product_in.model_dump(exclude={"sub_unit", "sub_unit_ratio"})
     product = Product(
         **payload, sub_unit=sub_unit, sub_unit_ratio=sub_unit_ratio, owner_id=owner.id
@@ -138,11 +150,10 @@ def update_product(
     _require_ownership(product, current_user)
 
     updates = product_in.model_dump(exclude_unset=True)
-
     effective_unit = updates.get("unit", product.unit)
-    effective_stock = updates.get("stock", product.stock)
-    _validate_stock_for_unit(effective_unit, effective_stock)
 
+    # Resolve sub-unit config first — whether fractional stock is valid
+    # for this unit depends on it.
     if "sub_unit" in updates or "sub_unit_ratio" in updates or "unit" in updates:
         requested_sub_unit = updates.get("sub_unit", product.sub_unit)
         requested_ratio = updates.get("sub_unit_ratio", product.sub_unit_ratio)
@@ -151,9 +162,19 @@ def update_product(
         )
         updates["sub_unit"] = resolved_sub_unit
         updates["sub_unit_ratio"] = resolved_ratio
+        effective_sub_unit = resolved_sub_unit
+    else:
+        effective_sub_unit = product.sub_unit
 
+    # Only validate stock when it's actually being changed here. Stock
+    # can legitimately drift to a fractional value in the primary unit
+    # through sub-unit sales (e.g. selling 1kg off a 25kg sack leaves
+    # 24.96 sacks) — re-validating an untouched, already-fractional value
+    # on unrelated edits (price, name, category, etc.) would incorrectly
+    # block the save.
     if "stock" in updates:
         new_stock = updates.pop("stock")
+        _validate_stock_for_unit(effective_unit, new_stock, effective_sub_unit)
         delta = new_stock - product.stock
         stock_service.record_stock_change(db, product, delta, StockChangeReason.ADJUSTMENT)
 
@@ -173,10 +194,6 @@ def delete_product(db: Session, product_id: int, current_user: User) -> None:
     product = get_product(db, product_id)
     _require_ownership(product, current_user)
 
-    # Order history keeps its own name/image snapshot (see OrderItem), so a
-    # deleted product just detaches from any past orders rather than
-    # blocking the delete or leaving a dangling foreign key. Same idea for
-    # stock history.
     db.query(OrderItem).filter(OrderItem.product_id == product.id).update(
         {OrderItem.product_id: None}
     )
@@ -184,9 +201,6 @@ def delete_product(db: Session, product_id: int, current_user: User) -> None:
         {StockHistory.product_id: None}
     )
 
-    # if product.image:
-    #     _delete_image_file(product.image)
-        
     if product.image:
         storage_service.delete_file(product.image)
 
@@ -224,13 +238,3 @@ def save_product_image(
         storage_service.delete_file(old_image)
 
     return product
-
-
-# def _delete_image_file(image_url: str) -> None:
-#     filename = os.path.basename(image_url)
-#     filepath = os.path.join(settings.UPLOAD_DIR, filename)
-#     if os.path.exists(filepath):
-#         try:
-#             os.remove(filepath)
-#         except OSError:
-#             pass

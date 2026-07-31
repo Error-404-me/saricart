@@ -62,13 +62,12 @@ def adjust_stock(db: Session, product_id: int, delta: Decimal, current_user: Use
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Can't remove {abs(delta)} — only {product.stock} in stock.",
         )
-    _validate_stock_for_unit(product.unit, new_stock)
+    _validate_stock_for_unit(product.unit, new_stock, product.sub_unit)
 
     record_stock_change(db, product, delta, StockChangeReason.ADJUSTMENT)
     db.commit()
     db.refresh(product)
     return product
-
 
 def list_stock_history(
     db: Session,

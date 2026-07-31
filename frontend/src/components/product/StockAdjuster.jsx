@@ -3,17 +3,28 @@ import { Plus, Minus } from "lucide-react";
 import { getUnitConfig } from "../../constants/units";
 import { formatQuantity } from "../../utils/formatQuantity";
 
-export default function StockAdjuster({ stock, unit, onAdjust, disabled }) {
+export default function StockAdjuster({
+  stock,
+  unit,
+  subUnit,
+  onAdjust,
+  disabled,
+}) {
   const [amount, setAmount] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
   const unitConfig = getUnitConfig(unit);
+  // A whole-number unit (sack, box, pack, bundle, dozen) still needs
+  // decimal precision here once it's configured with a sub-unit — e.g.
+  // adjusting stock by 0.98 sacks after loose kg sales.
+  const allowsDecimal = unitConfig.allowsDecimal || !!subUnit;
+
   const parsed = parseFloat(amount);
   const isValidAmount =
     !Number.isNaN(parsed) &&
     parsed > 0 &&
-    (unitConfig.allowsDecimal || Number.isInteger(parsed));
+    (allowsDecimal || Number.isInteger(parsed));
 
   async function handleAdjust(sign) {
     if (!isValidAmount) return;
@@ -44,7 +55,7 @@ export default function StockAdjuster({ stock, unit, onAdjust, disabled }) {
         <input
           type="number"
           min="0"
-          step={unitConfig.allowsDecimal ? unitConfig.step : 1}
+          step={allowsDecimal ? 0.01 : 1}
           placeholder={unitConfig.label}
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
