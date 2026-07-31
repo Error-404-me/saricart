@@ -43,10 +43,21 @@ def list_my_products(
 @router.get("/stock-history", response_model=list[StockHistoryOut])
 def stock_history(
     product_id: int | None = None,
+    limit: int = 20,
+    offset: int = 0,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_owner),
 ):
-    return stock_service.list_stock_history(db, current_user.id, product_id)
+    return stock_service.list_stock_history(db, current_user.id, product_id, limit, offset)
+
+
+@router.delete("/stock-history/{entry_id}", status_code=204)
+def delete_stock_history_entry(
+    entry_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_owner),
+):
+    stock_service.delete_stock_history_entry(db, current_user.id, entry_id)
 
 
 @router.get("/barcode/{barcode}", response_model=ProductOut)

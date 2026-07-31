@@ -43,6 +43,25 @@ function formatMonthLabel(monthKey) {
   });
 }
 
+// Compact currency tick, e.g. ₱0, ₱350, ₱1.4k — short enough to never
+// clip inside the YAxis width, and unambiguous either way.
+function formatChartTick(value) {
+  const num = Number(value);
+  if (!num) return "₱0";
+  if (Math.abs(num) >= 1000) {
+    const thousands = num / 1000;
+    return `₱${thousands % 1 === 0 ? thousands : thousands.toFixed(1)}k`;
+  }
+  return `₱${Math.round(num)}`;
+}
+
+// Prevents Recharts from generating an unstable/odd tick set when every
+// value in the window is 0 (all-zero domains otherwise produce
+// unpredictable "nice" scale ticks).
+function yAxisDomainMax(dataMax) {
+  return dataMax > 0 ? dataMax : 10;
+}
+
 function ChartTooltip({ active, payload, label, labelFormatter }) {
   if (!active || !payload?.length) return null;
   return (
@@ -176,10 +195,13 @@ export default function Analytics() {
                 tickLine={false}
               />
               <YAxis
+                domain={[0, yAxisDomainMax]}
+                allowDecimals={false}
+                tickFormatter={formatChartTick}
                 tick={{ fontSize: 12, fill: "var(--color-muted)" }}
                 axisLine={false}
                 tickLine={false}
-                width={40}
+                width={56}
               />
               <Tooltip
                 content={<ChartTooltip labelFormatter={formatDayLabel} />}
@@ -220,10 +242,13 @@ export default function Analytics() {
                 tickLine={false}
               />
               <YAxis
+                domain={[0, yAxisDomainMax]}
+                allowDecimals={false}
+                tickFormatter={formatChartTick}
                 tick={{ fontSize: 12, fill: "var(--color-muted)" }}
                 axisLine={false}
                 tickLine={false}
-                width={40}
+                width={56}
               />
               <Tooltip
                 content={<ChartTooltip labelFormatter={formatMonthLabel} />}

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { AlertTriangle, Boxes } from "lucide-react";
 import Spinner from "../../components/common/Spinner";
 import ComingSoon from "../../components/common/ComingSoon";
+import ConfirmModal from "../../components/common/ConfirmModal";
 import StockAdjuster from "../../components/product/StockAdjuster";
 import StockHistoryList from "../../components/product/StockHistoryList";
 import RestockSuggestions from "../../components/product/RestockSuggestions";
@@ -12,6 +13,7 @@ import {
   fetchMyProducts,
   adjustStock,
   fetchStockHistory,
+  deleteStockHistoryEntry,
 } from "../../services/productService";
 import {
   fetchRestockSuggestions,
@@ -20,10 +22,15 @@ import {
 } from "../../services/analyticsService";
 
 const LOW_STOCK_THRESHOLD = 5;
+const HISTORY_PAGE_SIZE = 20;
 
 export default function Inventory() {
   const [products, setProducts] = useState([]);
   const [history, setHistory] = useState([]);
+  const [historyHasMore, setHistoryHasMore] = useState(false);
+  const [historyLoadingMore, setHistoryLoadingMore] = useState(false);
+  const [pendingHistoryDeleteId, setPendingHistoryDeleteId] = useState(null);
+  const [deletingHistoryId, setDeletingHistoryId] = useState(null);
   const [restockSuggestions, setRestockSuggestions] = useState([]);
   const [slowMoving, setSlowMoving] = useState([]);
   const [fastestSelling, setFastestSelling] = useState([]);
@@ -42,13 +49,14 @@ export default function Inventory() {
         fastestData,
       ] = await Promise.all([
         fetchMyProducts(),
-        fetchStockHistory(),
+        fetchStockHistory({ limit: HISTORY_PAGE_SIZE }),
         fetchRestockSuggestions(),
         fetchSlowMovingProducts(),
         fetchFastestSelling(),
       ]);
       setProducts(productData);
       setHistory(historyData);
+      setHistoryHasMore(historyData.length === HISTORY_PAGE_SIZE);
       setRestockSuggestions(restockData);
       setSlowMoving(slowMovingData);
       setFastestSelling(fastestData);
@@ -66,12 +74,46 @@ export default function Inventory() {
   async function handleAdjust(productId, delta) {
     const updated = await adjustStock(productId, delta);
     setProducts((prev) => prev.map((p) => (p.id === productId ? updated : p)));
-    fetchStockHistory()
-      .then(setHistory)
+    fetchStockHistory({ limit: HISTORY_PAGE_SIZE })
+      .then((data) => {
+        setHistory(data);
+        setHistoryHasMore(data.length === HISTORY_PAGE_SIZE);
+      })
       .catch(() => {});
     fetchRestockSuggestions()
       .then(setRestockSuggestions)
       .catch(() => {});
+  }
+
+  async function handleLoadMoreHistory() {
+    setHistoryLoadingMore(true);
+    try {
+      const more = await fetchStockHistory({
+        limit: HISTORY_PAGE_SIZE,
+        offset: history.length,
+      });
+      setHistory((prev) => [...prev, ...more]);
+      setHistoryHasMore(more.length === HISTORY_PAGE_SIZE);
+    } catch {
+      setError("Couldn't load more activity. Please try again.");
+    } finally {
+      setHistoryLoadingMore(false);
+    }
+  }
+
+  async function confirmDeleteHistoryEntry() {
+    if (pendingHistoryDeleteId == null) return;
+    const id = pendingHistoryDeleteId;
+    setDeletingHistoryId(id);
+    try {
+      await deleteStockHistoryEntry(id);
+      setHistory((prev) => prev.filter((entry) => entry.id !== id));
+    } catch {
+      setError("Couldn't delete that activity entry. Please try again.");
+    } finally {
+      setDeletingHistoryId(null);
+      setPendingHistoryDeleteId(null);
+    }
   }
 
   const lowStockProducts = products.filter(
@@ -202,8 +244,29 @@ export default function Inventory() {
         <h2 className="font-display text-lg font-bold text-[var(--color-ink)]">
           Recent activity
         </h2>
-        <StockHistoryList entries={history} />
+        <StockHistoryList
+          entries={history}
+          onDeleteRequest={setPendingHistoryDeleteId}
+          deletingId={deletingHistoryId}
+          hasMore={historyHasMore}
+          onLoadMore={handleLoadMoreHistory}
+          loadingMore={historyLoadingMore}
+        />
       </div>
+
+      <ConfirmModal
+        open={pendingHistoryDeleteId != null}
+        onClose={() => setPendingHistoryDeleteId(null)}
+        onConfirm={confirmDeleteHistoryEntry}
+        loading={deletingHistoryId != null}
+        title="Delete this activity entry?"
+        confirmLabel="Delete"
+      >
+        <p>
+          This only removes it from your activity log — it won't change your
+          current stock. This can't be undone.
+        </p>
+      </ConfirmModal>
     </div>
   );
 }

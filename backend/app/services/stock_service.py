@@ -71,9 +71,35 @@ def adjust_stock(db: Session, product_id: int, delta: Decimal, current_user: Use
 
 
 def list_stock_history(
-    db: Session, owner_id: int, product_id: int | None = None, limit: int = 50
+    db: Session,
+    owner_id: int,
+    product_id: int | None = None,
+    limit: int = 20,
+    offset: int = 0,
 ) -> list[StockHistory]:
     query = db.query(StockHistory).filter(StockHistory.owner_id == owner_id)
     if product_id is not None:
         query = query.filter(StockHistory.product_id == product_id)
-    return query.order_by(StockHistory.created_at.desc()).limit(limit).all()
+    return (
+        query.order_by(StockHistory.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+
+
+def delete_stock_history_entry(db: Session, owner_id: int, entry_id: int) -> None:
+    """Removes an entry from the activity log only — it never rewinds the
+    stock change it recorded, same principle as deleting a notification."""
+    entry = (
+        db.query(StockHistory)
+        .filter(StockHistory.id == entry_id, StockHistory.owner_id == owner_id)
+        .first()
+    )
+    if not entry:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Activity entry not found.",
+        )
+    db.delete(entry)
+    db.commit()

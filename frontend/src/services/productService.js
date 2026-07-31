@@ -13,7 +13,9 @@ export async function browseCategories() {
 }
 
 export async function fetchMyProducts({ search, category } = {}) {
-  const { data } = await api.get("/products/mine", { params: { search, category } });
+  const { data } = await api.get("/products/mine", {
+    params: { search, category },
+  });
   return data;
 }
 
@@ -23,12 +25,16 @@ export async function fetchProduct(id) {
 }
 
 export async function fetchProductByBarcode(barcode) {
-  const { data } = await api.get(`/products/barcode/${encodeURIComponent(barcode)}`);
+  const { data } = await api.get(
+    `/products/barcode/${encodeURIComponent(barcode)}`,
+  );
   return data;
 }
 
 export async function fetchMyCategories(ownerId) {
-  const { data } = await api.get("/products/categories", { params: { owner_id: ownerId } });
+  const { data } = await api.get("/products/categories", {
+    params: { owner_id: ownerId },
+  });
   return data;
 }
 
@@ -51,11 +57,19 @@ export async function adjustStock(id, delta) {
   return data;
 }
 
-export async function fetchStockHistory({ productId } = {}) {
+export async function fetchStockHistory({
+  productId,
+  limit = 20,
+  offset = 0,
+} = {}) {
   const { data } = await api.get("/products/stock-history", {
-    params: { product_id: productId },
+    params: { product_id: productId, limit, offset },
   });
   return data;
+}
+
+export async function deleteStockHistoryEntry(id) {
+  await api.delete(`/products/stock-history/${id}`);
 }
 
 export async function uploadProductImage(id, file) {
