@@ -13,6 +13,8 @@ from app.models.stock_history import StockHistory, StockChangeReason
 from app.models.user import User
 from app.schemas.product import ProductCreate, ProductUpdate
 from app.services import storage_service
+from app.services import audit_service
+from app.models.audit_log import AuditAction
 from io import BytesIO
 
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
@@ -138,6 +140,11 @@ def create_product(db: Session, product_in: ProductCreate, owner: User) -> Produ
         db.rollback()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=BARCODE_CONFLICT_DETAIL)
     db.refresh(product)
+    audit_service.log_action(
+        db, AuditAction.PRODUCT_CREATED, user_id=owner.id, entity_type="product",
+        entity_id=product.id, description=f"Created '{product.name}'",
+    )
+    db.commit()
     return product
 
 
@@ -150,6 +157,7 @@ def update_product(
     _require_ownership(product, current_user)
 
     updates = product_in.model_dump(exclude_unset=True)
+    had_price_update = "price" in updates
     effective_unit = updates.get("unit", product.unit)
 
     # Resolve sub-unit config first — whether fractional stock is valid
@@ -187,6 +195,12 @@ def update_product(
         db.rollback()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=BARCODE_CONFLICT_DETAIL)
     db.refresh(product)
+    action = AuditAction.PRICE_UPDATED if had_price_update else AuditAction.PRODUCT_UPDATED
+    audit_service.log_action(
+        db, action, user_id=current_user.id, entity_type="product",
+        entity_id=product.id, description=f"Updated '{product.name}'",
+    )
+    db.commit()
     return product
 
 
@@ -204,6 +218,10 @@ def delete_product(db: Session, product_id: int, current_user: User) -> None:
     if product.image:
         storage_service.delete_file(product.image)
 
+    audit_service.log_action(
+        db, AuditAction.PRODUCT_DELETED, user_id=current_user.id, entity_type="product",
+        entity_id=product.id, description=f"Deleted '{product.name}'",
+    )
     db.delete(product)
     db.commit()
 

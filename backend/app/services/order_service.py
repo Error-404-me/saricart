@@ -16,6 +16,8 @@ from app.services.unit_conversion import (
     to_selling_unit_quantity,
     line_total,
 )
+from app.services import audit_service
+from app.models.audit_log import AuditAction
 from app.models.notification import NotificationType
 from app.services import notification_service
 
@@ -224,6 +226,10 @@ def update_order_status(
         _restock(db, order)
 
     order.status = new_status
+    audit_service.log_action(
+        db, AuditAction.ORDER_STATUS_CHANGED, user_id=current_user.id, entity_type="order",
+        entity_id=order.id, description=f"Order #{order.id} → {new_status.value}",
+    )
 
     if order.customer:
         store_label = (

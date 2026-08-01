@@ -97,6 +97,16 @@ export default function AuthLayout({ title, subtitle, children, footer }) {
               <div className="mt-6">{children}</div>
             </div>
 
+            <p className="mt-6 text-center text-xs text-[var(--color-muted)]">
+              <Link to="/privacy" className="hover:underline">
+                Privacy Policy
+              </Link>
+              {" · "}
+              <Link to="/terms" className="hover:underline">
+                Terms &amp; Conditions
+              </Link>
+            </p>
+
             {footer && (
               <div className="mt-5 text-center text-sm text-[var(--color-muted)]">
                 {footer}

@@ -24,3 +24,19 @@ class User(Base):
     notify_order_updates = Column(Boolean, default=True, nullable=False)
     notify_promotions = Column(Boolean, default=False, nullable=False)
     notify_low_stock = Column(Boolean, default=True, nullable=False)
+
+    # --- Compliance / security additions ---
+    email_verified = Column(Boolean, default=False, nullable=False)
+    terms_accepted_at = Column(DateTime, nullable=True)
+    privacy_accepted_at = Column(DateTime, nullable=True)
+
+    # Soft delete: account deactivates immediately; a scheduled job (see
+    # app/tasks/purge_deleted_accounts.py) hard-deletes it once purge_at
+    # passes, per RA 10173's storage-limitation principle. Logging back in
+    # before purge_at cancels the deletion.
+    deleted_at = Column(DateTime, nullable=True)
+    purge_at = Column(DateTime, nullable=True)
+
+    @property
+    def is_deleted(self) -> bool:
+        return self.deleted_at is not None

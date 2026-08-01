@@ -19,6 +19,7 @@ import {
   PanelLeftClose,
   Menu,
   X,
+  ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { useCart } from "../../hooks/useCart";
@@ -40,6 +41,7 @@ const OWNER_NAV_ITEMS = [
   { to: "/owner/inventory", labelKey: "nav.inventory", icon: Boxes },
   { to: "/owner/orders", labelKey: "nav.orders", icon: ClipboardList },
   { to: "/owner/analytics", labelKey: "nav.analytics", icon: BarChart3 },
+  { to: "/owner/audit-log", labelKey: "nav.auditLog", icon: ShieldCheck },
   { to: "/settings", labelKey: "nav.settings", icon: Settings },
 ];
 

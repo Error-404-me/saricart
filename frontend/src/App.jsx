@@ -1,4 +1,3 @@
-// frontend/src/App.jsx (modified — added NotificationsProvider)
 import { BrowserRouter } from "react-router-dom";
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import { Analytics } from "@vercel/analytics/react";
@@ -10,10 +9,16 @@ import { CartProvider } from "./context/CartContext";
 import { UploadQueueProvider } from "./context/UploadQueueContext";
 import { NotificationsProvider } from "./context/NotificationsContext";
 import AppRoutes from "./routes/AppRoutes";
+import CookieConsent from "./components/common/CookieConsent";
+import SkipToContent from "./components/common/SkipToContent";
+import { useCookieConsent } from "./hooks/useCookieConsent";
 
 function App() {
+  const { consent } = useCookieConsent();
+
   return (
     <ErrorBoundary>
+      <SkipToContent />
       <BrowserRouter>
         <AuthProvider>
           <ThemeProvider>
@@ -22,6 +27,7 @@ function App() {
                 <UploadQueueProvider>
                   <NotificationsProvider>
                     <AppRoutes />
+                    <CookieConsent />
                   </NotificationsProvider>
                 </UploadQueueProvider>
               </CartProvider>
@@ -29,8 +35,12 @@ function App() {
           </ThemeProvider>
         </AuthProvider>
       </BrowserRouter>
-      <SpeedInsights />
-      <Analytics />
+      {consent === "accepted" && (
+        <>
+          <SpeedInsights />
+          <Analytics />
+        </>
+      )}
     </ErrorBoundary>
   );
 }

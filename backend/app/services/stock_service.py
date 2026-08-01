@@ -6,6 +6,8 @@ from app.models.stock_history import StockHistory, StockChangeReason
 from app.models.user import User
 from app.models.notification import NotificationType
 from app.services import notification_service
+from app.services import audit_service
+from app.models.audit_log import AuditAction
 from decimal import Decimal
 
 LOW_STOCK_THRESHOLD = 5
@@ -65,6 +67,10 @@ def adjust_stock(db: Session, product_id: int, delta: Decimal, current_user: Use
     _validate_stock_for_unit(product.unit, new_stock, product.sub_unit)
 
     record_stock_change(db, product, delta, StockChangeReason.ADJUSTMENT)
+    audit_service.log_action(
+        db, AuditAction.STOCK_ADJUSTED, user_id=current_user.id, entity_type="product",
+        entity_id=product.id, description=f"Adjusted '{product.name}' by {delta}",
+    )
     db.commit()
     db.refresh(product)
     return product

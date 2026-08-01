@@ -2,10 +2,12 @@ import { Navigate } from "react-router-dom";
 import { Store } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import StoreProfileSection from "../../components/store/StoreProfileSection";
+import StoreVerificationSection from "../../components/store/StoreVerificationSection";
 
 export default function StoreSettings() {
   const { user } = useAuth();
-  if (user?.role !== "owner") return <Navigate to="/settings/profile" replace />;
+  if (user?.role !== "owner")
+    return <Navigate to="/settings/profile" replace />;
 
   return (
     <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
@@ -15,6 +17,9 @@ export default function StoreSettings() {
       </h2>
       <div className="mt-3">
         <StoreProfileSection />
+      </div>
+      <div className="mt-6">
+        <StoreVerificationSection />
       </div>
     </div>
   );

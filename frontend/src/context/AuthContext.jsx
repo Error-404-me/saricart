@@ -52,13 +52,24 @@ export function AuthProvider({ children }) {
   }, []);
 
   const register = useCallback(
-    async ({ username, email, password, role }) => {
+    async ({
+      username,
+      email,
+      password,
+      role,
+      acceptedTerms,
+      acceptedPrivacy,
+    }) => {
       setError(null);
       try {
-        await registerUser({ username, email, password, role });
-        // Register endpoint doesn't log the user in automatically —
-        // do that as a follow-up so the flow feels seamless.
-        return await login({ email, password });
+        return await registerUser({
+          username,
+          email,
+          password,
+          role,
+          acceptedTerms,
+          acceptedPrivacy,
+        });
       } catch (err) {
         const message =
           err.response?.data?.detail ||
@@ -67,7 +78,7 @@ export function AuthProvider({ children }) {
         throw new Error(message);
       }
     },
-    [login],
+    [],
   );
 
   const logout = useCallback(() => {

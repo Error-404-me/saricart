@@ -5,7 +5,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from app.database import Base
 from app.core.config import settings
-from app.models import favorite, notification, order, order_item, product, review, stock_history, store, user  # noqa: F401
+from app.models import (  # noqa: F401
+    favorite, notification, order, order_item, product, review, stock_history, store, user,
+    audit_log, email_verification, password_reset, store_verification,
+)
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config

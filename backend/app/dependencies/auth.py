@@ -7,13 +7,10 @@ from app.core.security import decode_access_token
 from app.services.auth_service import get_user_by_id
 from app.models.user import User, UserRole
 
-# tokenUrl only affects the auto-generated docs' "Authorize" flow
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 
 
-def get_current_user(
-    token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
-) -> User:
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials.",
@@ -32,14 +29,17 @@ def get_current_user(
     if user is None:
         raise credentials_exception
 
+    if user.deleted_at is not None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="This account has been deactivated.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     return user
 
 
 def require_owner(current_user: User = Depends(get_current_user)) -> User:
-    """Use as a dependency on routes that only store owners may access."""
     if current_user.role != UserRole.OWNER:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="This action requires store owner access.",
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This action requires store owner access.")
     return current_user

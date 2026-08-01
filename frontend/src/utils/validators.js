@@ -9,5 +9,7 @@ export function isValidUsername(value) {
 export function passwordIssues(value) {
   const issues = [];
   if (value.length < 8) issues.push("at least 8 characters");
+  if (!/[A-Za-z]/.test(value)) issues.push("at least one letter");
+  if (!/[0-9]/.test(value)) issues.push("at least one number");
   return issues;
 }

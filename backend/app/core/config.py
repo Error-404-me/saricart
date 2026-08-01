@@ -32,6 +32,18 @@ class Settings:
     VAPID_PUBLIC_KEY: str = os.getenv("VAPID_PUBLIC_KEY", "")
     VAPID_PRIVATE_KEY: str = os.getenv("VAPID_PRIVATE_KEY", "")
     VAPID_SUBJECT: str = os.getenv("VAPID_SUBJECT", "mailto:pasuquinargie29@gmail.com")
+    
+    # Add inside class Settings:
+    # --- Email (SMTP) — blank in dev logs emails instead of sending ---
+    SMTP_HOST: str = os.getenv("SMTP_HOST", "")
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
+    SMTP_USERNAME: str = os.getenv("SMTP_USERNAME", "")
+    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
+    SMTP_FROM: str = os.getenv("SMTP_FROM", "no-reply@saricart.app")
+    SMTP_USE_TLS: bool = os.getenv("SMTP_USE_TLS", "true").lower() == "true"
+
+    # --- Compliance ---
+    ACCOUNT_DELETION_RETENTION_DAYS: int = int(os.getenv("ACCOUNT_DELETION_RETENTION_DAYS", "30"))
 
 
 settings = Settings()

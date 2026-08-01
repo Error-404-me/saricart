@@ -30,7 +30,10 @@ export default function DangerZoneSettings() {
       await deleteAccount(password);
       logout();
     } catch (err) {
-      setError(err.response?.data?.detail || "Couldn't delete your account. Please try again.");
+      setError(
+        err.response?.data?.detail ||
+          "Couldn't delete your account. Please try again.",
+      );
     } finally {
       setDeleting(false);
     }
@@ -44,11 +47,13 @@ export default function DangerZoneSettings() {
           Danger zone
         </h2>
         <p className="mt-1 text-sm text-[var(--color-muted)]">
-          Permanently delete your account and all associated data. This can't be undone.
+          Deactivate and permanently delete your account. Your account is
+          deactivated immediately and erased after 30 days, unless you log back
+          in before then.
         </p>
         <p className="mt-2 text-xs text-[var(--color-muted)]">
-          Accounts with existing products or order history can't be deleted automatically —
-          you'll be asked to contact support instead.
+          Accounts with existing products or order history can't be deleted
+          automatically — you'll be asked to contact support instead.
         </p>
 
         <Button
@@ -82,7 +87,11 @@ export default function DangerZoneSettings() {
         }
       >
         <div className="flex flex-col gap-3">
-          <p>This immediately signs you out and can't be undone. Enter your password to confirm.</p>
+          <p>
+            This signs you out immediately. Your account can be reactivated by
+            logging back in within 30 days — after that, it's permanently
+            deleted. Enter your password to confirm.
+          </p>
           <PasswordInput
             id="delete-confirm-password"
             label="Password"
@@ -91,7 +100,10 @@ export default function DangerZoneSettings() {
             autoComplete="current-password"
           />
           {error && (
-            <p className="rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]" role="alert">
+            <p
+              className="rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]"
+              role="alert"
+            >
               {error}
             </p>
           )}

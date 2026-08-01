@@ -1,5 +1,4 @@
 import os
-
 import secrets
 
 from fastapi.openapi.docs import get_swagger_ui_html
@@ -9,11 +8,24 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from app.core.config import settings
+from app.core.rate_limit import limiter
+from app.core.security_headers import SecurityHeadersMiddleware
 from app.database import Base, engine
-from app.models import favorite, notification, order, order_item, product, push_subscription, review, stock_history, store, user  # noqa: F401
-from app.routes import analytics, auth, customers, notifications, orders, products, push, reviews, stores, users
+from app.models import (  # noqa: F401
+    favorite, notification, order, order_item, product, push_subscription, review,
+    stock_history, store, user, audit_log, email_verification, password_reset, store_verification,
+)
+from app.routes import (
+    analytics, audit, auth, customers, notifications, orders, products, push, reviews,
+    store_verification as store_verification_routes, stores, users,
+)
+
+if settings.ENVIRONMENT != "development" and settings.SECRET_KEY == "insecure-dev-secret-change-me":
+    raise RuntimeError("SECRET_KEY must be set to a strong random value in production.")
 
 if settings.ENVIRONMENT == "development":
     Base.metadata.create_all(bind=engine)
@@ -28,6 +40,10 @@ app = FastAPI(
     openapi_url="/openapi.json" if is_dev else None,
 )
 
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SecurityHeadersMiddleware)
+
 security = HTTPBasic()
 
 
@@ -35,11 +51,7 @@ def verify_docs_credentials(credentials: HTTPBasicCredentials = Depends(security
     correct_username = secrets.compare_digest(credentials.username, settings.DOCS_USERNAME)
     correct_password = secrets.compare_digest(credentials.password, settings.DOCS_PASSWORD)
     if not (correct_username and correct_password):
-        raise HTTPException(
-            status_code=401,
-            detail="Incorrect credentials",
-            headers={"WWW-Authenticate": "Basic"},
-        )
+        raise HTTPException(status_code=401, detail="Incorrect credentials", headers={"WWW-Authenticate": "Basic"})
     return credentials.username
 
 
@@ -74,6 +86,8 @@ app.include_router(reviews.router)
 app.include_router(customers.router)
 app.include_router(notifications.router)
 app.include_router(push.router)
+app.include_router(audit.router)
+app.include_router(store_verification_routes.router)
 
 
 @app.get("/api/health")

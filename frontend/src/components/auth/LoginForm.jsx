@@ -75,6 +75,15 @@ export default function LoginForm() {
         error={fieldErrors.password}
       />
 
+      <div className="-mt-2 flex justify-end">
+        <Link
+          to="/forgot-password"
+          className="text-xs font-medium text-[var(--color-storefront)] hover:underline"
+        >
+          Forgot password?
+        </Link>
+      </div>
+
       {formError && (
         <p
           className="rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]"

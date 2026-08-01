@@ -1,6 +1,7 @@
 """
 Password hashing (bcrypt) and JWT creation/verification.
 """
+import re
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -43,3 +44,14 @@ def decode_access_token(token: str) -> Optional[dict]:
         return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
     except JWTError:
         return None
+
+def validate_password_strength(password: str) -> str:
+    """Shared by registration, password change, and password reset so
+    the rule lives in exactly one place."""
+    if len(password) < 8:
+        raise ValueError("Password must be at least 8 characters long.")
+    if not re.search(r"[A-Za-z]", password):
+        raise ValueError("Password must contain at least one letter.")
+    if not re.search(r"[0-9]", password):
+        raise ValueError("Password must contain at least one number.")
+    return password

@@ -84,6 +84,28 @@ h3,
   );
 }
 
+/* Visible focus ring for keyboard navigation (WCAG 2.4.7) */
+:focus-visible {
+  outline: 2px solid var(--color-storefront);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Keyboard-only skip link */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100000;
+  background: var(--color-storefront);
+  color: white;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0 0 8px 0;
+}
+.skip-link:focus {
+  left: 0;
+}
+
 /* Thin, theme-colored scrollbar for scrollable panels (e.g. the
    notifications dropdown). Firefox uses scrollbar-color; everything
    WebKit/Chromium/Safari uses the ::-webkit-scrollbar pseudo-elements. */

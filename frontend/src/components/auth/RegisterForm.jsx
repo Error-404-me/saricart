@@ -17,9 +17,6 @@ export default function RegisterForm() {
   const { t } = useLanguage();
   const navigate = useNavigate();
 
-  // Built from t() at render time (rather than a module-level constant)
-  // so the labels re-render in the current language immediately when it
-  // changes, without needing a page reload.
   const ROLES = [
     {
       value: "customer",
@@ -41,6 +38,8 @@ export default function RegisterForm() {
     password: "",
     role: "customer",
   });
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -52,16 +51,18 @@ export default function RegisterForm() {
 
   function validate() {
     const errors = {};
-    if (!isValidUsername(form.username)) {
+    if (!isValidUsername(form.username))
       errors.username = "3-50 characters: letters, numbers, underscores.";
-    }
-    if (!isValidEmail(form.email)) {
+    if (!isValidEmail(form.email))
       errors.email = "Enter a valid email address.";
-    }
     const pwIssues = passwordIssues(form.password);
-    if (pwIssues.length) {
+    if (pwIssues.length)
       errors.password = `Password must be ${pwIssues.join(", ")}.`;
-    }
+    if (!acceptedTerms)
+      errors.acceptedTerms = "You must agree to the Terms and Conditions.";
+    if (!acceptedPrivacy)
+      errors.acceptedPrivacy =
+        "You must confirm you've read the Privacy Policy.";
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   }
@@ -73,10 +74,8 @@ export default function RegisterForm() {
 
     setSubmitting(true);
     try {
-      const user = await register(form);
-      navigate(user.role === "owner" ? "/owner/dashboard" : "/", {
-        replace: true,
-      });
+      await register({ ...form, acceptedTerms, acceptedPrivacy });
+      navigate("/verify-email-sent", { state: { email: form.email } });
     } catch (err) {
       setFormError(err.message);
     } finally {
@@ -91,11 +90,11 @@ export default function RegisterForm() {
           <label
             key={r.value}
             className={`cursor-pointer rounded-xl border px-3.5 py-3 text-sm transition
-        ${
-          form.role === r.value
-            ? "border-[var(--color-storefront)] bg-[var(--color-storefront)]/5 ring-1 ring-[var(--color-storefront)]/20"
-            : "border-[var(--color-border)] hover:border-[var(--color-storefront)]/30"
-        }`}
+              ${
+                form.role === r.value
+                  ? "border-[var(--color-storefront)] bg-[var(--color-storefront)]/5 ring-1 ring-[var(--color-storefront)]/20"
+                  : "border-[var(--color-border)] hover:border-[var(--color-storefront)]/30"
+              }`}
           >
             <input
               type="radio"
@@ -106,11 +105,7 @@ export default function RegisterForm() {
               className="sr-only"
             />
             <r.icon
-              className={`mb-1.5 h-4 w-4 ${
-                form.role === r.value
-                  ? "text-[var(--color-storefront)]"
-                  : "text-[var(--color-muted)]"
-              }`}
+              className={`mb-1.5 h-4 w-4 ${form.role === r.value ? "text-[var(--color-storefront)]" : "text-[var(--color-muted)]"}`}
             />
             <span className="block font-medium text-[var(--color-ink)]">
               {r.label}
@@ -154,6 +149,68 @@ export default function RegisterForm() {
         error={fieldErrors.password}
       />
 
+      <div className="flex flex-col gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-paper)] p-3.5">
+        <label className="flex items-start gap-2.5 text-sm text-[var(--color-ink)]">
+          <input
+            type="checkbox"
+            checked={acceptedTerms}
+            onChange={(e) => setAcceptedTerms(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-[var(--color-border)]"
+            aria-describedby="terms-error"
+          />
+          <span>
+            I agree to the{" "}
+            <Link
+              to="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-[var(--color-storefront)] hover:underline"
+            >
+              Terms and Conditions
+            </Link>
+          </span>
+        </label>
+        {fieldErrors.acceptedTerms && (
+          <p
+            id="terms-error"
+            className="pl-6.5 text-xs text-[var(--color-crate)]"
+            role="alert"
+          >
+            {fieldErrors.acceptedTerms}
+          </p>
+        )}
+
+        <label className="flex items-start gap-2.5 text-sm text-[var(--color-ink)]">
+          <input
+            type="checkbox"
+            checked={acceptedPrivacy}
+            onChange={(e) => setAcceptedPrivacy(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-[var(--color-border)]"
+            aria-describedby="privacy-error"
+          />
+          <span>
+            I have read the{" "}
+            <Link
+              to="/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-[var(--color-storefront)] hover:underline"
+            >
+              Privacy Policy
+            </Link>
+          </span>
+        </label>
+        {fieldErrors.acceptedPrivacy && (
+          <p
+            id="privacy-error"
+            className="pl-6.5 text-xs text-[var(--color-crate)]"
+            role="alert"
+          >
+            {fieldErrors.acceptedPrivacy}
+          </p>
+        )}
+      </div>
+
       {formError && (
         <p
           className="rounded-lg bg-[var(--color-crate)]/10 px-3 py-2 text-sm text-[var(--color-crate)]"
@@ -163,7 +220,12 @@ export default function RegisterForm() {
         </p>
       )}
 
-      <Button type="submit" loading={submitting} className="mt-1 w-full">
+      <Button
+        type="submit"
+        loading={submitting}
+        disabled={!acceptedTerms || !acceptedPrivacy}
+        className="mt-1 w-full"
+      >
         {t("auth.createAccountButton")}
       </Button>
 
