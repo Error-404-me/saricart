@@ -1,6 +1,10 @@
 import os
 import secrets
 
+import logging
+from fastapi.responses import JSONResponse
+from fastapi.requests import Request
+
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -23,6 +27,8 @@ from app.routes import (
     analytics, audit, auth, customers, notifications, orders, products, push, reviews,
     store_verification as store_verification_routes, stores, users,
 )
+
+logger = logging.getLogger(__name__)
 
 if settings.ENVIRONMENT != "development" and settings.SECRET_KEY == "insecure-dev-secret-change-me":
     raise RuntimeError("SECRET_KEY must be set to a strong random value in production.")
@@ -88,6 +94,17 @@ app.include_router(notifications.router)
 app.include_router(push.router)
 app.include_router(audit.router)
 app.include_router(store_verification_routes.router)
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    """Ensures every response — including crashes — passes back through
+    CORSMiddleware, so the frontend sees a real error message instead of
+    a misleading CORS block."""
+    logger.exception("Unhandled exception on %s %s", request.method, request.url.path)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Something went wrong. Please try again."},
+    )
 
 
 @app.get("/api/health")
