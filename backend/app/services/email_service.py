@@ -20,14 +20,21 @@ def _send(to_email: str, subject: str, html_body: str) -> None:
     message.attach(MIMEText(html_body, "html"))
 
     try:
-        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
+        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as server:
             if settings.SMTP_USE_TLS:
                 server.starttls()
             if settings.SMTP_USERNAME:
                 server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
             server.sendmail(settings.SMTP_FROM, [to_email], message.as_string())
+    except smtplib.SMTPAuthenticationError:
+        logger.exception("SMTP auth failed for %s — check SMTP_USERNAME/SMTP_PASSWORD (Gmail needs an App Password)", settings.SMTP_USERNAME)
+        raise
+    except smtplib.SMTPSenderRefused:
+        logger.exception("SMTP sender refused — SMTP_FROM (%s) must match the authenticated SMTP_USERNAME for Gmail", settings.SMTP_FROM)
+        raise
     except Exception:
         logger.exception("Failed to send email to %s", to_email)
+        raise
 
 
 def send_verification_email(to_email: str, username: str, token: str) -> None:
