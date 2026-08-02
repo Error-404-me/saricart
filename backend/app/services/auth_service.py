@@ -11,6 +11,8 @@ from app.models.user import User, UserRole
 from app.schemas.user import UserCreate
 from app.core.security import hash_password, verify_password
 from app.services import audit_service, email_service
+import logging
+logger = logging.getLogger(__name__)
 
 
 def get_user_by_email(db: Session, email: str) -> User | None:
@@ -54,13 +56,16 @@ def register_user(db: Session, user_in: UserCreate) -> User:
     db.add(user)
     db.commit()
     db.refresh(user)
+    logger.info("REGISTER user_id=%s email=%s committed", user.id, user.email)
 
     if user.role == UserRole.OWNER:
         from app.services.store_service import get_or_create_store
         get_or_create_store(db, user)
 
+    logger.info("REGISTER calling _issue_verification_email user_id=%s", user.id)
     _issue_verification_email(db, user)
     db.commit()
+    logger.info("REGISTER verification email flow completed user_id=%s", user.id)
     return user
 
 
@@ -128,15 +133,19 @@ def authenticate_user(db: Session, email: str, password: str, request=None) -> U
     return user
 
 
+# auth_service.py
 def request_password_reset(db: Session, email: str) -> None:
     user = get_user_by_email(db, email)
     if not user:
-        return  # never reveal account existence
+        logger.info("FORGOT_PW no account for email=%s — silently ignored", email)
+        return
     reset_token = PasswordResetToken(user_id=user.id)
     db.add(reset_token)
     db.commit()
     db.refresh(reset_token)
+    logger.info("FORGOT_PW token created user_id=%s — sending email", user.id)
     email_service.send_password_reset_email(user.email, user.username, reset_token.token)
+    logger.info("FORGOT_PW send_password_reset_email returned")
 
 
 def reset_password(db: Session, token_value: str, new_password: str) -> None:

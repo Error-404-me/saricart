@@ -22,6 +22,9 @@ from app.services.auth_service import (
 from app.core.security import create_access_token
 from app.core.rate_limit import limiter
 
+import logging
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
@@ -53,7 +56,9 @@ def resend_verification_endpoint(request: Request, payload: ResendVerificationRe
 @router.post("/forgot-password", status_code=204)
 @limiter.limit("5/hour")
 def forgot_password(request: Request, payload: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    logger.info("FORGOT_PW request received email=%s", payload.email)
     request_password_reset(db, payload.email)
+    logger.info("FORGOT_PW request_password_reset returned")
 
 
 @router.post("/reset-password", status_code=204)
