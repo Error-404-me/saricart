@@ -12,6 +12,11 @@ def _send(to_email: str, subject: str, html_body: str) -> None:
     if not settings.SMTP_HOST:
         logger.info("[email:dev-mode] to=%s subject=%s\n%s", to_email, subject, html_body)
         return
+    
+    logger.info("SMTP_HOST=%s", settings.SMTP_HOST)
+    logger.info("SMTP_PORT=%s", settings.SMTP_PORT)
+    logger.info("SMTP_USERNAME=%s", settings.SMTP_USERNAME)
+    logger.info("SMTP_USE_TLS=%s", settings.SMTP_USE_TLS)
 
     message = MIMEMultipart("alternative")
     message["Subject"] = subject
