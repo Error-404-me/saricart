@@ -1,6 +1,7 @@
+# backend/app/services/auth_service.py
 from datetime import datetime, timezone
 
-from fastapi import HTTPException, status
+from fastapi import BackgroundTasks, HTTPException, status
 
 from sqlalchemy.orm import Session
 
@@ -27,7 +28,9 @@ def get_user_by_id(db: Session, user_id: int) -> User | None:
     return db.query(User).filter(User.id == user_id).first()
 
 
-def register_user(db: Session, user_in: UserCreate) -> User:
+def register_user(
+    db: Session, user_in: UserCreate, background_tasks: BackgroundTasks | None = None
+) -> User:
     if not user_in.accepted_terms or not user_in.accepted_privacy:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -56,33 +59,39 @@ def register_user(db: Session, user_in: UserCreate) -> User:
     db.add(user)
     db.commit()
     db.refresh(user)
-    logger.info("REGISTER user_id=%s email=%s committed", user.id, user.email)
 
     if user.role == UserRole.OWNER:
         from app.services.store_service import get_or_create_store
         get_or_create_store(db, user)
 
-    logger.info("REGISTER calling _issue_verification_email user_id=%s", user.id)
-    _issue_verification_email(db, user)
-    db.commit()
-    logger.info("REGISTER verification email flow completed user_id=%s", user.id)
+    _issue_verification_email(db, user, background_tasks)
     return user
 
 
-def _issue_verification_email(db: Session, user: User) -> None:
+def _issue_verification_email(
+    db: Session, user: User, background_tasks: BackgroundTasks | None = None
+) -> None:
     token = EmailVerificationToken(user_id=user.id)
     db.add(token)
     db.commit()
     db.refresh(token)
-    email_service.send_verification_email(user.email, user.username, token.token)
+
+    if background_tasks is not None:
+        background_tasks.add_task(
+            email_service.send_verification_email, user.email, user.username, token.token
+        )
+    else:
+        email_service.send_verification_email(user.email, user.username, token.token)
 
 
-def resend_verification(db: Session, email: str) -> None:
+def resend_verification(
+    db: Session, email: str, background_tasks: BackgroundTasks | None = None
+) -> None:
     """Never reveals whether the email is registered or already verified."""
     user = get_user_by_email(db, email)
     if not user or user.email_verified:
         return
-    _issue_verification_email(db, user)
+    _issue_verification_email(db, user, background_tasks)
 
 
 def verify_email(db: Session, token_value: str) -> User:
@@ -123,7 +132,6 @@ def authenticate_user(db: Session, email: str, password: str, request=None) -> U
             detail="Please verify your email before logging in. Check your inbox or resend the verification email.",
         )
 
-    # Logging in during the retention window cancels a pending deletion.
     if user.deleted_at is not None:
         user.deleted_at = None
         user.purge_at = None
@@ -133,19 +141,23 @@ def authenticate_user(db: Session, email: str, password: str, request=None) -> U
     return user
 
 
-# auth_service.py
-def request_password_reset(db: Session, email: str) -> None:
+def request_password_reset(
+    db: Session, email: str, background_tasks: BackgroundTasks | None = None
+) -> None:
     user = get_user_by_email(db, email)
     if not user:
-        logger.info("FORGOT_PW no account for email=%s — silently ignored", email)
         return
     reset_token = PasswordResetToken(user_id=user.id)
     db.add(reset_token)
     db.commit()
     db.refresh(reset_token)
-    logger.info("FORGOT_PW token created user_id=%s — sending email", user.id)
-    email_service.send_password_reset_email(user.email, user.username, reset_token.token)
-    logger.info("FORGOT_PW send_password_reset_email returned")
+
+    if background_tasks is not None:
+        background_tasks.add_task(
+            email_service.send_password_reset_email, user.email, user.username, reset_token.token
+        )
+    else:
+        email_service.send_password_reset_email(user.email, user.username, reset_token.token)
 
 
 def reset_password(db: Session, token_value: str, new_password: str) -> None:

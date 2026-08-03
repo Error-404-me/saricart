@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, Request
+# backend/app/routes/auth.py
+from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -30,8 +31,13 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 @router.post("/register", response_model=UserOut, status_code=201)
 @limiter.limit("5/hour")
-def register(request: Request, user_in: UserCreate, db: Session = Depends(get_db)):
-    return register_user(db, user_in)
+def register(
+    request: Request,
+    user_in: UserCreate,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    return register_user(db, user_in, background_tasks)
 
 
 @router.post("/login", response_model=Token)
@@ -49,16 +55,24 @@ def verify_email_endpoint(payload: VerifyEmailRequest, db: Session = Depends(get
 
 @router.post("/resend-verification", status_code=204)
 @limiter.limit("3/hour")
-def resend_verification_endpoint(request: Request, payload: ResendVerificationRequest, db: Session = Depends(get_db)):
-    resend_verification(db, payload.email)
+def resend_verification_endpoint(
+    request: Request,
+    payload: ResendVerificationRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    resend_verification(db, payload.email, background_tasks)
 
 
 @router.post("/forgot-password", status_code=204)
 @limiter.limit("5/hour")
-def forgot_password(request: Request, payload: ForgotPasswordRequest, db: Session = Depends(get_db)):
-    logger.info("FORGOT_PW request received email=%s", payload.email)
-    request_password_reset(db, payload.email)
-    logger.info("FORGOT_PW request_password_reset returned")
+def forgot_password(
+    request: Request,
+    payload: ForgotPasswordRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    request_password_reset(db, payload.email, background_tasks)
 
 
 @router.post("/reset-password", status_code=204)

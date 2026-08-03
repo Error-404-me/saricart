@@ -1,23 +1,42 @@
+# backend/app/services/email_service.py
 import logging
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+import requests
+
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+RESEND_API_URL = "https://api.resend.com/emails"
 
-def _send(to_email: str, subject: str, html_body: str) -> None:
-    if not settings.SMTP_HOST:
-        logger.info("[email:dev-mode] to=%s subject=%s\n%s", to_email, subject, html_body)
-        return
-    
-    logger.info("SMTP_HOST=%s", settings.SMTP_HOST)
-    logger.info("SMTP_PORT=%s", settings.SMTP_PORT)
-    logger.info("SMTP_USERNAME=%s", settings.SMTP_USERNAME)
-    logger.info("SMTP_USE_TLS=%s", settings.SMTP_USE_TLS)
 
+def _send_via_resend(to_email: str, subject: str, html_body: str) -> bool:
+    try:
+        response = requests.post(
+            RESEND_API_URL,
+            headers={
+                "Authorization": f"Bearer {settings.RESEND_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "from": settings.RESEND_FROM_EMAIL,
+                "to": [to_email],
+                "subject": subject,
+                "html": html_body,
+            },
+            timeout=10,
+        )
+        response.raise_for_status()
+        return True
+    except requests.RequestException:
+        logger.exception("Resend email failed (to=%s, subject=%s)", to_email, subject)
+        return False
+
+
+def _send_via_smtp(to_email: str, subject: str, html_body: str) -> bool:
     message = MIMEMultipart("alternative")
     message["Subject"] = subject
     message["From"] = settings.SMTP_FROM
@@ -25,21 +44,42 @@ def _send(to_email: str, subject: str, html_body: str) -> None:
     message.attach(MIMEText(html_body, "html"))
 
     try:
-        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as server:
+        with smtplib.SMTP(
+            settings.SMTP_HOST, settings.SMTP_PORT, timeout=settings.SMTP_TIMEOUT_SECONDS
+        ) as server:
             if settings.SMTP_USE_TLS:
                 server.starttls()
             if settings.SMTP_USERNAME:
                 server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
             server.sendmail(settings.SMTP_FROM, [to_email], message.as_string())
-    except smtplib.SMTPAuthenticationError:
-        logger.exception("SMTP auth failed for %s — check SMTP_USERNAME/SMTP_PASSWORD (Gmail needs an App Password)", settings.SMTP_USERNAME)
-        raise
-    except smtplib.SMTPSenderRefused:
-        logger.exception("SMTP sender refused — SMTP_FROM (%s) must match the authenticated SMTP_USERNAME for Gmail", settings.SMTP_FROM)
-        raise
-    except Exception:
-        logger.exception("Failed to send email to %s", to_email)
-        raise
+        return True
+    except (smtplib.SMTPException, OSError):
+        logger.exception(
+            "SMTP send failed (host=%s, port=%s, to=%s) — outbound SMTP may be "
+            "blocked by your hosting provider. Consider setting RESEND_API_KEY "
+            "to send over HTTPS instead.",
+            settings.SMTP_HOST, settings.SMTP_PORT, to_email,
+        )
+        return False
+
+
+def _send(to_email: str, subject: str, html_body: str) -> None:
+    """Best-effort email delivery. NEVER raises — a delivery failure must
+    not fail the HTTP request that triggered it (registration, password
+    reset, etc.), since the underlying DB state (user row, reset token)
+    is already committed by the time this runs."""
+    if settings.RESEND_API_KEY:
+        if _send_via_resend(to_email, subject, html_body):
+            return
+        # Fall through to SMTP only if explicitly configured as a backup.
+        if not settings.SMTP_HOST:
+            return
+
+    if not settings.SMTP_HOST:
+        logger.info("[email:dev-mode] to=%s subject=%s\n%s", to_email, subject, html_body)
+        return
+
+    _send_via_smtp(to_email, subject, html_body)
 
 
 def send_verification_email(to_email: str, username: str, token: str) -> None:

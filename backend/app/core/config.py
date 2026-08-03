@@ -1,3 +1,4 @@
+# backend/app/core/config.py
 import os
 from dotenv import load_dotenv
 
@@ -15,7 +16,7 @@ class Settings:
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(
         os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440")
     )
-    
+
     UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "uploads")
 
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:5173")
@@ -25,22 +26,26 @@ class Settings:
     CLOUDINARY_CLOUD_NAME: str = os.getenv("CLOUDINARY_CLOUD_NAME", "")
     CLOUDINARY_API_KEY: str = os.getenv("CLOUDINARY_API_KEY", "")
     CLOUDINARY_API_SECRET: str = os.getenv("CLOUDINARY_API_SECRET", "")
-    
+
     DOCS_USERNAME: str = os.getenv("DOCS_USERNAME", "admin")
     DOCS_PASSWORD: str = os.getenv("DOCS_PASSWORD", "")
-    
+
     VAPID_PUBLIC_KEY: str = os.getenv("VAPID_PUBLIC_KEY", "")
     VAPID_PRIVATE_KEY: str = os.getenv("VAPID_PRIVATE_KEY", "")
     VAPID_SUBJECT: str = os.getenv("VAPID_SUBJECT", "mailto:pasuquinargie29@gmail.com")
-    
-    # Add inside class Settings:
-    # --- Email (SMTP) — blank in dev logs emails instead of sending ---
+
+    # --- Email: HTTPS API preferred (works on PaaS that block outbound SMTP) ---
+    RESEND_API_KEY: str = os.getenv("RESEND_API_KEY", "")
+    RESEND_FROM_EMAIL: str = os.getenv("RESEND_FROM_EMAIL", "SariCart <no-reply@saricart.app>")
+
+    # --- Email: SMTP fallback — blank in dev logs emails instead of sending ---
     SMTP_HOST: str = os.getenv("SMTP_HOST", "")
     SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
     SMTP_USERNAME: str = os.getenv("SMTP_USERNAME", "")
     SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
     SMTP_FROM: str = os.getenv("SMTP_FROM", "no-reply@saricart.app")
     SMTP_USE_TLS: bool = os.getenv("SMTP_USE_TLS", "true").lower() == "true"
+    SMTP_TIMEOUT_SECONDS: int = int(os.getenv("SMTP_TIMEOUT_SECONDS", "5"))
 
     # --- Compliance ---
     ACCOUNT_DELETION_RETENTION_DAYS: int = int(os.getenv("ACCOUNT_DELETION_RETENTION_DAYS", "30"))
