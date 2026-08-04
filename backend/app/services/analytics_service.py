@@ -3,6 +3,7 @@ from zoneinfo import ZoneInfo
 from decimal import Decimal
 import math
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.order import Order, OrderStatus

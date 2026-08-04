@@ -33,6 +33,7 @@ import ProfileSettings from "../pages/settings/ProfileSettings";
 import SecuritySettings from "../pages/settings/SecuritySettings";
 import NotificationSettings from "../pages/settings/NotificationSettings";
 import AppearanceSettings from "../pages/settings/AppearanceSettings";
+import LegalSettings from "../pages/settings/LegalSettings";
 import StoreSettings from "../pages/settings/StoreSettings";
 import DangerZoneSettings from "../pages/settings/DangerZoneSettings";
 import Unauthorized from "../pages/Unauthorized";
@@ -90,6 +91,7 @@ export default function AppRoutes() {
             <Route path="security" element={<SecuritySettings />} />
             <Route path="notifications" element={<NotificationSettings />} />
             <Route path="appearance" element={<AppearanceSettings />} />
+            <Route path="legal" element={<LegalSettings />} />
             <Route path="danger" element={<DangerZoneSettings />} />
           </Route>
 

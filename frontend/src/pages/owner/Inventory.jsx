@@ -38,31 +38,35 @@ export default function Inventory() {
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
+
     try {
-      const [
-        productData,
-        historyData,
-        restockData,
-        slowMovingData,
-        fastestData,
-      ] = await Promise.all([
-        fetchMyProducts(),
+      setProducts(await fetchMyProducts());
+    } catch {
+      setError("Couldn't load your inventory. Please try again.");
+      setLoading(false);
+      return;
+    }
+
+    const [historyResult, restockResult, slowMovingResult, fastestResult] =
+      await Promise.allSettled([
         fetchStockHistory({ limit: HISTORY_PAGE_SIZE }),
         fetchRestockSuggestions(),
         fetchSlowMovingProducts(),
         fetchFastestSelling(),
       ]);
-      setProducts(productData);
-      setHistory(historyData);
-      setHistoryHasMore(historyData.length === HISTORY_PAGE_SIZE);
-      setRestockSuggestions(restockData);
-      setSlowMoving(slowMovingData);
-      setFastestSelling(fastestData);
-    } catch {
-      setError("Couldn't load your inventory. Please try again.");
-    } finally {
-      setLoading(false);
+
+    if (historyResult.status === "fulfilled") {
+      setHistory(historyResult.value);
+      setHistoryHasMore(historyResult.value.length === HISTORY_PAGE_SIZE);
     }
+    if (restockResult.status === "fulfilled")
+      setRestockSuggestions(restockResult.value);
+    if (slowMovingResult.status === "fulfilled")
+      setSlowMoving(slowMovingResult.value);
+    if (fastestResult.status === "fulfilled")
+      setFastestSelling(fastestResult.value);
+
+    setLoading(false);
   }, []);
 
   useEffect(() => {

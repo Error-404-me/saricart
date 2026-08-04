@@ -157,6 +157,7 @@ export const translations = {
       security: "Security",
       notifications: "Notifications",
       appearance: "Appearance",
+      legal: "Legal & Policies",
       dangerZone: "Danger zone",
     },
     appearance: {
@@ -337,6 +338,7 @@ export const translations = {
       security: "Seguridad",
       notifications: "Mga Notification",
       appearance: "Itsura",
+      legal: "Legal at Patakaran",
       dangerZone: "Delikadong bahagi",
     },
     appearance: {
