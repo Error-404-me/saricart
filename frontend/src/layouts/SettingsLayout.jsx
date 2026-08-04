@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, Link } from "react-router-dom";
 import {
   User,
   ShieldCheck,
@@ -43,6 +43,15 @@ const DANGER_TAB = {
   icon: AlertTriangle,
   danger: true,
 };
+
+const SETTINGS_FOOTER_LINKS = [
+  { to: "/about", label: "About" },
+  { to: "/contact", label: "Contact" },
+  { to: "/privacy", label: "Privacy Policy" },
+  { to: "/terms", label: "Terms & Conditions" },
+  { to: "/refund-policy", label: "Refund Policy" },
+  { to: "/delivery-policy", label: "Delivery Policy" },
+];
 
 export default function SettingsLayout() {
   const { user } = useAuth();
@@ -93,6 +102,19 @@ export default function SettingsLayout() {
 
       <div className="min-w-0 flex-1">
         <Outlet />
+
+        <div className="mt-10 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-[var(--color-border-subtle)] pt-6 text-xs text-[var(--color-muted)]">
+          {SETTINGS_FOOTER_LINKS.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className="hover:text-[var(--color-storefront)] hover:underline"
+            >
+              {link.label}
+            </Link>
+          ))}
+          <span className="ml-auto">© {new Date().getFullYear()} SariCart</span>
+        </div>
       </div>
     </div>
   );

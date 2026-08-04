@@ -6,6 +6,7 @@ import Input from "../common/Input";
 import PasswordInput from "../common/PasswordInput";
 import Button from "../common/Button";
 import { isValidEmail } from "../../utils/validators";
+import { resendVerification } from "../../services/authService";
 
 export default function LoginForm() {
   const { login } = useAuth();
@@ -45,6 +46,14 @@ export default function LoginForm() {
         (user.role === "owner" ? "/owner/dashboard" : "/");
       navigate(redirectTo, { replace: true });
     } catch (err) {
+      if (err.status === 403) {
+        // Account exists but isn't verified yet — resend the link (same
+        // as Register/Forgot Password do) instead of leaving the person
+        // stuck on a plain error message.
+        resendVerification(form.email).catch(() => {});
+        navigate("/verify-email-sent", { state: { email: form.email } });
+        return;
+      }
       setFormError(err.message);
     } finally {
       setSubmitting(false);

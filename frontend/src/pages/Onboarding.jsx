@@ -11,9 +11,9 @@ import {
   BarChart3,
   Smartphone,
   Package,
-  Users,
 } from "lucide-react";
 import Button from "../components/common/Button";
+import Footer from "../components/layout/Footer";
 import { useLanguage } from "../hooks/useLanguage";
 
 const FEATURES = [
@@ -234,24 +234,7 @@ export default function Onboarding() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-[var(--color-border-subtle)] py-8">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 text-sm text-[var(--color-muted)] sm:flex-row sm:px-6">
-          <span>
-            © {new Date().getFullYear()} SariCart.{" "}
-            {t("onboarding.footerTagline")}
-          </span>
-          <div className="flex items-center gap-1.5">
-            <Users className="h-3.5 w-3.5" />
-            {t("onboarding.footerHaveStore")}{" "}
-            <Link
-              to="/register"
-              className="font-medium text-[var(--color-storefront)] hover:underline"
-            >
-              {t("onboarding.footerListIt")}
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

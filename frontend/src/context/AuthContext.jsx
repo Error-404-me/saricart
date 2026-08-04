@@ -47,7 +47,9 @@ export function AuthProvider({ children }) {
       const message =
         err.response?.data?.detail || "Couldn't log you in. Please try again.";
       setError(message);
-      throw new Error(message);
+      const loginError = new Error(message);
+      loginError.status = err.response?.status;
+      throw loginError;
     }
   }, []);
 
