@@ -1,8 +1,6 @@
 # backend/app/services/email_service.py
 import logging
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+import re
 
 import requests
 
@@ -11,6 +9,18 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 RESEND_API_URL = "https://api.resend.com/emails"
+BREVO_API_URL = "https://api.brevo.com/v3/smtp/email"
+
+
+def _parse_sender(from_header: str) -> tuple[str, str]:
+    """Parses 'Name <email@domain.com>' into (name, email). Falls back to
+    treating the whole string as the email if no name is present."""
+    match = re.match(r"^\s*(.*?)\s*<(.+?)>\s*$", from_header)
+    if match:
+        name = match.group(1).strip().strip('"') or "SariCart"
+        email = match.group(2).strip()
+        return name, email
+    return "SariCart", from_header.strip()
 
 
 def _send_via_resend(to_email: str, subject: str, html_body: str) -> bool:
@@ -29,6 +39,11 @@ def _send_via_resend(to_email: str, subject: str, html_body: str) -> bool:
             },
             timeout=10,
         )
+        if not response.ok:
+            logger.error(
+                "Resend email failed (to=%s, subject=%s, status=%s, body=%s)",
+                to_email, subject, response.status_code, response.text,
+            )
         response.raise_for_status()
         return True
     except requests.RequestException:
@@ -36,30 +51,33 @@ def _send_via_resend(to_email: str, subject: str, html_body: str) -> bool:
         return False
 
 
-def _send_via_smtp(to_email: str, subject: str, html_body: str) -> bool:
-    message = MIMEMultipart("alternative")
-    message["Subject"] = subject
-    message["From"] = settings.SMTP_FROM
-    message["To"] = to_email
-    message.attach(MIMEText(html_body, "html"))
-
+def _send_via_brevo(to_email: str, subject: str, html_body: str) -> bool:
+    sender_name, sender_email = _parse_sender(settings.RESEND_FROM_EMAIL)
     try:
-        with smtplib.SMTP(
-            settings.SMTP_HOST, settings.SMTP_PORT, timeout=settings.SMTP_TIMEOUT_SECONDS
-        ) as server:
-            if settings.SMTP_USE_TLS:
-                server.starttls()
-            if settings.SMTP_USERNAME:
-                server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
-            server.sendmail(settings.SMTP_FROM, [to_email], message.as_string())
-        return True
-    except (smtplib.SMTPException, OSError):
-        logger.exception(
-            "SMTP send failed (host=%s, port=%s, to=%s) — outbound SMTP may be "
-            "blocked by your hosting provider. Consider setting RESEND_API_KEY "
-            "to send over HTTPS instead.",
-            settings.SMTP_HOST, settings.SMTP_PORT, to_email,
+        response = requests.post(
+            BREVO_API_URL,
+            headers={
+                "accept": "application/json",
+                "content-type": "application/json",
+                "api-key": settings.BREVO_API_KEY,
+            },
+            json={
+                "sender": {"name": sender_name, "email": sender_email},
+                "to": [{"email": to_email}],
+                "subject": subject,
+                "htmlContent": html_body,
+            },
+            timeout=10,
         )
+        if not response.ok:
+            logger.error(
+                "Brevo email failed (to=%s, subject=%s, status=%s, body=%s)",
+                to_email, subject, response.status_code, response.text,
+            )
+        response.raise_for_status()
+        return True
+    except requests.RequestException:
+        logger.exception("Brevo email failed (to=%s, subject=%s)", to_email, subject)
         return False
 
 
@@ -67,50 +85,84 @@ def _send(to_email: str, subject: str, html_body: str) -> None:
     """Best-effort email delivery. NEVER raises — a delivery failure must
     not fail the HTTP request that triggered it (registration, password
     reset, etc.), since the underlying DB state (user row, reset token)
-    is already committed by the time this runs."""
-    if settings.RESEND_API_KEY:
-        if _send_via_resend(to_email, subject, html_body):
-            return
-        # Fall through to SMTP only if explicitly configured as a backup.
-        if not settings.SMTP_HOST:
-            return
+    is already committed by the time this runs.
 
-    if not settings.SMTP_HOST:
+    Priority: Resend, then Brevo as HTTP-API fallback. If neither
+    provider is configured, the email is logged instead of sent (dev
+    mode)."""
+    if not settings.RESEND_API_KEY and not settings.BREVO_API_KEY:
         logger.info("[email:dev-mode] to=%s subject=%s\n%s", to_email, subject, html_body)
         return
 
-    _send_via_smtp(to_email, subject, html_body)
+    if settings.RESEND_API_KEY and _send_via_resend(to_email, subject, html_body):
+        return
+
+    if settings.BREVO_API_KEY and _send_via_brevo(to_email, subject, html_body):
+        return
+
+    logger.error(
+        "Email delivery failed via all configured providers (to=%s, subject=%s)",
+        to_email, subject,
+    )
+
+
+def _render_email(heading: str, paragraphs: list[str], link: str | None = None, link_label: str | None = None) -> str:
+    body_paragraphs = "\n".join(f"    <p>{p}</p>" for p in paragraphs)
+    link_block = (
+        f'    <p><a href="{link}">{link_label}</a></p>\n'
+        f'    <p style="color:#6e7d77;font-size:13px;">'
+        f'If the link above doesn\'t work, copy and paste this URL into your browser:<br>'
+        f'{link}</p>\n'
+        if link
+        else ""
+    )
+    return f"""<!doctype html>
+<html>
+  <body style="font-family: sans-serif; color: #1b2e2a;">
+    <h2>{heading}</h2>
+{body_paragraphs}
+{link_block}    <p style="color:#6e7d77;font-size:13px;">— SariCart</p>
+  </body>
+</html>"""
 
 
 def send_verification_email(to_email: str, username: str, token: str) -> None:
     link = f"{settings.FRONTEND_URL}/verify-email?token={token}"
-    _send(
-        to_email,
-        "Verify your SariCart account",
-        f"<p>Hi {username},</p>"
-        f"<p>Welcome to SariCart! Please confirm your email to activate your account.</p>"
-        f'<p><a href="{link}">Verify my email</a></p>'
-        f"<p>This link expires in 24 hours.</p>",
+    html_body = _render_email(
+        heading="Verify your SariCart account",
+        paragraphs=[
+            f"Hi {username},",
+            "Welcome to SariCart! Please confirm your email to activate your account.",
+            "This link expires in 24 hours.",
+        ],
+        link=link,
+        link_label="Verify my email",
     )
+    _send(to_email, "Verify your SariCart account", html_body)
 
 
 def send_password_reset_email(to_email: str, username: str, token: str) -> None:
     link = f"{settings.FRONTEND_URL}/reset-password?token={token}"
-    _send(
-        to_email,
-        "Reset your SariCart password",
-        f"<p>Hi {username},</p>"
-        f"<p>We received a request to reset your password.</p>"
-        f'<p><a href="{link}">Reset my password</a></p>'
-        f"<p>This link expires in 1 hour. If you didn't request this, ignore this email.</p>",
+    html_body = _render_email(
+        heading="Reset your SariCart password",
+        paragraphs=[
+            f"Hi {username},",
+            "We received a request to reset your password.",
+            "This link expires in 1 hour. If you didn't request this, ignore this email.",
+        ],
+        link=link,
+        link_label="Reset my password",
     )
+    _send(to_email, "Reset your SariCart password", html_body)
 
 
 def send_account_deletion_email(to_email: str, username: str, purge_date: str) -> None:
-    _send(
-        to_email,
-        "Your SariCart account is scheduled for deletion",
-        f"<p>Hi {username},</p>"
-        f"<p>Your account has been deactivated. It will be permanently "
-        f"deleted on {purge_date}. Log back in before then to cancel this.</p>",
+    html_body = _render_email(
+        heading="Your SariCart account is scheduled for deletion",
+        paragraphs=[
+            f"Hi {username},",
+            "Your account has been deactivated. It will be permanently deleted on "
+            f"{purge_date}. Log back in before then to cancel this.",
+        ],
     )
+    _send(to_email, "Your SariCart account is scheduled for deletion", html_body)

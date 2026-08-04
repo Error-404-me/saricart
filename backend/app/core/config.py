@@ -34,18 +34,12 @@ class Settings:
     VAPID_PRIVATE_KEY: str = os.getenv("VAPID_PRIVATE_KEY", "")
     VAPID_SUBJECT: str = os.getenv("VAPID_SUBJECT", "mailto:pasuquinargie29@gmail.com")
 
-    # --- Email: HTTPS API preferred (works on PaaS that block outbound SMTP) ---
+    # --- Email: HTTP APIs only. Resend tried first, Brevo as fallback.
+    # Blank in dev logs emails instead of sending. ---
     RESEND_API_KEY: str = os.getenv("RESEND_API_KEY", "")
     RESEND_FROM_EMAIL: str = os.getenv("RESEND_FROM_EMAIL", "SariCart <no-reply@saricart.app>")
 
-    # --- Email: SMTP fallback — blank in dev logs emails instead of sending ---
-    SMTP_HOST: str = os.getenv("SMTP_HOST", "")
-    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
-    SMTP_USERNAME: str = os.getenv("SMTP_USERNAME", "")
-    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
-    SMTP_FROM: str = os.getenv("SMTP_FROM", "no-reply@saricart.app")
-    SMTP_USE_TLS: bool = os.getenv("SMTP_USE_TLS", "true").lower() == "true"
-    SMTP_TIMEOUT_SECONDS: int = int(os.getenv("SMTP_TIMEOUT_SECONDS", "5"))
+    BREVO_API_KEY: str = os.getenv("BREVO_API_KEY", "")
 
     # --- Compliance ---
     ACCOUNT_DELETION_RETENTION_DAYS: int = int(os.getenv("ACCOUNT_DELETION_RETENTION_DAYS", "30"))
