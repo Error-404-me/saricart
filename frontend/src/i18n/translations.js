@@ -23,6 +23,7 @@ export const translations = {
       logoutConfirmTitle: "Log out?",
       logoutConfirmBody: "You'll need to log back in to access your account.",
       auditLog: "Activity Log",
+      verifications: "Verification Queue",
     },
     onboarding: {
       logIn: "Log in",
@@ -205,6 +206,7 @@ export const translations = {
       logoutConfirmBody:
         "Kailangan mong mag-login ulit para ma-access ang account mo.",
       auditLog: "Talaan ng Aktibidad",
+      verifications: "Talaan ng Beripikasyon",
     },
     onboarding: {
       logIn: "Mag-login",

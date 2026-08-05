@@ -24,6 +24,10 @@ export default function Landing() {
     return <Onboarding />;
   }
 
+  if (user.role === "admin") {
+    return <Navigate to="/admin/verifications" replace />;
+  }
+
   if (user.role === "owner") {
     return <Navigate to="/owner/dashboard" replace />;
   }

@@ -29,6 +29,16 @@ import NotificationBell from "../notifications/NotificationBell";
 import LanguageToggle from "../common/LanguageToggle";
 import ConfirmModal from "../common/ConfirmModal";
 
+const ADMIN_NAV_ITEMS = [
+  {
+    to: "/admin/verifications",
+    labelKey: "nav.verifications",
+    icon: ShieldCheck,
+    end: true,
+  },
+  { to: "/settings", labelKey: "nav.settings", icon: Settings },
+];
+
 const OWNER_NAV_ITEMS = [
   {
     to: "/owner/dashboard",
@@ -145,7 +155,11 @@ export default function Sidebar({ collapsed, onToggleCollapse }) {
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
 
   const navItems =
-    user?.role === "owner" ? OWNER_NAV_ITEMS : CUSTOMER_NAV_ITEMS;
+    user?.role === "owner"
+      ? OWNER_NAV_ITEMS
+      : user?.role === "admin"
+        ? ADMIN_NAV_ITEMS
+        : CUSTOMER_NAV_ITEMS;
 
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";

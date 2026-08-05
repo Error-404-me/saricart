@@ -46,6 +46,7 @@ import Privacy from "../pages/legal/Privacy";
 import Terms from "../pages/legal/Terms";
 import RefundPolicy from "../pages/legal/RefundPolicy";
 import DeliveryPolicy from "../pages/legal/DeliveryPolicy";
+import VerificationQueue from "../pages/admin/VerificationQueue";
 
 export default function AppRoutes() {
   return (
@@ -93,6 +94,13 @@ export default function AppRoutes() {
             <Route path="appearance" element={<AppearanceSettings />} />
             <Route path="legal" element={<LegalSettings />} />
             <Route path="danger" element={<DangerZoneSettings />} />
+          </Route>
+
+          <Route element={<ProtectedRoute role="admin" />}>
+            <Route
+              path="/admin/verifications"
+              element={<VerificationQueue />}
+            />
           </Route>
 
           <Route element={<ProtectedRoute role="owner" />}>
