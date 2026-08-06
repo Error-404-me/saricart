@@ -1,239 +1,52 @@
+// frontend/src/pages/Onboarding.jsx
 import { Link } from "react-router-dom";
-import {
-  Search,
-  ShoppingBag,
-  ShoppingCart,
-  Store,
-  MapPin,
-  Star,
-  ArrowRight,
-  ScanBarcode,
-  BarChart3,
-  Smartphone,
-  Package,
-} from "lucide-react";
 import Button from "../components/common/Button";
 import Footer from "../components/layout/Footer";
-import { useLanguage } from "../hooks/useLanguage";
-
-const FEATURES = [
-  {
-    icon: Search,
-    titleKey: "onboarding.feature1Title",
-    descKey: "onboarding.feature1Desc",
-  },
-  {
-    icon: ShoppingBag,
-    titleKey: "onboarding.feature2Title",
-    descKey: "onboarding.feature2Desc",
-  },
-  {
-    icon: Store,
-    titleKey: "onboarding.feature3Title",
-    descKey: "onboarding.feature3Desc",
-  },
-  {
-    icon: ScanBarcode,
-    titleKey: "onboarding.feature4Title",
-    descKey: "onboarding.feature4Desc",
-  },
-];
-
-const STEPS = [
-  {
-    number: "01",
-    titleKey: "onboarding.step1Title",
-    descKey: "onboarding.step1Desc",
-  },
-  {
-    number: "02",
-    titleKey: "onboarding.step2Title",
-    descKey: "onboarding.step2Desc",
-  },
-  {
-    number: "03",
-    titleKey: "onboarding.step3Title",
-    descKey: "onboarding.step3Desc",
-  },
-];
-
-const HERO_HIGHLIGHTS = [
-  { icon: Package, labelKey: "onboarding.heroHighlight1" },
-  { icon: BarChart3, labelKey: "onboarding.heroHighlight2" },
-  { icon: ShoppingCart, labelKey: "onboarding.heroHighlight3" },
-  { icon: ScanBarcode, labelKey: "onboarding.heroHighlight4" },
-  { icon: Smartphone, labelKey: "onboarding.heroHighlight5" },
-];
+import HeroSection from "../components/landing/HeroSection";
+import SocialProofSection from "../components/landing/SocialProofSection";
+import FeaturesSection from "../components/landing/FeaturesSection";
+import DashboardShowcaseSection from "../components/landing/DashboardShowcaseSection";
+import InventoryIntelligenceSection from "../components/landing/InventoryIntelligenceSection";
+import HowItWorksSection from "../components/landing/HowItWorksSection";
+import PricingSection from "../components/landing/PricingSection";
+import TestimonialsSection from "../components/landing/TestimonialsSection";
+import FAQSection from "../components/landing/FAQSection";
+import FinalCTASection from "../components/landing/FinalCTASection";
 
 export default function Onboarding() {
-  const { t } = useLanguage();
-
   return (
     <div className="min-h-screen bg-[var(--color-paper)]">
-      {/* Top bar */}
-      <header className="bg-[var(--color-storefront)] sticky top-0 z-50 bg-[var(--color-paper)]">
+      <header className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-paper)]/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
-          <span className="font-display text-xl font-extrabold tracking-tight text-white">
-            Sari<span className="text-[var(--color-awning)]">Cart</span>
+          <span className="font-display text-xl font-extrabold tracking-tight text-[var(--color-ink)]">
+            Sari<span className="text-[var(--color-storefront)]">Cart</span>
           </span>
           <div className="flex items-center gap-2">
             <Link
               to="/login"
-              className="rounded-lg px-3.5 py-2 text-sm font-medium text-white/75 hover:text-white"
+              className="rounded-lg px-3.5 py-2 text-sm font-medium text-[var(--color-muted)] hover:text-[var(--color-ink)]"
             >
-              {t("onboarding.logIn")}
+              Log in
             </Link>
             <Link to="/register">
-              <Button
-                variant="secondary"
-                className="!px-4 !py-2 text-sm !bg-[var(--color-awning)] !text-[var(--color-ink)] hover:!bg-[var(--color-awning-dark)]"
-              >
-                {t("onboarding.getStarted")}
+              <Button variant="secondary" className="!px-4 !py-2 text-sm">
+                Get started
               </Button>
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-[var(--color-storefront)]">
-        <div className="pointer-events-none absolute -right-32 top-10 h-72 w-72 rounded-full bg-[var(--color-awning)]/10 blur-3xl" />
-
-        <div className="relative mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:py-24">
-          <div className="text-center lg:text-left">
-            <h1 className="mt-4 font-display text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl">
-              {t("onboarding.heroTitlePrefix")}{" "}
-              <span className="text-[var(--color-awning)]">
-                {t("onboarding.heroTitleHighlight")}
-              </span>
-            </h1>
-            <p className="mx-auto mt-4 max-w-md text-white/75 lg:mx-0">
-              {t("onboarding.heroSubtitle")}
-            </p>
-
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start">
-              <Link to="/register" className="w-full sm:w-auto">
-                <Button
-                  variant="secondary"
-                  className="w-full gap-1.5 !bg-[var(--color-awning)] !text-[var(--color-ink)] hover:!bg-[var(--color-awning-dark)]"
-                >
-                  {t("onboarding.startFree")}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <a href="#features" className="w-full sm:w-auto">
-                <Button
-                  variant="secondary"
-                  className="w-full !bg-white/10 !text-white hover:!bg-white/20"
-                >
-                  {t("onboarding.exploreFeatures")}
-                </Button>
-              </a>
-            </div>
-
-            <ul className="mt-9 grid grid-cols-1 gap-x-6 gap-y-3 border-t border-white/10 pt-6 sm:grid-cols-2">
-              {HERO_HIGHLIGHTS.map(({ icon: Icon, labelKey }) => (
-                <li
-                  key={labelKey}
-                  className="flex items-center justify-center gap-2 text-sm text-white/85 lg:justify-start"
-                >
-                  <Icon className="h-4 w-4 shrink-0 text-[var(--color-awning)]" />
-                  {t(labelKey)}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="mx-auto w-full max-w-sm lg:mx-0 lg:ml-auto object-contain items-center justify-center">
-            <img src="/favicon.svg" alt="SariCart" />
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section
-        className="mx-auto max-w-6xl px-4 py-16 sm:px-6 scroll-smooth"
-        id="features"
-      >
-        <div className="text-center">
-          <h2 className="font-display text-2xl font-bold text-[var(--color-ink)] sm:text-3xl">
-            {t("onboarding.featuresHeading")}
-          </h2>
-          <p className="mx-auto mt-2 max-w-lg text-sm text-[var(--color-muted)]">
-            {t("onboarding.featuresSubheading")}
-          </p>
-        </div>
-
-        <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {FEATURES.map(({ icon: Icon, titleKey, descKey }) => (
-            <div
-              key={titleKey}
-              className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 transition hover:border-[var(--color-storefront)]/30 hover:shadow-md"
-            >
-              <span className="inline-flex rounded-xl bg-[var(--color-storefront)]/10 p-2.5 text-[var(--color-storefront)]">
-                <Icon className="h-5 w-5" />
-              </span>
-              <h3 className="mt-3.5 font-display font-bold text-[var(--color-ink)]">
-                {t(titleKey)}
-              </h3>
-              <p className="mt-1 text-sm text-[var(--color-muted)]">
-                {t(descKey)}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section className="bg-[var(--color-surface)] py-16">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <h2 className="text-center font-display text-2xl font-bold text-[var(--color-ink)] sm:text-3xl">
-            {t("onboarding.howItWorksHeading")}
-          </h2>
-
-          <div className="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-3">
-            {STEPS.map((step) => (
-              <div key={step.number} className="text-center sm:text-left">
-                <span className="font-display text-4xl font-extrabold text-[var(--color-storefront)]/15">
-                  {step.number}
-                </span>
-                <h3 className="mt-1 font-display font-bold text-[var(--color-ink)]">
-                  {t(step.titleKey)}
-                </h3>
-                <p className="mt-1.5 text-sm text-[var(--color-muted)]">
-                  {t(step.descKey)}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-        <div className="relative overflow-hidden rounded-3xl bg-[var(--color-storefront)] px-6 py-12 text-center sm:px-12">
-          <div className="pointer-events-none absolute -left-16 -top-16 h-56 w-56 rounded-full bg-[var(--color-awning)]/10 blur-3xl" />
-          <h2 className="font-display text-2xl font-bold text-white sm:text-3xl">
-            {t("onboarding.ctaHeading")}
-          </h2>
-          <p className="mx-auto mt-2 max-w-md text-sm text-white/75">
-            {t("onboarding.ctaSubheading")}
-          </p>
-          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-            <Link to="/register">
-              <Button
-                variant="secondary"
-                className="gap-1.5 !bg-[var(--color-awning)] !text-[var(--color-ink)] hover:!bg-[var(--color-awning-dark)]"
-              >
-                {t("onboarding.ctaButton")}
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
+      <HeroSection />
+      <SocialProofSection />
+      <FeaturesSection />
+      <DashboardShowcaseSection />
+      <InventoryIntelligenceSection />
+      <HowItWorksSection />
+      <PricingSection />
+      <TestimonialsSection />
+      <FAQSection />
+      <FinalCTASection />
       <Footer />
     </div>
   );

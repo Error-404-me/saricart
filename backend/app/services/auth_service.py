@@ -12,6 +12,7 @@ from app.models.user import User, UserRole
 from app.schemas.user import UserCreate
 from app.core.security import hash_password, verify_password
 from app.services import audit_service, email_service
+from app.core.config import settings
 import logging
 logger = logging.getLogger(__name__)
 
@@ -125,11 +126,12 @@ def authenticate_user(db: Session, email: str, password: str, request=None) -> U
             detail="Incorrect email or password.",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
-    if not user.email_verified:
+    
+    #Skip email verification check in development environment
+    if not user.email_verified and settings.ENVIRONMENT != "development":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Please verify your email before logging in. Check your inbox or resend the verification email.",
+            detail="Please verify your email before logging in. Check your inbox or resend the verification email by clicking the login button.",
         )
 
     if user.deleted_at is not None:
